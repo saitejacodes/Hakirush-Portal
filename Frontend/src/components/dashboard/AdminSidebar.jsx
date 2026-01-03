@@ -1,20 +1,22 @@
 import React from "react"
 import Logo from "/favicon.png"
 import { NavLink } from "react-router-dom"
-import { Building, CalendarCheck, LayoutDashboard, Settings, User, UserSquare } from "lucide-react"
+import { Building, CalendarCheck, ClipboardList, LayoutDashboard, Settings, User, UserCheck, UserSquare } from "lucide-react"
 
 const sidebar = [
   { link: "/admin-dashboard", icon: <LayoutDashboard size={20} />, title: "Dashboard" },
-  { link: "/employees", icon: <User size={20} />, title: "Employees" },
   { link: "/admin-dashboard/departments", icon: <Building size={20} />, title: "Departments" },
-  { link: "/clients", icon: <UserSquare size={20} />, title: "Clients" },
-  { link: "/leaves", icon: <CalendarCheck size={20} />, title: "Leaves" },
-  { link: "/settings", icon: <Settings size={20} />, title: "Settings" },
+  { link: "/admin-dashboard/employees", icon: <User size={20} />, title: "Employees" },
+  { link: "/admin-dashboard/clients", icon: <UserSquare size={20} />, title: "Clients" },
+  { link: "/admin-dashboard/attendance", icon: <UserCheck size={20} />, title: "Attendence" },
+  { link: "/admin-dashboard/attendance-report", icon: <ClipboardList size={20} />, title: "Attendence Report" },
+  { link: "/admin-dashboard/leaves", icon: <CalendarCheck size={20} />, title: "Leaves" },
+  { link: "/admin-dashboard/setting", icon: <Settings size={20} />, title: "Settings" },
 ]
 
 const AdminSidebar = () => {
   return (
-    <aside className="h-screen w-72 bg-white/70 backdrop-blur-2xl border-r shadow-xl flex flex-col">
+    <aside className="h-250 w-72 bg-white/70 backdrop-blur-2xl border-r shadow-xl flex flex-col">
 
       {/* Header */}
       <div className="flex items-center gap-3 p-6">

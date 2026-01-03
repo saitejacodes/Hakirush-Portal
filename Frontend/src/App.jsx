@@ -8,6 +8,21 @@ import AdminSummary from './components/dashboard/AdminSummary';
 import DepartmentList from './components/departments/DepartmentList';
 import AddDepartments from './components/departments/AddDepartments';
 import EditDepartment from './components/departments/EditDepartment';
+import EmplyeeList from './components/employee/EmployeeList';
+import EmplyeeAdd from './components/employee/EmployeeAdd';
+import EmplyeeView from './components/employee/EmployeeView';
+import EmplyeeEdit from './components/employee/EmployeeEdit';
+import ClientList from './components/client/ClinetList'
+import ClientAdd from './components/client/ClientAdd'
+import ViewClient from './components/client/ClientView';
+import EmpolyeeSummary from './components/EmpolyeeDashboard/EmployeeSummary'
+import EmployeeLeaveList from './components/leave/EmployeeLeaveList';
+import EmployeeLeaveAdd from './components/leave/EmployeeLeaveAdd';
+import EmployeeSetting from './components/EmpolyeeDashboard/EmployeeSetting';
+import AdminLeaveTable from './components/leave/AdminLeaveTable';
+import LeaveDetails from './components/leave/LeaveDetails';
+import AdminAttendence from './components/attendance/AdminAttendance';
+import AdminAttendenceReport from './components/attendance/AdminAttendanceReport';
 
 const App = () => {
   return (
@@ -27,8 +42,35 @@ const App = () => {
          <Route path="/admin-dashboard/departments" element={<DepartmentList />} />
          <Route path="/admin-dashboard/add-department" element={<AddDepartments />} />
          <Route path="/admin-dashboard/department/:id" element={<EditDepartment />} />
+         <Route path="/admin-dashboard/department/:id" element={<EditDepartment />} />
+         <Route path='/admin-dashboard/employees' element={<EmplyeeList />}/>
+         <Route path='/admin-dashboard/add-employee' element={<EmplyeeAdd />} />
+         <Route path='/admin-dashboard/employees/:id' element={<EmplyeeView />}/>
+         <Route path='/admin-dashboard/employees/edit/:id' element={<EmplyeeEdit />}/>
+         <Route path='/admin-dashboard/clients' element={<ClientList />}/>
+         <Route path='/admin-dashboard/add-client' element={<ClientAdd />} />
+         <Route path='/admin-dashboard/clients/:id' element={<ViewClient />}/>
+         <Route path='/admin-dashboard/leaves' element={<AdminLeaveTable />}/>
+         <Route path='/admin-dashboard/leaves/:id' element={<LeaveDetails />}/>
+         <Route path='/admin-dashboard/employees/leaves/:id' element={<EmployeeLeaveList />}/>
+         <Route path='/admin-dashboard/setting' element={<EmployeeSetting />} />
+         <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
+         <Route path='/admin-dashboard/attendance-report' element={<AdminAttendenceReport />} />
        </Route>
-        <Route path='/employee-dashboard' element={<EmployeeDashboard />}/>
+       <Route path='employee-dashboard' 
+          element={
+          <PrivateRoutes>
+            <RoleBaseRoutes requiredRole={["admin","employee","client"]}>
+              <EmployeeDashboard />
+            </RoleBaseRoutes>
+          </PrivateRoutes>
+        } >
+          <Route index element={<EmpolyeeSummary />} />
+          <Route path='/employee-dashboard/profile/:id' element={<EmplyeeView />} />
+          <Route path='/employee-dashboard/leaves/:id' element={<EmployeeLeaveList />} />
+          <Route path='/employee-dashboard/add-leave' element={<EmployeeLeaveAdd />} />
+          <Route path='/employee-dashboard/setting' element={<EmployeeSetting />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )
