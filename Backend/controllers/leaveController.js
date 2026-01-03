@@ -72,27 +72,24 @@ const getLeaves = async (req, res) => {
 }
 
 const getLeaveDetail = async (req, res) => {
-   try {
-        const {id} = req.params;
-        const leave = await Leave.findById({_id:id}).populate({
-           path: "employeeId",
-           populate: [
-              {
-                 path: 'department',
-                 select: 'dep_name'
-              },
-              {
-                 path: 'userId',
-                 select: 'name profileImage'
-              }
-           ]
-        })
-        return res.status(200).json({ success: true, leave });
-    } catch (error) {
-    console.log("LEAVE ERROR:", error.message);
-    return res.status(500).json({ success: false, error: error.message || "Server error" });
+  try {
+    const { id } = req.params;
+
+    const leave = await Leave.findById(id).populate({
+      path: "employeeId",
+      populate: [
+        { path: "department", select: "dep_name" },
+        { path: "userId", select: "name email profileImage" }
+      ]
+    });
+
+    return res.status(200).json({ success: true, leave });
+  } catch (error) {
+    console.log("LEAVE ERROR:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
-}
+};
+
 
 const updateLeave = async (req, res) => {
   try {

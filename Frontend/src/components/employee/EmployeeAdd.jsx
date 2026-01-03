@@ -113,9 +113,9 @@ const Add = () => {
 
               <input name="employeeId" placeholder="Employee ID" required onChange={handleChange} className="input" />
 
-              <input type="date" name="dob" onChange={handleChange} className="input" />
+              <input type="date" name="dob" onChange={handleChange} required className="input" />
 
-              <select name="gender" onChange={handleChange} className="input">
+              <select name="gender" onChange={handleChange} required className="input">
                 <option value="">Gender</option>
                 <option>Male</option>
                 <option>Female</option>
@@ -128,7 +128,7 @@ const Add = () => {
                 <option>Married</option>
               </select>
 
-              <select name="bloodGroup" onChange={handleChange} className="input">
+              <select name="bloodGroup" onChange={handleChange} required className="input">
                 <option value="">Blood Group</option>
                 <option>A+</option>
                 <option>A-</option>
