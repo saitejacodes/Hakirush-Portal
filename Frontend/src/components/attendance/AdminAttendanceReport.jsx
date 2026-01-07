@@ -7,6 +7,9 @@ const AdminAttendanceReport = () => {
   const [skip, setSkip] = useState(0);
   const [dataFilter, setDataFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+
 
   const fetchReport = async () => {
     try {
@@ -14,9 +17,10 @@ const AdminAttendanceReport = () => {
 
       const query = new URLSearchParams({ limit, skip });
       if (dataFilter) query.append("date", dataFilter);
+      if (search) query.append("search", search);
 
       const response = await axios.get(
-        `http://localhost:5000/api/attendance/report?${query.toString()}`,
+        `${import.meta.env.VITE_BACKEND_URL}/attendance/report?${query.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -44,7 +48,7 @@ const AdminAttendanceReport = () => {
 
   useEffect(() => {
     fetchReport();
-  }, [limit, skip, dataFilter]);
+  }, [limit, skip, dataFilter, search]);
 
   const handleDateChange = (e) => {
     setSkip(0);
@@ -52,63 +56,97 @@ const AdminAttendanceReport = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h2 className="text-4xl font-extrabold text-center text-red-700 mb-6">
-        Attendance Report
-      </h2>
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6">
+      <div className="max-w-6xl mx-auto">
 
-      {/* Filter box */}
-      <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-        <label className="font-semibold text-red-800">
-          Filter by Date
-        </label>
+        <h2 className="text-4xl font-extrabold text-center text-red-700 mb-8">
+          Attendance Report
+        </h2>
 
-        <input
-          type="date"
-          value={dataFilter}
-          onChange={handleDateChange}
-          className="border border-red-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-        />
-      </div>
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur p-6 mb-8">
+          <div className="grid sm:grid-cols-2 gap-4">
 
-      {loading ? (
-        <div className="text-center text-red-600 font-bold text-xl">
-          Loading...
+        {/* DATE FILTER */}
+        <div>
+          <p className="text-red-700 font-semibold">Filter by date</p>
+          <input
+            type="date"
+            value={dataFilter}
+            onChange={handleDateChange}
+            className="border border-red-300 rounded-xl px-3 py-2 w-full
+                       focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
         </div>
-      ) : (
-        Object.entries(report || {}).map(([date, record]) => (
-          <div
-            key={date}
-            className="bg-white shadow-lg border border-red-200 rounded-2xl p-5 mb-6"
-          >
-            <h3 className="text-2xl font-bold text-red-700 mb-3">
-              {date}
-            </h3>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-red-600 text-white">
-                    <th className="p-3">S No</th>
-                    <th className="p-3">Employee ID</th>
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
+        {/* 🔍 SEARCH FILTER */}
+        <div>
+          <p className="text-red-700 font-semibold">Search by Name / Employee ID</p>
+            <div className="flex gap-2">
+              <input type="text" value={searchInput} placeholder="eg: EMP001 or name"
+                onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
 
-                <tbody>
-                  {record?.map((data, i) => (
-                    <tr
-                      key={data.employeeId}
-                      className="text-center border-b hover:bg-red-50"
-                    >
-                      <td className="p-2">{i + 1}</td>
-                      <td className="p-2">{data.employeeId || "N/A"}</td>
-                      <td className="p-2">{data.employeeName || "Unknown"}</td>
-                      <td className="p-2">{data.departmentName || "N/A"}</td>
-                      <td
-                        className={`p-2 font-bold rounded-lg
+                if (value.trim() === "") {
+                  setSearch("");
+                  setSkip(0);
+                  setReport({});
+                }
+              }}
+                className="border border-red-300 rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500" />
+
+              <button
+                onClick={() => {
+                  if (!searchInput.trim()) return;
+                  setSkip(0);
+                  setReport({});
+                  setSearch(searchInput.trim());
+                }}
+                className="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-700"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+        {/* REPORT CARDS */}
+        {loading ? (
+          <div className="text-center text-red-600 font-bold text-xl">
+            Loading report...
+          </div>
+        ) : (
+          Object.entries(report || {}).map(([date, record]) => (
+            <div
+              key={date}
+              className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur p-6 mb-8"
+            >
+              <h3 className="text-2xl font-bold text-red-700 mb-4">
+                {date}
+              </h3>
+
+              <div className="max-h-[60vh] overflow-auto rounded-b-2xl">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-red-50/80 backdrop-blur-xl shadow-sm">
+                    <tr>
+                      <th className="p-3 text-left text-red-800 font-semibold">S No</th>
+                      <th className="p-3 text-left text-red-800 font-semibold">Employee ID</th>
+                      <th className="p-3 text-left text-red-800 font-semibold">Name</th>
+                      <th className="p-3 text-left text-red-800 font-semibold">Department</th>
+                      <th className="p-3 text-left text-red-800 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-red-100/70">
+                    {record?.map((data, i) => (
+                      <tr key={`${date}-${data.employeeId}-${i}`} className="hover:bg-red-50">
+                        <td className="p-3">{i + 1}</td>
+                        <td className="p-3">{data.employeeId || "N/A"}</td>
+                        <td className="p-3">{data.employeeName || "Unknown"}</td>
+                        <td className="p-3">{data.departmentName || "N/A"}</td>
+
+                        <td
+                          className={`p-3 font-semibold
                           ${
                             data.status === "Present"
                               ? "text-green-600"
@@ -116,17 +154,18 @@ const AdminAttendanceReport = () => {
                               ? "text-red-600"
                               : "text-orange-500"
                           }`}
-                      >
-                        {data.status}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        >
+                          {data.status}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };

@@ -10,8 +10,8 @@ const ViewClient = () => {
   useEffect(() => {
     const fetchClient = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/client/${id}`,
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/client/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -19,9 +19,13 @@ const ViewClient = () => {
           }
         );
 
-        if (res.data?.success) setClient(res.data.client);
-      } catch (err) {
-        alert(err?.response?.data?.error || "Failed to load client");
+        // SAME CONDITION STYLE AS EMPLOYEE VIEW
+        if (response.data?.success) {
+          setClient(response.data.client);
+        }
+
+      } catch (error) {
+        alert(error?.response?.data?.error || "Failed to load client");
       } finally {
         setLoading(false);
       }
@@ -30,16 +34,16 @@ const ViewClient = () => {
     fetchClient();
   }, [id]);
 
-  // Smart logo url builder
+  // SAME IMAGE LOGIC AS EMPLOYEE
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
     if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`;
-    if (imagePath.startsWith("uploads/"))
-      return `http://localhost:5000/${imagePath}`;
+    if (imagePath.startsWith("uploads/")) return `http://localhost:5000/${imagePath}`;
     return `http://localhost:5000/uploads/${imagePath}`;
   };
 
+  // SAME LOADING VIEW
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
@@ -47,6 +51,7 @@ const ViewClient = () => {
       </div>
     );
 
+  // SAME NOT FOUND VIEW
   if (!client)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
@@ -107,7 +112,6 @@ const ViewClient = () => {
               }
             />
 
-            {/* 🔥 NEW — PLAN TYPE FIELD */}
             <Info
               label="Plan Type"
               value={
@@ -119,7 +123,6 @@ const ViewClient = () => {
               }
             />
 
-            <Info label="Status" value={client?.status || "Active"} />
             <Info label="Account Type" value="CLIENT" />
           </div>
         </div>
@@ -128,7 +131,7 @@ const ViewClient = () => {
   );
 };
 
-// Reusable field like Employee View
+// SAME REUSABLE INFO COMPONENT
 const Info = ({ label, value }) => (
   <div className="bg-red-50 rounded-xl p-4 border border-red-100">
     <p className="text-xs uppercase tracking-wide text-red-500 font-semibold">

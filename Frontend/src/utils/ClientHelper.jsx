@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Edit2, Trash2, Eye } from "lucide-react";
 
 export const ClientButtons = ({ id, refresh }) => {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ export const ClientButtons = ({ id, refresh }) => {
     if (!window.confirm("Are you sure you want to delete this client?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/client/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/client/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -28,28 +29,28 @@ export const ClientButtons = ({ id, refresh }) => {
       {/* View */}
       <button
         onClick={() => navigate(`/admin-dashboard/clients/${id}`)}
-        className="px-3 py-1.5 rounded-lg border border-red-400 text-red-600 
+        className="p-2 rounded-lg border border-red-400 text-red-600 
                    hover:bg-red-100 transition text-sm font-medium"
       >
-        View
+        <Eye size={16} />
       </button>
 
       {/* Edit */}
       <button
         onClick={() => navigate(`/admin-dashboard/clients/edit/${id}`)}
-        className="px-3 py-1.5 rounded-lg bg-red-600 text-white
+        className="p-2 rounded-lg bg-red-600 text-white
                    hover:bg-red-700 shadow-md transition text-sm font-semibold"
       >
-        Edit
+        <Edit2 size={16} />
       </button>
 
       {/* Delete */}
       <button
         onClick={deleteClient}
-        className="px-3 py-1.5 rounded-lg bg-white text-red-600
+        className="p-2 rounded-lg bg-white text-red-600
                    border border-red-400 hover:bg-red-50 transition text-sm font-semibold"
       >
-        Delete
+        <Trash2 size={16} />
       </button>
     </div>
   );
@@ -58,7 +59,7 @@ export const ClientButtons = ({ id, refresh }) => {
 /* ✅ Helper function like fetchDepartments */
 export const fetchClients = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/client", {
+    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/client`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },

@@ -19,7 +19,7 @@ const AuthProvider = ({ children }) => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/auth/verify",
+          `${import.meta.env.VITE_BACKEND_URL}/auth/verify`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

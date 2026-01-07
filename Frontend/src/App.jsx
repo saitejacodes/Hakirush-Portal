@@ -23,6 +23,16 @@ import AdminLeaveTable from './components/leave/AdminLeaveTable';
 import LeaveDetails from './components/leave/LeaveDetails';
 import AdminAttendence from './components/attendance/AdminAttendance';
 import AdminAttendenceReport from './components/attendance/AdminAttendanceReport';
+import ClientEdit from './components/client/ClientEdit';
+import ClientDashboard from './pages/ClientDashboard';
+import ClientSummary from './components/ClientDashboard/ClientSummary'
+import Unauthorized from "./pages/Unauthorized";
+import HolidaysList from "./components/holidays/HolidayList"
+import AddHoliday from './components/holidays/AddHolidays';
+import ClientRelationship from './components/ClientDashboard/ClientRelationship';
+import ForgotPassword from './pages/ForgotPassword';
+
+
 
 const App = () => {
   return (
@@ -50,17 +60,20 @@ const App = () => {
          <Route path='/admin-dashboard/clients' element={<ClientList />}/>
          <Route path='/admin-dashboard/add-client' element={<ClientAdd />} />
          <Route path='/admin-dashboard/clients/:id' element={<ViewClient />}/>
+         <Route path='/admin-dashboard/clients/edit/:id' element={<ClientEdit />}/>
          <Route path='/admin-dashboard/leaves' element={<AdminLeaveTable />}/>
-         <Route path='/admin-dashboard/leaves/:id' element={<LeaveDetails />}/>
-         <Route path='/admin-dashboard/employees/leaves/:id' element={<EmployeeLeaveList />}/>
-         <Route path='/admin-dashboard/setting' element={<EmployeeSetting />} />
          <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
          <Route path='/admin-dashboard/attendance-report' element={<AdminAttendenceReport />} />
+         <Route path='/admin-dashboard/leaves/:id' element={<LeaveDetails />}/>
+         <Route path='/admin-dashboard/employees/leaves/:id' element={<EmployeeLeaveList />}/>
+         <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
+         <Route path='/admin-dashboard/holidays' element={<HolidaysList />} />
+         <Route path='/admin-dashboard/add-holiday' element={<AddHoliday />} />
        </Route>
-       <Route path='employee-dashboard' 
+       <Route path='/employee-dashboard' 
           element={
           <PrivateRoutes>
-            <RoleBaseRoutes requiredRole={["admin","employee","client"]}>
+            <RoleBaseRoutes requiredRole={["admin","employee"]}>
               <EmployeeDashboard />
             </RoleBaseRoutes>
           </PrivateRoutes>
@@ -71,6 +84,20 @@ const App = () => {
           <Route path='/employee-dashboard/add-leave' element={<EmployeeLeaveAdd />} />
           <Route path='/employee-dashboard/setting' element={<EmployeeSetting />} />
         </Route>
+        <Route path='/client-dashboard'
+          element={
+            <PrivateRoutes>
+            <RoleBaseRoutes requiredRole={["client"]}>
+              <ClientDashboard />
+            </RoleBaseRoutes>
+          </PrivateRoutes>
+          }>
+            <Route index element={<ClientSummary />} />
+            <Route path='/client-dashboard/ourrelationship/:id' element={<ClientRelationship />}/>
+            <Route path='/client-dashboard/setting' element={<EmployeeSetting />} />
+        </Route>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
     </BrowserRouter>
   )

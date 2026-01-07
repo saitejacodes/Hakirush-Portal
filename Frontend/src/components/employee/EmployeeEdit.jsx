@@ -20,7 +20,7 @@ const Edit = () => {
     const fetchEmployee = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/employee/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/employee/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -84,7 +84,7 @@ const Edit = () => {
 
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/employee/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/employee/${id}`,
         form,
         {
           headers: {

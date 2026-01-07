@@ -46,12 +46,11 @@ const Add = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/employee/add",
+        `${import.meta.env.VITE_BACKEND_URL}/employee/add`,
         formDataObj,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
           },
         }
       );

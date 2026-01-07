@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { ClientButtons } from "../../utils/ClientHelper";
+import { Search } from "lucide-react";
 
 const ClientList = () => {
   const [clients, setClients] = useState([]);
@@ -14,11 +15,14 @@ const ClientList = () => {
       setLoading(true);
 
       try {
-        const res = await axios.get("http://localhost:5000/api/client", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/client`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
         if (res.data.success) {
           let sno = 1;
@@ -49,88 +53,98 @@ const ClientList = () => {
     fetchClients();
   }, []);
 
-  // 🔍 Search filter
+  // search filter
   useEffect(() => {
     const result = clients.filter((c) =>
-      (c.name || "").toString().toLowerCase().includes(search.toLowerCase())
+      (c.name || "").toLowerCase().includes(search.toLowerCase())
     );
-
     setFilteredClients(result);
   }, [search, clients]);
 
-  // 🖼 smart image url builder
+  // smart logo url builder
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
-
     if (imagePath.startsWith("http")) return imagePath;
-
-    if (imagePath.startsWith("/"))
-      return `http://localhost:5000${imagePath}`;
-
+    if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`;
     if (imagePath.startsWith("uploads/"))
       return `http://localhost:5000/${imagePath}`;
-
     return `http://localhost:5000/uploads/${imagePath}`;
   };
 
   return (
-    <div className="min-h-screen bg-red-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6">
+      <div className="max-w-6xl mx-auto">
 
+        {/* HEADER */}
         <div className="mb-8 text-center">
-          <h3 className="text-4xl font-extrabold text-red-700">
+          <h3 className="text-4xl font-extrabold text-red-800 tracking-tight">
             Manage Clients
           </h3>
-          <p className="text-red-500 mt-2">
-            View, search and manage clients
-          </p>
+          <p className="text-red-500 mt-2">View, search and manage clients</p>
         </div>
 
-        <div className="bg-white shadow-xl rounded-2xl p-6 border border-red-100">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* MAIN CARD */}
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
 
-            <input
-              type="text"
-              placeholder="Search client..."
-              className="w-full sm:w-1/2 rounded-xl border border-red-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          {/* TOP BAR */}
+          <div className="p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
 
+            {/* Search box */}
+            <div className="relative w-full sm:w-1/2">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400"
+                size={18}
+              />
+
+              <input
+                type="text"
+                placeholder="Search client..."
+                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5
+                           outline-none focus:ring-2 focus:ring-red-500 transition shadow-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Add client button */}
             <Link
               to="/admin-dashboard/add-client"
-              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white shadow-md hover:bg-red-700 hover:shadow-lg transition"
+              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white
+                         shadow-md hover:bg-red-700 hover:shadow-lg transition active:scale-95 text-center"
             >
               + Add Client
             </Link>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
+          {/* TABLE WRAPPER */}
+          <div className="max-h-[60vh] overflow-auto rounded-b-3xl">
+
             {loading ? (
-              <p className="text-center text-red-500 py-10">
+              <div className="p-10 text-center text-red-600 font-semibold text-lg">
                 Loading clients...
-              </p>
+              </div>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-red-100">
-                    <th className="px-4 py-3 font-semibold text-red-700">S No</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Logo</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Client Name</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Budget</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Date of Joining</th>
-                    {/* 🔥 NEW COLUMN */}
-                    <th className="px-4 py-3 font-semibold text-red-700">Plan Type</th>
-                    <th className="px-4 py-3 font-semibold text-red-700 text-right">Action</th>
+              <table className="w-full border-collapse">
+
+                {/* STICKY HEADER */}
+                <thead className="sticky top-0 z-10 bg-red-50/80 backdrop-blur-xl shadow-sm">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">S No</th>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Logo</th>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Client Name</th>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Budget</th>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Date of Joining</th>
+                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Plan Type</th>
+                    <th className="px-4 py-3 text-right text-red-800 font-semibold">Action</th>
                   </tr>
                 </thead>
 
-                <tbody>
-                  {filteredClients.length > 0 ? (
+                <tbody className="divide-y divide-red-100/70">
+                  {filteredClients.length ? (
                     filteredClients.map((c) => (
                       <tr
                         key={c._id}
-                        className="border-b hover:bg-red-50 transition"
+                        className="transition-all duration-200 hover:bg-red-50"
                       >
                         <td className="px-4 py-3">{c.sno}</td>
 
@@ -138,21 +152,24 @@ const ClientList = () => {
                           <img
                             src={getImageUrl(c.logo)}
                             alt={c.name}
-                            className="w-12 h-12 rounded-full object-cover border"
+                            className="w-12 h-12 rounded-full object-cover border shadow-sm"
                             onError={(e) =>
                               (e.target.src = "/default-avatar.png")
                             }
                           />
                         </td>
 
-                        <td className="px-4 py-3 font-medium">{c.name}</td>
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {c.name}
+                        </td>
 
-                        <td className="px-4 py-3 font-medium">₹ {c.budget}</td>
-
-                        <td className="px-4 py-3 font-medium">{c.doj}</td>
-
-                        {/* 🔥 PLAN TYPE DISPLAY */}
                         <td className="px-4 py-3 font-medium">
+                          ₹ {c.budget}
+                        </td>
+
+                        <td className="px-4 py-3">{c.doj}</td>
+
+                        <td className="px-4 py-3">
                           {c.planType === "annual"
                             ? "Annual"
                             : c.planType === "quarterly"
@@ -169,9 +186,12 @@ const ClientList = () => {
                     <tr>
                       <td
                         colSpan="7"
-                        className="px-4 py-10 text-center text-red-400"
+                        className="px-4 py-16 text-center text-red-400 text-lg"
                       >
-                        No clients found.
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-4xl">🧾</span>
+                          No clients found
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -179,7 +199,6 @@ const ClientList = () => {
               </table>
             )}
           </div>
-
         </div>
       </div>
     </div>

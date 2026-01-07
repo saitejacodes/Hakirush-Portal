@@ -11,6 +11,7 @@ import leaveRouter from "./routes/leaveRoute.js";
 import settingRouter from "./routes/settingRoute.js";
 import attendanceRouter from "./routes/attendanceRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js";
+import holidayRouter from "./routes/holidayRoute.js";
 import connectToDatabase from "./db/db.js";
 
 connectToDatabase();
@@ -38,6 +39,7 @@ app.use("/api/leave", leaveRouter);
 app.use("/api/setting", settingRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/holiday", holidayRouter);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running on port ${process.env.PORT}`);

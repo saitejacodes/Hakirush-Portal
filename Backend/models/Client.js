@@ -2,7 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const clientSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-
   dateOfJoining: { type: Date, required: true },
   companyLogo: { type: String },
   budget: { type: Number, required: true },

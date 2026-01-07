@@ -33,7 +33,7 @@ const EmployeeLeaveList = () => {
   const fetchLeaves = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/leave/${id}/${user.role}`,
+        `${import.meta.env.VITE_BACKEND_URL}/leave/${id}/${user.role}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

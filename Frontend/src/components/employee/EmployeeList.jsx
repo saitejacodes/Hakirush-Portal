@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { EmployeeButtons } from "../../utils/EmployeeHelper";
+import { Search } from "lucide-react";
 
 const List = () => {
   const [employees, setEmployees] = useState([]);
@@ -15,7 +16,7 @@ const List = () => {
 
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/employee",
+          `${import.meta.env.VITE_BACKEND_URL}/employee`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -52,103 +53,114 @@ const List = () => {
   // search filter
   useEffect(() => {
     const result = employees.filter((emp) =>
-      (emp.name || "")
-        .toString()
-        .toLowerCase()
-        .includes(search.toLowerCase())
+      (emp.name || "").toLowerCase().includes(search.toLowerCase())
     );
 
     setFilteredEmployees(result);
   }, [search, employees]);
 
-
-  // smart URL builder for images
+  // smart image url
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
-
-    // already full URL
     if (imagePath.startsWith("http")) return imagePath;
-
-    // /uploads/abc.jpg
-    if (imagePath.startsWith("/"))
-      return `http://localhost:5000${imagePath}`;
-
-    // uploads/abc.jpg
+    if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`;
     if (imagePath.startsWith("uploads/"))
       return `http://localhost:5000/${imagePath}`;
-
-    // just filename -> assume uploads folder
     return `http://localhost:5000/uploads/${imagePath}`;
   };
 
-
   return (
-    <div className="min-h-screen bg-red-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6">
+      <div className="max-w-6xl mx-auto">
 
+        {/* HEADER */}
         <div className="mb-8 text-center">
-          <h3 className="text-4xl font-extrabold text-red-700">
+          <h3 className="text-4xl font-extrabold text-red-700 tracking-tight">
             Manage Employees
           </h3>
           <p className="text-red-500 mt-2">
-            View, search and add new employees
+            View, search and manage employee records
           </p>
         </div>
 
-        <div className="bg-white shadow-xl rounded-2xl p-6 border border-red-100">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* MAIN CARD */}
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
 
-            <input
-              type="text"
-              placeholder="Search employee..."
-              className="w-full sm:w-1/2 rounded-xl border border-red-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
 
+            {/* Search box with icon */}
+            <div className="relative w-full sm:w-1/2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+
+              <input
+                type="text"
+                placeholder="Search employee..."
+                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5
+                           outline-none focus:ring-2 focus:ring-red-500 transition shadow-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Add Employee Button */}
             <Link
               to="/admin-dashboard/add-employee"
-              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white shadow-md hover:bg-red-700 hover:shadow-lg transition"
+              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white
+                         shadow-md hover:bg-red-700 hover:shadow-lg transition active:scale-95 text-center"
             >
               + Add Employee
             </Link>
           </div>
+          {/* TABLE WRAPPER */}
+          <div className="max-h-[60vh] overflow-auto rounded-b-3xl">
 
-          <div className="mt-6 overflow-x-auto">
+            {/* LOADING */}
             {empLoading ? (
-              <p className="text-center text-red-500 py-10">
+              <div className="p-10 text-center text-red-600 font-semibold text-lg">
                 Loading employees...
-              </p>
+              </div>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-red-100">
-                    <th className="px-4 py-3 font-semibold text-red-700">S No</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Image</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Name</th>
-                    <th className="px-4 py-3 font-semibold text-red-700">Department</th>
-                    <th className="px-4 py-3 font-semibold text-red-700 text-right">Action</th>
+              <table className="w-full border-collapse">
+
+                {/* STICKY HEADER */}
+                <thead className="sticky top-0 z-10 bg-red-50/80 backdrop-blur-xl shadow-sm">
+                  <tr>
+                    <th className="px-4 py-3 text-red-800 font-semibold text-left">S No</th>
+                    <th className="px-4 py-3 text-red-800 font-semibold text-left">Image</th>
+                    <th className="px-4 py-3 text-red-800 font-semibold text-left">Name</th>
+                    <th className="px-4 py-3 text-red-800 font-semibold text-left">Department</th>
+                    <th className="px-4 py-3 text-red-800 font-semibold text-right">Action</th>
                   </tr>
                 </thead>
 
-                <tbody>
-                  {filteredEmployees.length > 0 ? (
+                <tbody className="divide-y divide-red-100/70">
+
+                  {filteredEmployees.length ? (
                     filteredEmployees.map((emp) => (
-                      <tr key={emp._id} className="border-b hover:bg-red-50 transition">
+                      <tr
+                        key={emp._id}
+                        className="transition-all duration-200 hover:bg-red-50"
+                      >
                         <td className="px-4 py-3">{emp.sno}</td>
 
                         <td className="px-4 py-3">
                           <img
                             src={getImageUrl(emp.profileImage)}
                             alt={emp.name}
-                            className="w-12 h-12 rounded-full object-cover border"
-                            onError={(e) => (e.target.src = "/default-avatar.png")}
+                            className="w-12 h-12 rounded-full object-cover border shadow-sm"
+                            onError={(e) =>
+                              (e.target.src = "/default-avatar.png")
+                            }
                           />
                         </td>
 
-                        <td className="px-4 py-3 font-medium">{emp.name}</td>
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {emp.name}
+                        </td>
 
-                        <td className="px-4 py-3 font-medium">{emp.dep_name}</td>
+                        <td className="px-4 py-3 text-gray-700">
+                          {emp.dep_name}
+                        </td>
 
                         <td className="px-4 py-3 text-right">
                           <EmployeeButtons id={emp._id} />
@@ -157,8 +169,14 @@ const List = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-4 py-10 text-center text-red-400">
-                        No employees found.
+                      <td
+                        colSpan="5"
+                        className="px-4 py-16 text-center text-red-400 text-lg"
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-4xl">👤</span>
+                          No employees found
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -166,7 +184,6 @@ const List = () => {
               </table>
             )}
           </div>
-
         </div>
       </div>
     </div>

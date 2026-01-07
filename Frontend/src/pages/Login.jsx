@@ -1,80 +1,94 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import axios from 'axios'
+import axios from "axios";
 import { useAuth } from "../context/authContext";
 import { useNavigate } from "react-router-dom";
 
-
 const Login = () => {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const {login} = useAuth()
-    const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        console.log("Email and password required", email, password);
-        
-         const response = await axios.post("http://localhost:5000/api/auth/login", 
-          { email, password}
-        );
-        localStorage.setItem('token', response.data.token)
-        // console.log("Response", response.data);
-        
-      if(response.data.success) {
-        login(response.data.user)
-        console.log(response.data.user)
-        if(response.data.user.role === "admin") {
-            navigate('/admin-dashboard')
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/login`,
+        { email, password }
+      );
+
+      localStorage.setItem("token", response.data.token);
+
+      if (response.data.success) {
+        login(response.data.user);
+
+        if (response.data.user.role === "admin") {
+          navigate("/admin-dashboard");
         } else {
-            navigate('/employee-dashboard')
+          navigate("/employee-dashboard");
         }
       }
-      } catch (error) {
-        console.log("AXIOS ERROR", error.response?.data);
-      }
+    } catch (error) {
+      setErr(error.response?.data?.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
     }
-    
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-red-100 via-white to-red-200 perspective-distant">
-      
-      {/* Main 3D Container */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-white to-red-200">
       <motion.div
         initial={{ rotateY: -15, opacity: 0 }}
         animate={{ rotateY: 0, opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="flex w-225 rounded-3xl bg-white shadow-2xl transform-style-preserve-3d"
+        className="w-[900px] max-w-full rounded-3xl bg-white/70 backdrop-blur-xl shadow-2xl border border-white/40 flex flex-col md:flex-row"
       >
+        {/* LEFT LOGO PANEL */}
         <motion.div
-          initial={{ x: -50 }}
-          animate={{ x: 0 }}
+          initial={{ y: -30 }}
+          animate={{ y: 0 }}
           transition={{ duration: 1 }}
-          className="relative flex w-1/2 flex-col items-center justify-center rounded-l-3xl bg-linear-to-br from-red-500 to-red-700 text-white"
+          className="md:w-1/2 w-full bg-black text-red-500 rounded-l-3xl flex flex-col justify-center items-center p-10 relative overflow-hidden"
         >
+          <motion.img
+            src="/favicon.png"
+            className="w-60 h-60"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 3 }}
+          />
+
           <h1 className="text-5xl font-extrabold tracking-wide">Hakirush</h1>
+          <p className="mt-3 text-red-400">Secure • Fast • Reliable Portal</p>
 
-          <p className="mt-4 text-center text-red-100">Secure • Fast • Reliable Portal</p>
-
-          {/* Glow */}
-          <div className="absolute inset-0 rounded-l-3xl bg-white/10 blur-3xl"></div>
+          <div className="absolute inset-0 bg-red-500/10 blur-3xl"></div>
         </motion.div>
 
-        {/* RIGHT – Login Form */}
-        <div className="flex w-1/2 flex-col justify-center p-10">
-          <h2 className="mb-6 text-3xl font-bold text-gray-800">
-            Portal Login
-          </h2>
+        {/* RIGHT FORM */}
+        <div className="md:w-1/2 w-full p-10">
+          <h2 className="text-3xl font-bold text-red-700 mb-6">Portal Login</h2>
+
+          {err && (
+            <p className="mb-3 text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-xl">
+              {err}
+            </p>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="text-sm font-medium text-gray-600">
-                Email
-              </label>
+              <label className="text-sm font-medium text-gray-600">Email</label>
               <input
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
                 placeholder="Enter Email"
-                className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
+                className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow focus:ring-2 focus:ring-red-200 outline-none"
                 required
               />
             </div>
@@ -83,20 +97,29 @@ const Login = () => {
               <label className="text-sm font-medium text-gray-600">
                 Password
               </label>
-              <input
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                placeholder="••••••••"
-                className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
-                required
-              />
+
+              <div className="relative">
+                <input
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow focus:ring-2 focus:ring-red-200 outline-none"
+                  required
+                />
+
+                <span
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-4 cursor-pointer text-gray-500 text-sm"
+                >
+                  {showPass ? "Hide" : "Show"}
+                </span>
+              </div>
             </div>
 
-            {/* Forgot Password */}
-            <div className="flex justify-end">
+            <div className="flex justify-between text-sm">
               <a
                 href="/forgot-password"
-                className="text-sm font-medium text-red-500 hover:text-red-600 transition"
+                className="text-red-500 hover:text-red-700"
               >
                 Forgot password?
               </a>
@@ -104,11 +127,12 @@ const Login = () => {
 
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.05 }}
+              disabled={loading}
+              whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full rounded-xl bg-linear-to-r from-red-500 to-red-600 py-3 font-semibold text-white shadow-lg"
+              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-600 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </motion.button>
           </form>
         </div>

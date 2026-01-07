@@ -1,36 +1,16 @@
 import axios from "axios";
+import { Edit2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-export const columns = [
-  {
-    name: "S No",
-    selector: (row) => row.sno,
-    sortable: true,
-    width: "100px"
-  },
-  {
-    name: "Department Name",
-    selector: (row) => row.dep_name,
-    sortable: true,
-  },
-  {
-    name: "Action",
-    cell: (row) => <DepartmentButtons Id={row._id} />,
-    ignoreRowClick: true,
-    allowOverflow: true,
-    button: true,
-  }
-];
 
 export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
   const navigate = useNavigate();
 
   const handleDelete = async () => {
-    if (!window.confirm("Do you want to delete?")) return;
+    if (!window.confirm("Do you want to delete this department?")) return;
 
     try {
       const res = await axios.delete(
-        `http://localhost:5000/api/department/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/department/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -48,21 +28,27 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
 
   return (
     <div className="flex gap-2 justify-end">
+
       <button
+        title="Edit Department"
         onClick={() => navigate(`/admin-dashboard/department/${id}`)}
-        className="px-3 py-1.5 rounded-lg border border-red-400 text-red-600
-                   hover:bg-red-100 transition text-sm font-medium"
+        className="p-2 rounded-xl border border-red-200 text-red-600 
+                   hover:bg-red-100/70 hover:shadow transition-all
+                   active:scale-95 backdrop-blur"
       >
-        Edit
+        <Edit2 size={16} />
       </button>
 
       <button
+        title="Delete Department"
         onClick={handleDelete}
-        className="px-3 py-1.5 rounded-lg bg-red-600 text-white 
-                   hover:bg-red-700 shadow-sm transition text-sm font-medium"
+        className="p-2 rounded-xl bg-red-600/90 text-white
+                   hover:bg-red-700 hover:shadow transition-all
+                   active:scale-95 backdrop-blur"
       >
-        Delete
+        <Trash2 size={16} />
       </button>
+
     </div>
   );
 };

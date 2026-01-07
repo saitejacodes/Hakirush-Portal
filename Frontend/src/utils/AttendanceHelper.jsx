@@ -2,11 +2,10 @@ import axios from "axios";
 import React from "react";
 
 const AttendanceHelper = ({ status, employeeId, statusChange }) => {
-
   const markEmployee = async (newStatus) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/attendance/update/${employeeId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/attendance/update/${employeeId}`,
         { status: newStatus },
         {
           headers: {
@@ -24,7 +23,6 @@ const AttendanceHelper = ({ status, employeeId, statusChange }) => {
     }
   };
 
-  // 🎨 status -> color mapping
   const getStatusStyle = (status) => {
     switch (status) {
       case "Present":
@@ -40,8 +38,8 @@ const AttendanceHelper = ({ status, employeeId, statusChange }) => {
     }
   };
 
-  // ✅ Already marked -> show colored pill
-  if (status) {
+  // show pill ONLY if attendance marked
+  if (status && status !== null) {
     return (
       <span
         className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusStyle(
@@ -53,34 +51,34 @@ const AttendanceHelper = ({ status, employeeId, statusChange }) => {
     );
   }
 
-  // ⏳ Not marked yet -> show action buttons
+  // show action buttons when not marked
   return (
-    <div className="flex gap-2 justify-end">
+    <div className="flex gap-2 justify-center">
 
       <button
         onClick={() => markEmployee("Present")}
-        className="px-3 py-1 rounded-lg bg-green-500 text-white text-sm hover:bg-green-600 shadow"
+        className="px-3 py-1 rounded-lg bg-green-500 text-white text-sm"
       >
         Present
       </button>
 
       <button
         onClick={() => markEmployee("Absent")}
-        className="px-3 py-1 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 shadow"
+        className="px-3 py-1 rounded-lg bg-red-500 text-white text-sm"
       >
         Absent
       </button>
 
       <button
         onClick={() => markEmployee("Sick")}
-        className="px-3 py-1 rounded-lg bg-yellow-500 text-white text-sm hover:bg-yellow-600 shadow"
+        className="px-3 py-1 rounded-lg bg-yellow-500 text-white text-sm"
       >
         Sick
       </button>
 
       <button
         onClick={() => markEmployee("Leave")}
-        className="px-3 py-1 rounded-lg bg-blue-500 text-white text-sm hover:bg-blue-600 shadow"
+        className="px-3 py-1 rounded-lg bg-blue-500 text-white text-sm"
       >
         Leave
       </button>

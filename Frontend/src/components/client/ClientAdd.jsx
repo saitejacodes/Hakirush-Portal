@@ -34,7 +34,7 @@ const AddClient = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/client/add",
+        `${import.meta.env.VITE_BACKEND_URL}/client/add`,
         fd,
         {
           headers: {
