@@ -12,7 +12,7 @@ const LeaveDetails = () => {
     const fetchLeave = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/leave/detail/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/leave/detail/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -36,7 +36,7 @@ const LeaveDetails = () => {
   const changeStatus = async (id, status) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/leave/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/leave/${id}`,
         { status },
         {
           headers: {
@@ -56,10 +56,10 @@ const LeaveDetails = () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`;
+    if (imagePath.startsWith("/")) return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
     if (imagePath.startsWith("uploads/"))
-      return `http://localhost:5000/${imagePath}`;
-    return `http://localhost:5000/uploads/${imagePath}`;
+      return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
+    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`;
   };
 
   if (loading)

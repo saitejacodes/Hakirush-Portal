@@ -2,56 +2,60 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-const View = () => {
+const SponsorView = () => {
   const { id } = useParams();
-  const [employee, setEmployee] = useState(null);
+  const [sponsor, setSponsor] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /* ================= FETCH SPONSOR ================= */
   useEffect(() => {
-    const fetchEmployee = async () => {
+    const fetchSponsor = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           }
         );
-        
+
         if (response.data?.success) {
-          setEmployee(response.data.employee);
+          setSponsor(response.data.sponsor);
         }
       } catch (error) {
-        alert(error?.response?.data?.error || "Failed to load employee");
+        alert(error?.response?.data?.error || "Failed to load sponsor");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEmployee();
+    fetchSponsor();
   }, [id]);
 
+  /* ================= IMAGE URL ================= */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/")) return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
+    if (imagePath.startsWith("/"))
+      return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
     if (imagePath.startsWith("uploads/"))
       return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
     return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`;
   };
 
+  /* ================= STATES ================= */
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
-        Loading profile…
+        Loading sponsor profile…
       </div>
     );
 
-  if (!employee)
+  if (!sponsor)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
-        Employee not found
+        Sponsor not found
       </div>
     );
 
@@ -59,56 +63,55 @@ const View = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-3xl mx-auto">
 
-        {/* Title */}
+        {/* TITLE */}
         <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
-          Employee Profile
+          Sponsor Profile
         </h3>
 
-        {/* Card */}
+        {/* CARD */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 border border-red-100">
 
-          {/* Avatar */}
+          {/* LOGO */}
           <div className="flex flex-col items-center gap-3">
             <div className="w-32 h-32 rounded-full border-4 border-red-200 shadow-lg overflow-hidden hover:scale-105 transition">
               <img
-                src={getImageUrl(employee?.userId?.profileImage)}
-                alt="profile"
+                src={getImageUrl(sponsor?.logo)}
+                alt="logo"
                 className="w-full h-full object-cover"
                 onError={(e) => (e.target.src = "/default-avatar.png")}
               />
             </div>
 
             <h2 className="text-2xl font-bold text-gray-800">
-              {employee?.userId?.name}
+              {sponsor?.name}
             </h2>
 
             <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-              {employee?.department?.dep_name || "No Department"}
+              {sponsor?.collaboration || "No Collaboration"}
             </span>
           </div>
 
-          {/* Details */}
+          {/* DETAILS */}
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-            <Info label="Employee ID" value={employee?.employeeId} />
-            <Info label="Email" value={employee?.userId?.email} />
-            <Info label="Gender" value={employee?.gender} />
-            <Info label="Blood Group" value={employee?.bloodGroup || "N/A"} />
-            <Info label="Department" value={employee?.department?.dep_name || "N/A"}/>
-
+            <Info label="Sponsor Name" value={sponsor?.name} />
+            <Info label="Collaboration Type" value={sponsor?.collaboration} />
             <Info
-              label="Date of Birth"
-              value={
-                employee?.dob
-                  ? new Date(employee.dob).toDateString()
-                  : "N/A"
-              }
+              label="Events Sponsored"
+              value={sponsor?.eventsSponsored ?? 0}
             />
-            <Info label="Marital Status" value={employee?.maritalStatus} />
-            <Info label="Salary" value={`₹ ${employee?.salary || 0}`} />
+            <Info label="Reach" value={sponsor?.reach} />
             <Info
-              label="Role"
-              value={employee?.userId?.role?.toUpperCase() || "EMPLOYEE"}
+              label="Upcoming Events"
+              value={sponsor?.upcomingEvents || "—"}
+            />
+            <Info
+              label="Created On"
+              value={
+                sponsor?.createdAt
+                  ? new Date(sponsor.createdAt).toDateString()
+                  : "—"
+              }
             />
           </div>
         </div>
@@ -117,14 +120,16 @@ const View = () => {
   );
 };
 
-// small reusable field renderer
+/* ================= INFO FIELD ================= */
 const Info = ({ label, value }) => (
   <div className="bg-red-50 rounded-xl p-4 border border-red-100">
     <p className="text-xs uppercase tracking-wide text-red-500 font-semibold">
       {label}
     </p>
-    <p className="text-gray-800 text-lg font-bold mt-1">{value || "—"}</p>
+    <p className="text-gray-800 text-lg font-bold mt-1">
+      {value || "—"}
+    </p>
   </div>
 );
 
-export default View;
+export default SponsorView;

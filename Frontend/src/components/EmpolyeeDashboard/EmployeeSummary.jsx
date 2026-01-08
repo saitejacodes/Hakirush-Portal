@@ -23,6 +23,15 @@ const EmployeeSummary = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [hoverDay, setHoverDay] = useState(null);
 
+  // 🔥 normalize date to YYYY-MM-DD
+  const toYMD = (d) => {
+    const date = new Date(d);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   // FETCH DATA
   useEffect(() => {
     if (!user) return;
@@ -31,24 +40,30 @@ const EmployeeSummary = () => {
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.all([
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/employee/by-department/me`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/employee/new/recent`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/holiday/upcoming`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/employee/leave/balance/me`, { headers })
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/new/recent`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/leave/balance/me`, { headers })
     ])
       .then(([d1, d2, d3, d4]) => {
         setDeptEmployees(d1?.data?.employees || []);
         setNewEmployees(d2?.data?.employees || []);
         setHolidays(d3?.data?.holidays || []);
-        setLeaveBalance(d4?.data?.balance || 0);
         setDepartment(d1?.data?.department || null);
+
+        const leaveData = d4?.data || {};
+        setLeaveBalance(
+          leaveData.balance ??
+          (leaveData.total - leaveData.used) ??
+          0
+        );
       })
       .catch(console.error);
   }, [user]);
 
   // FETCH ATTENDANCE
   useEffect(() => {
-    if (!user?._id) return;
+    if (!user || !user._id) return;
 
     const token = localStorage.getItem("token");
     const headers = { Authorization: `Bearer ${token}` };
@@ -58,7 +73,7 @@ const EmployeeSummary = () => {
 
     axios
       .get(
-        `${import.meta.env.VITE_BACKEND_URL}/attendance/user/${user._id}/monthly?month=${month}&year=${year}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${month}&year=${year}`,
         { headers }
       )
       .then(res => setAttendance(res.data.attendance || []))
@@ -95,36 +110,30 @@ const EmployeeSummary = () => {
   const isToday = (day) => {
     if (!day) return false;
     const d = new Date(calendar.year, calendar.month, day);
-    const t = new Date();
-    return (
-      d.getFullYear() === t.getFullYear() &&
-      d.getMonth() === t.getMonth() &&
-      d.getDate() === t.getDate()
-    );
+    return toYMD(d) === toYMD(new Date());
   };
 
-  // TOOLTIP TEXT
+  // TOOLTIP
   const getDayTooltip = (day) => {
     if (!day) return "";
 
     const date = new Date(calendar.year, calendar.month, day);
-    const str = date.toLocaleDateString("en-CA");
+    const str = toYMD(date);
 
-    if (date.getDay() === 0) {
-      return "Week Off";
-    }
+    if (date.getDay() === 0) return "Week Off";
 
-    const holiday = holidays.find(
-      h => new Date(h.date).toLocaleDateString("en-CA") === str
-    );
-    if (holiday) return `${holiday.title}`;
+    const holiday = holidays.find(h => toYMD(h.date) === str);
+    if (holiday) return holiday.title;
 
-    const rec = attendance.find(
-      a => new Date(a.date).toLocaleDateString("en-CA") === str
-    );
+    const rec = attendance.find(a => a.date === str);
+    if (!rec || !rec.status) return "No record";
 
-    if (rec?.status === "Present") return "Present";
-    if (rec?.status === "Absent") return "Absent";
+    const status = rec.status.toString().trim().toLowerCase();
+
+    if (status === "present") return "Present";
+    if (status === "absent") return "Absent";
+    if (status === "leave") return "Leave";
+    if (status === "sick") return "Sick";
 
     return "No record";
   };
@@ -134,22 +143,22 @@ const EmployeeSummary = () => {
     if (!day) return null;
 
     const date = new Date(calendar.year, calendar.month, day);
-    const str = date.toLocaleDateString("en-CA");
+    const str = toYMD(date);
 
     if (date.getDay() === 0) return "do";
 
-    const isHoliday = holidays.some(
-      h => new Date(h.date).toLocaleDateString("en-CA") === str
-    );
+    const isHoliday = holidays.some(h => toYMD(h.date) === str);
     if (isHoliday) return "holiday";
 
-    const rec = attendance.find(
-      a => new Date(a.date).toLocaleDateString("en-CA") === str
-    );
+    const rec = attendance.find(a => a.date === str);
+    if (!rec || !rec.status) return "none";
 
-    if (!rec) return "none";
-    if (rec.status === "Present") return "present";
-    if (rec.status === "Absent") return "absent";
+    const status = rec.status.toString().trim().toLowerCase();
+
+    if (status === "present") return "present";
+    if (status === "absent") return "absent";
+    if (status === "leave") return "leave";
+    if (status === "sick") return "sick";
 
     return "none";
   };
@@ -160,12 +169,10 @@ const EmployeeSummary = () => {
     <div className="min-h-screen bg-red-100 p-10">
       <div className="max-w-7xl mx-auto space-y-10">
 
-        {/* HEADER */}
         <h1 className="text-3xl font-extrabold text-red-800">
           Dashboard Overview
         </h1>
 
-        {/* DEPARTMENT CARD */}
         {department && (
           <div className="rounded-3xl p-7 bg-white shadow-xl border">
             <div className="flex items-center gap-3 text-red-700">
@@ -176,9 +183,7 @@ const EmployeeSummary = () => {
           </div>
         )}
 
-        {/* WIDGET GRID */}
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-
           <Widget title="Department Employees" icon={<Users className="text-red-600" />}>
             {deptEmployees.map(e => (
               <Chip key={e._id} color="red">{e?.userId?.name}</Chip>
@@ -202,10 +207,8 @@ const EmployeeSummary = () => {
           </Widget>
         </div>
 
-        {/* CALENDAR CARD */}
+        {/* ✅ FULL CALENDAR – UNBROKEN */}
         <div className="rounded-3xl p-8 bg-white shadow-2xl border relative">
-
-          {/* TOP BAR */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-3xl font-extrabold text-red-700">
               Attendance Calendar
@@ -218,27 +221,23 @@ const EmployeeSummary = () => {
             </div>
           </div>
 
-          {/* TOOLTIP */}
           {hoverDay && (
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-3 py-1 text-sm rounded-xl bg-black text-white shadow-lg z-20">
               {getDayTooltip(hoverDay)}
             </div>
           )}
 
-          {/* MONTH TITLE */}
           <p className="text-center font-semibold mb-2">
             {calendarMonth.toLocaleString("default", { month: "long" })}{" "}
             {calendarMonth.getFullYear()}
           </p>
 
-          {/* WEEK DAYS */}
-          <div className="grid grid-cols-7 text-center font-semibold mb-2">
+          <div className="grid grid-cols-7 gap-2 text-center font-semibold mb-2">
             {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => (
-              <div key={d}>{d}</div>
+              <div key={d} className="bg-red-100 py-2 rounded-xl">{d}</div>
             ))}
           </div>
 
-          {/* DAYS GRID */}
           <div className="grid grid-cols-7 gap-2">
             {calendar.days.map((d, i) => {
               const s = getDayStatus(d);
@@ -254,6 +253,8 @@ const EmployeeSummary = () => {
                     ${!d ? "bg-transparent" : ""}
                     ${s === "present" ? "bg-green-500 text-white" : ""}
                     ${s === "absent" ? "bg-red-500 text-white" : ""}
+                    ${s === "leave" ? "bg-yellow-400 text-white" : ""}
+                    ${s === "sick" ? "bg-blue-500 text-white" : ""}
                     ${s === "holiday" ? "bg-yellow-400 text-white" : ""}
                     ${s === "do" ? "bg-gray-600 text-white" : ""}
                     ${s === "none" ? "bg-gray-200" : ""}

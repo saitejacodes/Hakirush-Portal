@@ -9,7 +9,7 @@ export const ClientButtons = ({ id, refresh }) => {
     if (!window.confirm("Are you sure you want to delete this client?")) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/client/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -59,7 +59,7 @@ export const ClientButtons = ({ id, refresh }) => {
 /* ✅ Helper function like fetchDepartments */
 export const fetchClients = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/client`, {
+    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },

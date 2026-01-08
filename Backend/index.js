@@ -12,6 +12,7 @@ import settingRouter from "./routes/settingRoute.js";
 import attendanceRouter from "./routes/attendanceRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js";
 import holidayRouter from "./routes/holidayRoute.js";
+import sponsorRouter from "./routes/sponsorRoutes.js";
 import connectToDatabase from "./db/db.js";
 
 connectToDatabase();
@@ -26,7 +27,7 @@ app.use(express.json());
 app.use(cors());
 
 // serve public folder
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public")));  
 
 // serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
@@ -40,6 +41,7 @@ app.use("/api/setting", settingRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/holiday", holidayRouter);
+app.use("/api/sponsors", sponsorRouter);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running on port ${process.env.PORT}`);

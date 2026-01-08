@@ -5,7 +5,7 @@ const AttendanceHelper = ({ status, employeeId, statusChange }) => {
   const markEmployee = async (newStatus) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/attendance/update/${employeeId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance/update/${employeeId}`,
         { status: newStatus },
         {
           headers: {

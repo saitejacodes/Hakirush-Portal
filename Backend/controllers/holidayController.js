@@ -31,3 +31,31 @@ export const addHoliday = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+export const deleteHoliday = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const holiday = await Holiday.findById(id);
+
+    if (!holiday) {
+      return res.status(404).json({
+        success: false,
+        message: "Holiday not found"
+      });
+    }
+
+    await Holiday.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Holiday deleted successfully"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};

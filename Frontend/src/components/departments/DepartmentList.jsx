@@ -14,7 +14,7 @@ const DepartmentList = () => {
 
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/department`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/department`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

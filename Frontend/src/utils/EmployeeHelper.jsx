@@ -9,7 +9,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
     if (!window.confirm("Are you sure you want to delete this employee?")) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/employee/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -77,7 +77,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
 /* ✅ FIXED fetchDepartments */
 export const fetchDepartments = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/department`, {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/department`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },

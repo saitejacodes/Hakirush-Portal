@@ -40,7 +40,7 @@ const EmployeeSetting = () => {
       setLoading(true);
 
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/setting/change-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/setting/change-password`,
         setting,
         {
           headers: {

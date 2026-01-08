@@ -13,7 +13,7 @@ const AddHoliday = () => {
     setLoading(true);
 
     await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/holiday/add`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/holiday/add`,
       holiday,
       { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
     );

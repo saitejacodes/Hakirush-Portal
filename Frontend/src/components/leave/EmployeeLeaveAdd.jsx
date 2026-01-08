@@ -22,7 +22,7 @@ const EmployeeLeaveAdd = () => {
     const fetchBalance = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/employee/leave/balance/me`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/employee/leave/balance/me`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -72,7 +72,7 @@ const EmployeeLeaveAdd = () => {
       setLoading(true);
 
       const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/leave/add`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/leave/add`,
         leave,
         {
           headers: {

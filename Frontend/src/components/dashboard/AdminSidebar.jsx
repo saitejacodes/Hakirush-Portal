@@ -2,12 +2,14 @@ import React from "react"
 import Logo from "/favicon.png"
 import { NavLink } from "react-router-dom"
 import {
+  BadgeDollarSign,
   Building,
   CalendarCheck,
   ClipboardList,
   LayoutDashboard,
   PartyPopper,
   Settings,
+  Store,
   User,
   UserCheck,
   UserSquare
@@ -22,6 +24,8 @@ const sidebar = [
   { link: "/admin-dashboard/attendance-report", icon: ClipboardList, title: "Attendance Report" },
   { link: "/admin-dashboard/leaves", icon: CalendarCheck, title: "Leaves" },
   { link: "/admin-dashboard/holidays", icon: PartyPopper, title: "Holidays" },
+  { link: "/admin-dashboard/sponsors", icon: BadgeDollarSign, title: "Sponsors" },
+  { link: "/admin-dashboard/stalls", icon: Store, title: "Stalls" },
 ]
 
 const AdminSidebar = () => {

@@ -30,7 +30,7 @@ const EditDepartment = () => {
       setDepLoading(true);
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/department/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -59,7 +59,7 @@ const EditDepartment = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/department/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`,
         department,
         {
           headers: { Authorization: `Bearer ${token}` },

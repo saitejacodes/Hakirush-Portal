@@ -18,7 +18,7 @@ const AddDepartments = () => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/department/add`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/department/add`,
         department,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

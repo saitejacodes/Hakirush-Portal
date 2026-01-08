@@ -25,7 +25,7 @@ const AdminLeaveTable = () => {
       setLoading(true);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/leave`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/leave`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

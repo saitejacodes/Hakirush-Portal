@@ -16,7 +16,7 @@ const AdminAttendance = () => {
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/attendance`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

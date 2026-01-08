@@ -9,9 +9,9 @@ const Navbar = () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png"
     if (imagePath.startsWith("http")) return imagePath
-    if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`
-    if (imagePath.startsWith("uploads/")) return `http://localhost:5000/${imagePath}`
-    return `http://localhost:5000/uploads/${imagePath}`
+    if (imagePath.startsWith("/")) return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`
+    if (imagePath.startsWith("uploads/")) return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`
+    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`
   }
 
   // 👇 shrink navbar on scroll
@@ -54,7 +54,7 @@ const Navbar = () => {
           className={`
             font-semibold rounded-xl transition-all shadow cursor-pointer
             ${small
-              ? "p-2 bg-red-500 text-white"
+              ? "p-2 bg-red-800 text-white"
               : "px-6 py-2 bg-red-800 text-white hover:bg-red-600"}
           `}
         >

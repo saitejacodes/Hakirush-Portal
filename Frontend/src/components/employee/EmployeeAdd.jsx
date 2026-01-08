@@ -46,7 +46,7 @@ const Add = () => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/employee/add`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/employee/add`,
         formDataObj,
         {
           headers: {

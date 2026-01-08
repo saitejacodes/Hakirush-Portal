@@ -11,7 +11,7 @@ const ViewClient = () => {
     const fetchClient = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/client/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -38,9 +38,9 @@ const ViewClient = () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/")) return `http://localhost:5000${imagePath}`;
-    if (imagePath.startsWith("uploads/")) return `http://localhost:5000/${imagePath}`;
-    return `http://localhost:5000/uploads/${imagePath}`;
+    if (imagePath.startsWith("/")) return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
+    if (imagePath.startsWith("uploads/")) return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
+    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`;
   };
 
   // SAME LOADING VIEW

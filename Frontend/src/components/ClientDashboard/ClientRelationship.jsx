@@ -27,7 +27,7 @@ const ClientRelationship = () => {
     const fetchClient = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/client`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/client`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

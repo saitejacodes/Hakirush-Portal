@@ -12,7 +12,7 @@ const HolidayList = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/holiday/upcoming`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -46,7 +46,7 @@ const HolidayList = () => {
     if (!confirm("Delete this holiday?")) return;
 
     await axios.delete(
-      `${import.meta.env.VITE_BACKEND_URL}/holiday/${id}`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/holiday/${id}`,
       {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       }

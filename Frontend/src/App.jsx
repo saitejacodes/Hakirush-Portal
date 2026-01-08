@@ -31,7 +31,13 @@ import HolidaysList from "./components/holidays/HolidayList"
 import AddHoliday from './components/holidays/AddHolidays';
 import ClientRelationship from './components/ClientDashboard/ClientRelationship';
 import ForgotPassword from './pages/ForgotPassword';
-
+import SponsorList from './components/sponsor/SponsorList';
+import SponsorAdd from './components/sponsor/SponsorAdd';
+import SponsorEdit from './components/sponsor/SponsorEdit'
+import StallList from './components/stalls/StallList';
+import StallAdd from './components/stalls/StallAdd';
+import StallEdit from './components/stalls/StallEdit';
+import SponsorView from './components/sponsor/SponsorView';
 
 
 const App = () => {
@@ -69,6 +75,13 @@ const App = () => {
          <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
          <Route path='/admin-dashboard/holidays' element={<HolidaysList />} />
          <Route path='/admin-dashboard/add-holiday' element={<AddHoliday />} />
+         <Route path='/admin-dashboard/sponsors' element={<SponsorList />} />
+         <Route path='/admin-dashboard/add-sponsor' element={<SponsorAdd />} />
+         <Route path='/admin-dashboard/sponsors/edit/:id' element={<SponsorEdit />}/>
+         <Route path='/admin-dashboard/stalls' element={<StallList />} />
+         <Route path='/admin-dashboard/add-stall' element={<StallAdd />} />
+         <Route path="/admin-dashboard/sponsors/:id" element={<SponsorView />} />
+         <Route path='/admin-dashboard/stalls/edit/:id' element={<StallEdit />}/>
        </Route>
        <Route path='/employee-dashboard' 
           element={

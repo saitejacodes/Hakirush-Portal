@@ -19,7 +19,7 @@ const EditClient = () => {
     const fetchClient = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/client/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -37,7 +37,7 @@ const EditClient = () => {
 
           if (c?.image) {
             setPreview(
-              `${import.meta.env.VITE_BACKEND_URL}/uploads/${c.image}`
+              `${import.meta.env.VITE_BACKEND_URL}/api/uploads/${c.image}`
             );
           }
         }
@@ -79,7 +79,7 @@ const EditClient = () => {
 
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/client/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
         fd,
         {
           headers: {

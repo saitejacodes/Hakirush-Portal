@@ -20,7 +20,7 @@ const Edit = () => {
     const fetchEmployee = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/employee/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -39,7 +39,7 @@ const Edit = () => {
 
           if (emp?.userId?.profileImage) {
             setPreview(
-              `http://localhost:5000/uploads/${emp.userId.profileImage}`
+              `${import.meta.env.VITE_BACKEND_URL}/uploads/${emp.userId.profileImage}`
             );
           }
         }
@@ -84,7 +84,7 @@ const Edit = () => {
 
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/employee/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
         form,
         {
           headers: {
