@@ -29,11 +29,17 @@ const AdminAttendance = () => {
 
         const data = response.data.attendance.map((att) => ({
           _id: att._id,
-          sno: sno++,
-          employeeId: att.employeeId?.employeeId || "N/A",
-          name: att.employeeId?.userId?.name || "Unknown",
-          department: att.employeeId?.department?.dep_name || "N/A",
-          status: att.status || null,
+  sno: sno++,
+
+  // ✅ MongoDB ObjectId (ONLY for API)
+  employeeMongoId: att.employeeId?._id,
+
+  // ✅ Human-readable Employee ID (ONLY for UI)
+  employeeCode: att.employeeId?.employeeId || "N/A",
+
+  name: att.employeeId?.userId?.name || "Unknown",
+  department: att.employeeId?.department?.dep_name || "N/A",
+  status: att.status || null,
         }));
 
         setAttendance(data);
@@ -129,12 +135,12 @@ const AdminAttendance = () => {
                       <tr key={att._id} className="hover:bg-red-50">
                         <td className="px-4 py-3">{att.sno}</td>
                         <td className="px-4 py-3">{att.name}</td>
-                        <td className="px-4 py-3">{att.employeeId}</td>
+                        <td className="px-4 py-3">{att.employeeCode}</td>
                         <td className="px-4 py-3">{att.department}</td>
 
                         <td className="px-4 py-3 text-right">
                           <AttendanceHelper
-                            employeeId={att.employeeId}
+                            employeeId={att.employeeMongoId}
                             status={att.status}
                             statusChange={statusChange}
                           />
@@ -155,7 +161,6 @@ const AdminAttendance = () => {
               </table>
             )}
           </div>
-
         </div>
       </div>
     </div>

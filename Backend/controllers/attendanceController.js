@@ -92,7 +92,6 @@ const updateAttendance = async (req, res) => {
   }
 };
 
-
 const attendanceReport = async (req, res) => {
   try {
     const limit = Number(req.query.limit) || 5;
