@@ -4,37 +4,61 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { SponsorButtons } from "../../utils/SponsorHelper";
 
+/* ===== MOBILE CARD ===== */
+const MobileSponsorCard = ({ s, getImageUrl }) => {
+  return (
+    <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
+      <div className="flex items-center gap-3">
+
+        {/* Logo */}
+        <img
+          src={getImageUrl(s.logo)}
+          onError={(e) => (e.target.src = "/default-avatar.png")}
+          className="w-12 h-12 rounded-full object-cover border shrink-0"
+        />
+
+        {/* Name & Info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 truncate">
+            {s.name}
+          </p>
+          <p className="text-xs text-gray-500 truncate">
+            {s.collaboration}
+          </p>
+          <p className="text-xs text-red-600 mt-0.5">
+            {s.eventsSponsored} events • Reach {s.reach}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="shrink-0">
+          <SponsorButtons id={s._id} refresh={() => window.location.reload()} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SponsorList = () => {
   const [sponsors, setSponsors] = useState([]);
   const [filteredSponsors, setFilteredSponsors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  /* ================= FETCH SPONSORS ================= */
   useEffect(() => {
     const fetchSponsors = async () => {
       setLoading(true);
-
       try {
         const token = localStorage.getItem("token");
-
-        if (!token) {
-          alert("Login required");
-          return;
-        }
-
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/sponsors`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         if (response.data.success) {
           let sno = 1;
-
           const data = response.data.sponsors.map((s) => ({
             _id: s._id,
             sno: sno++,
@@ -48,15 +72,7 @@ const SponsorList = () => {
 
           setSponsors(data);
           setFilteredSponsors(data);
-        } else {
-          alert("Failed to load sponsors");
         }
-      } catch (error) {
-        console.error("FETCH SPONSORS ERROR:", error.response || error.message);
-        alert(
-          error.response?.data?.error ||
-            "Server error while loading sponsors"
-        );
       } finally {
         setLoading(false);
       }
@@ -65,7 +81,6 @@ const SponsorList = () => {
     fetchSponsors();
   }, []);
 
-  /* ================= SEARCH FILTER ================= */
   useEffect(() => {
     const result = sponsors.filter((s) =>
       (s.name || "").toLowerCase().includes(search.toLowerCase())
@@ -73,7 +88,6 @@ const SponsorList = () => {
     setFilteredSponsors(result);
   }, [search, sponsors]);
 
-  /* ================= IMAGE URL HANDLER ================= */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
@@ -85,139 +99,103 @@ const SponsorList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 px-3 py-4 md:p-6">
+      <div className="w-full max-w-6xl mx-auto">
 
-        {/* ================= HEADER ================= */}
-        <div className="mb-8 text-center">
-          <h3 className="text-4xl font-extrabold text-red-700 tracking-tight">
+        <div className="mb-6 md:mb-8 text-center">
+          <h3 className="text-2xl md:text-4xl font-extrabold text-red-700">
             Manage Sponsors
           </h3>
-          <p className="text-red-500 mt-2">
+          <p className="text-red-500 mt-1">
             View, search and manage sports sponsorships
           </p>
         </div>
 
-        {/* ================= MAIN CARD ================= */}
         <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
 
-          <div className="p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-
-            {/* SEARCH */}
-            <div className="relative w-full sm:w-1/2">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400"
-                size={18}
-              />
+          <div className="p-4 md:p-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+            <div className="relative w-full md:w-1/2">
+              <Search className="absolute left-3 top-3 text-red-400" size={18} />
               <input
                 type="text"
                 placeholder="Search sponsor..."
-                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5
-                           outline-none focus:ring-2 focus:ring-red-500 transition shadow-sm"
+                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-red-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            {/* ADD BUTTON */}
             <Link
               to="/admin-dashboard/add-sponsor"
-              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white
-                         shadow-md hover:bg-red-700 hover:shadow-lg transition active:scale-95 text-center"
+              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white text-center"
             >
               + Add Sponsor
             </Link>
           </div>
 
-          {/* ================= TABLE ================= */}
-          <div className="max-h-[60vh] overflow-auto rounded-b-3xl">
-
-            {loading ? (
-              <div className="p-10 text-center text-red-600 font-semibold text-lg">
-                Loading sponsors...
+          {loading ? (
+            <div className="p-10 text-center text-red-600">Loading sponsors...</div>
+          ) : (
+            <>
+              {/* MOBILE */}
+              <div className="md:hidden grid gap-3 px-2 pb-24">
+                {filteredSponsors.length ? (
+                  filteredSponsors.map((s) => (
+                    <MobileSponsorCard
+                      key={s._id}
+                      s={s}
+                      getImageUrl={getImageUrl}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center text-red-400 py-20">
+                    No sponsors found
+                  </div>
+                )}
               </div>
-            ) : (
-              <table className="w-full border-collapse">
 
-                <thead className="sticky top-0 z-10 bg-red-50/80 backdrop-blur-xl shadow-sm">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">S No</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Logo</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Name</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Collaboration</th>
-                    <th className="px-4 py-3 text-center text-red-800 font-semibold">Events</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Reach</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Upcoming</th>
-                    <th className="px-4 py-3 text-red-800 font-semibold text-right">Action</th>
-                  </tr>
-                </thead>
+              {/* DESKTOP */}
+              <div className="hidden md:block max-h-[60vh] overflow-auto">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-red-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left">S No</th>
+                      <th className="px-4 py-3 text-left">Logo</th>
+                      <th className="px-4 py-3 text-left">Name</th>
+                      <th className="px-4 py-3 text-left">Collaboration</th>
+                      <th className="px-4 py-3 text-center">Events</th>
+                      <th className="px-4 py-3 text-left">Reach</th>
+                      <th className="px-4 py-3 text-left">Upcoming</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
 
-                <tbody className="divide-y divide-red-100/70">
-
-                  {filteredSponsors.length ? (
-                    filteredSponsors.map((s) => (
-                      <tr
-                        key={s._id}
-                        className="transition-all duration-200 hover:bg-red-50"
-                      >
+                  <tbody>
+                    {filteredSponsors.map((s) => (
+                      <tr key={s._id} className="hover:bg-red-50">
                         <td className="px-4 py-3">{s.sno}</td>
-
                         <td className="px-4 py-3">
                           <img
                             src={getImageUrl(s.logo)}
-                            alt={s.name}
-                            className="w-12 h-12 rounded-full object-cover border shadow-sm"
-                            onError={(e) =>
-                              (e.target.src = "/default-avatar.png")
-                            }
+                            onError={(e) => (e.target.src = "/default-avatar.png")}
+                            className="w-12 h-12 rounded-full border object-cover"
                           />
                         </td>
-
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {s.name}
-                        </td>
-
-                        <td className="px-4 py-3 text-gray-700">
-                          {s.collaboration}
-                        </td>
-
-                        <td className="px-4 py-3 text-center">
-                          {s.eventsSponsored}
-                        </td>
-
-                        <td className="px-4 py-3 text-gray-700">
-                          {s.reach}
-                        </td>
-
-                        <td className="px-4 py-3 text-gray-700">
-                          {s.upcomingEvents}
-                        </td>
+                        <td className="px-4 py-3">{s.name}</td>
+                        <td className="px-4 py-3">{s.collaboration}</td>
+                        <td className="px-4 py-3 text-center">{s.eventsSponsored}</td>
+                        <td className="px-4 py-3">{s.reach}</td>
+                        <td className="px-4 py-3">{s.upcomingEvents}</td>
                         <td className="px-4 py-3 text-right">
-                          <SponsorButtons
-                            id={s._id}
-                            refresh={() => window.location.reload()}
-                          />
+                          <SponsorButtons id={s._id} refresh={() => window.location.reload()} />
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="7"
-                        className="px-4 py-16 text-center text-red-400 text-lg"
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <span className="text-4xl">🏆</span>
-                          No sponsors found
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-
-                </tbody>
-              </table>
-            )}
-          </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

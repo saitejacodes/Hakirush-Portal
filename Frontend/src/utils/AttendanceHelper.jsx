@@ -1,88 +1,54 @@
 import axios from "axios";
-import React from "react";
 
-const AttendanceHelper = ({ status, employeeId, statusChange }) => {
+const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeekend }) => {
+
+  if (isHoliday || isWeekend) {
+    return (
+      <span className="px-3 py-1 rounded-xl bg-gray-300 text-gray-700 text-sm">
+        {isHoliday ? "Holiday" : "Sunday"}
+      </span>
+    );
+  }
+
   const markEmployee = async (newStatus) => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/attendance/update/${employeeId}`,
         { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-
-      if (response.data.success) {
-        statusChange();
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update attendance");
+      statusChange();
+    } catch {
+      alert("Attendance not allowed today");
     }
   };
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Present":
-        return "bg-green-100 text-green-700";
-      case "Absent":
-        return "bg-red-100 text-red-700";
-      case "Sick":
-        return "bg-yellow-100 text-yellow-700";
-      case "Leave":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
+  const badge = {
+    Present: "bg-green-200 text-green-800",
+    Absent: "bg-red-200 text-red-800",
+    Sick: "bg-yellow-200 text-yellow-800",
+    Leave: "bg-blue-200 text-blue-800"
   };
 
-  // show pill ONLY if attendance marked
-  if (status && status !== null) {
+  if (status) {
     return (
-      <span
-        className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusStyle(
-          status
-        )}`}
-      >
+      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge[status]}`}>
         {status}
       </span>
     );
   }
 
-  // show action buttons when not marked
   return (
-    <div className="flex gap-2 justify-center">
-
-      <button
-        onClick={() => markEmployee("Present")}
-        className="px-3 py-1 rounded-lg bg-green-500 text-white text-sm"
-      >
-        Present
-      </button>
-
-      <button
-        onClick={() => markEmployee("Absent")}
-        className="px-3 py-1 rounded-lg bg-red-500 text-white text-sm"
-      >
-        Absent
-      </button>
-
-      <button
-        onClick={() => markEmployee("Sick")}
-        className="px-3 py-1 rounded-lg bg-yellow-500 text-white text-sm"
-      >
-        Sick
-      </button>
-
-      <button
-        onClick={() => markEmployee("Leave")}
-        className="px-3 py-1 rounded-lg bg-blue-500 text-white text-sm"
-      >
-        Leave
-      </button>
-
+    <div className="flex gap-2">
+      {["Present","Absent","Sick","Leave"].map(s => (
+        <button
+          key={s}
+          onClick={() => markEmployee(s)}
+          className="px-3 py-1 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700"
+        >
+          {s}
+        </button>
+      ))}
     </div>
   );
 };

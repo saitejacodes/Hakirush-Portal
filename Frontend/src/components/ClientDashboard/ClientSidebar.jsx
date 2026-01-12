@@ -1,11 +1,18 @@
 import React from "react"
 import Logo from "/favicon.png"
 import { NavLink } from "react-router-dom"
-import { Building, Handshake, LayoutDashboard, Settings } from "lucide-react"
+import {
+  LayoutDashboard,
+  Handshake,
+  Settings,
+  X
+} from "lucide-react"
 import { useAuth } from "../../context/authContext"
+import { useSidebar } from "../../context/sidebarContext"
 
 const ClientSidebar = () => {
   const { user } = useAuth()
+  const { open, setOpen } = useSidebar()
 
   const sidebar = [
     { link: "/client-dashboard", icon: LayoutDashboard, title: "Dashboard" },
@@ -14,60 +21,89 @@ const ClientSidebar = () => {
   ]
 
   return (
-    <aside
-      className="
-        sticky top-0 z-50
-        group
-        h-screen
-        w-20 hover:w-72
-        transition-all duration-300
-        bg-white/80 backdrop-blur-xl
-        border-r shadow-xl
-        flex flex-col
-      "
-    >
+    <>
+      {/* MOBILE OVERLAY */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
-      {/* HEADER */}
-      <div className="p-4 flex items-center gap-3 bg-black/80">
-        <img src={Logo} className="w-10 h-10 rounded-xl" />
+      <aside
+        className={`
+          fixed md:sticky top-0 left-0 z-50 h-screen
+          bg-white/90 backdrop-blur-xl
+          border-r shadow-xl
+          transition-all duration-300
+          ${open ? "translate-x-0 w-72" : "-translate-x-full w-72"}
+          md:translate-x-0 md:w-20 md:hover:w-72
+          group
+        `}
+        end
+      >
+        {/* HEADER */}
+        <div className="h-16 px-4 flex items-center gap-3
+          bg-gradient-to-r from-black to-gray-900 text-white">
 
-        {/* Title shows only when expanded */}
-        <span className="opacity-0 group-hover:opacity-100 transition-all text-xl font-black whitespace-nowrap text-yellow-500">
-          Hakirush Portal
-        </span>
-      </div>
+          <img src={Logo} className="w-10 h-10 rounded-xl" />
 
-      {/* MENU */}
-      <nav className="my-5 flex-1 px-2 space-y-1">
-        {sidebar.map((item, i) => (
-          <NavLink
-            key={i}
-            to={item.link}
-            end
-            className={({ isActive }) =>
-              `
-              flex items-center gap-4 px-4 py-3 rounded-2xl
-              transition-all duration-200
-              ${
-                isActive
-                  ? "bg-red-500 text-white shadow-lg"
-                  : "hover:bg-red-50 text-gray-700"
-              }
-              `
-            }
+          <span
+            className="
+              text-lg font-extrabold whitespace-nowrap
+              opacity-100 md:opacity-0 md:group-hover:opacity-100
+              transition
+              text-yellow-500
+            "
           >
-            {/* ICON ALWAYS VISIBLE */}
-            <item.icon className="min-w-5" />
+            Hakirush Portal
+          </span>
 
-            {/* TEXT ONLY WHEN EXPANDED */}
-            <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all">
-              {item.title}
-            </span>
-          </NavLink>
-        ))}
-      </nav>
+          {/* CLOSE (MOBILE) */}
+          <button
+            className="ml-auto md:hidden"
+            onClick={() => setOpen(false)}
+          >
+            <X />
+          </button>
+        </div>
 
-    </aside>
+        {/* MENU */}
+        <nav className="mt-6 px-2 space-y-1">
+          {sidebar.map((item, i) => (
+            <NavLink
+              key={i}
+              to={item.link}
+              end
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `
+                flex items-center gap-4 px-4 py-3 rounded-xl
+                transition-all duration-200
+                ${isActive
+                  ? "bg-red-600 text-white shadow-lg"
+                  : "text-gray-700 hover:bg-red-50"}
+                `
+              }
+            >
+              {/* ICON */}
+              <item.icon size={20} className="min-w-[20px]" />
+
+              {/* TITLE */}
+              <span
+                className="
+                  whitespace-nowrap
+                  opacity-100 md:opacity-0 md:group-hover:opacity-100
+                  transition
+                "
+              >
+                {item.title}
+              </span>
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+    </>
   )
 }
 

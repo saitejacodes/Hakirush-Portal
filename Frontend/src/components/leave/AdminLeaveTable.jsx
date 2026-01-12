@@ -9,13 +9,55 @@ const statusColors = {
   Rejected: "bg-red-100 text-red-700",
 };
 
+/* ========== MOBILE CARD ========== */
+const MobileLeaveCard = ({ leave, handleView }) => {
+  return (
+    <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
+      <div className="flex justify-between items-start">
+
+        <div>
+          <p className="font-semibold text-gray-900">
+            {leave.name}
+          </p>
+          <p className="text-xs text-gray-500">
+            {leave.employeeId} • {leave.department}
+          </p>
+
+          <div className="mt-1 flex gap-2 text-xs">
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full">
+              {leave.leaveType}
+            </span>
+            <span className="px-2 py-0.5 bg-gray-100 rounded-full">
+              {leave.days} days
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[leave.status]}`}
+          >
+            {leave.status}
+          </span>
+
+          <button
+            onClick={() => handleView(leave._id)}
+            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
+          >
+            <Eye size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminLeaveTable = () => {
   const [leaves, setLeaves] = useState([]);
   const [filteredLeaves, setFilteredLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
-
   const navigate = useNavigate();
 
   const handleView = (id) => navigate(`/admin-dashboard/leaves/${id}`);
@@ -23,7 +65,6 @@ const AdminLeaveTable = () => {
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/leave`,
         {
@@ -37,8 +78,7 @@ const AdminLeaveTable = () => {
         const data = response.data.leaves.map((leave, index) => {
           const start = new Date(leave.startDate);
           const end = new Date(leave.endDate);
-          const days =
-            Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+          const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
           return {
             _id: leave._id,
@@ -55,9 +95,6 @@ const AdminLeaveTable = () => {
         setLeaves(data);
         setFilteredLeaves(data);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to load leaves");
     } finally {
       setLoading(false);
     }
@@ -67,64 +104,53 @@ const AdminLeaveTable = () => {
     fetchLeaves();
   }, []);
 
-  // search + filter combo
   useEffect(() => {
     let result = leaves;
-
     if (statusFilter !== "All") {
       result = result.filter((l) => l.status === statusFilter);
     }
-
-    if (search.trim() !== "") {
+    if (search.trim()) {
       result = result.filter((l) =>
         l.employeeId?.toLowerCase().includes(search.toLowerCase())
       );
     }
-
     setFilteredLeaves(result);
   }, [search, statusFilter, leaves]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 px-3 py-4 md:p-6">
+      <div className="w-full max-w-7xl mx-auto">
 
-        {/* HEADER */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-red-700 tracking-tight">
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-extrabold text-red-700">
             Leave Requests
           </h1>
-          <p className="text-red-500 mt-2">
+          <p className="text-red-500 mt-1">
             Review and manage employee leave applications
           </p>
         </div>
 
-        {/* MAIN CARD */}
         <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
 
           {/* FILTER BAR */}
-          <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-            {/* SEARCH */}
+          <div className="p-4 md:p-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <input
               type="text"
               placeholder="Search Employee ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-80 px-4 py-2.5 rounded-xl border border-red-300
-                         outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
+              className="w-full md:w-80 px-4 py-2.5 rounded-xl border border-red-300 focus:ring-2 focus:ring-red-500"
             />
 
-            {/* STATUS FILTER BUTTONS */}
             <div className="flex flex-wrap gap-2">
               {["All", "Pending", "Approved", "Rejected"].map((item) => (
                 <button
                   key={item}
                   onClick={() => setStatusFilter(item)}
-                  className={`px-5 py-2 rounded-xl font-semibold transition
-                  ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold ${
                     statusFilter === item
-                      ? "bg-red-600 text-white shadow"
-                      : "bg-white border hover:bg-red-50"
+                      ? "bg-red-600 text-white"
+                      : "bg-white border"
                   }`}
                 >
                   {item}
@@ -133,72 +159,76 @@ const AdminLeaveTable = () => {
             </div>
           </div>
 
-          {/* TABLE AREA */}
-          <div className="max-h-[65vh] overflow-auto rounded-b-3xl">
-
-            {loading ? (
-              <div className="p-12 text-center text-red-600 font-semibold text-lg">
-                Loading leave records...
+          {loading ? (
+            <div className="p-10 text-center text-red-600">
+              Loading leave records...
+            </div>
+          ) : (
+            <>
+              {/* MOBILE */}
+              <div className="md:hidden grid gap-3 px-2 pb-24">
+                {filteredLeaves.length ? (
+                  filteredLeaves.map((leave) => (
+                    <MobileLeaveCard
+                      key={leave._id}
+                      leave={leave}
+                      handleView={handleView}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center text-red-400 py-20">
+                    No leave records found
+                  </div>
+                )}
               </div>
-            ) : filteredLeaves.length === 0 ? (
-              <div className="p-16 text-center">
-                <p className="text-2xl font-bold text-red-400">
-                  No leave records found
-                </p>
-                <p className="text-red-500 mt-1">
-                  Try changing filters or search again
-                </p>
-              </div>
-            ) : (
-              <table className="w-full border-collapse">
 
-                {/* STICKY HEADER */}
-                <thead className="sticky top-0 bg-red-50/80 backdrop-blur-xl shadow-sm">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">S No</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Emp ID</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Name</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Leave Type</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Department</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Days</th>
-                    <th className="px-4 py-3 text-left text-red-800 font-semibold">Status</th>
-                    <th className="px-4 py-3 text-right text-red-800 font-semibold">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-red-100/70">
-                  {filteredLeaves.map((leave) => (
-                    <tr key={leave._id} className="hover:bg-red-50">
-                      <td className="px-4 py-3">{leave.sno}</td>
-                      <td className="px-4 py-3">{leave.employeeId}</td>
-                      <td className="px-4 py-3 font-medium">{leave.name}</td>
-                      <td className="px-4 py-3">{leave.leaveType}</td>
-                      <td className="px-4 py-3">{leave.department}</td>
-                      <td className="px-4 py-3">{leave.days}</td>
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold
-                            ${statusColors[leave.status] || "bg-gray-100"}
-                          `}
-                        >
-                          {leave.status}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleView(leave._id)}
-                          className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100/70 hover:shadow transition-all active:scale-95 backdrop-blur">
-                          <Eye size={16} />
-                        </button>
-                      </td>
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block max-h-[65vh] overflow-auto">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-red-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left">S No</th>
+                      <th className="px-4 py-3 text-left">Emp ID</th>
+                      <th className="px-4 py-3 text-left">Name</th>
+                      <th className="px-4 py-3 text-left">Leave Type</th>
+                      <th className="px-4 py-3 text-left">Department</th>
+                      <th className="px-4 py-3 text-left">Days</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  </thead>
+
+                  <tbody>
+                    {filteredLeaves.map((leave) => (
+                      <tr key={leave._id} className="hover:bg-red-50">
+                        <td className="px-4 py-3">{leave.sno}</td>
+                        <td className="px-4 py-3">{leave.employeeId}</td>
+                        <td className="px-4 py-3">{leave.name}</td>
+                        <td className="px-4 py-3">{leave.leaveType}</td>
+                        <td className="px-4 py-3">{leave.department}</td>
+                        <td className="px-4 py-3">{leave.days}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[leave.status]}`}
+                          >
+                            {leave.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleView(leave._id)}
+                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

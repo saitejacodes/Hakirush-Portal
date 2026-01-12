@@ -31,21 +31,20 @@ const AddDepartments = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-red-50 flex justify-center items-center">
+    <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-red-50 flex justify-center items-center px-4">
+      <div className="w-full max-w-xl bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl p-5 sm:p-8 border">
 
-      <div className="w-full max-w-xl bg-white/60 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 border">
-
+        {/* Header */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-red-200 flex items-center justify-center text-red-600 shadow">
-            <Building2 size={28} />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-red-200 flex items-center justify-center text-red-600 shadow">
+            <Building2 size={24} />
           </div>
-
-          <h2 className="text-3xl font-bold mt-3 hidden sm:block">Add Department</h2>
-          <h2 className="text-xl font-bold mt-3 sm:hidden">New Dept</h2>
+          <h2 className="text-xl sm:text-3xl font-bold mt-3">Add Department</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
+          {/* Name */}
           <div>
             <label className="text-sm font-semibold">Department Name</label>
             <div className="flex gap-2 border rounded-xl px-3 focus-within:ring-2 focus-within:ring-red-500">
@@ -55,11 +54,12 @@ const AddDepartments = () => {
                 required
                 placeholder="Ex: Accounts"
                 onChange={handleChange}
-                className="w-full py-3 outline-none bg-transparent"
+                className="w-full py-3 outline-none bg-transparent text-sm sm:text-base"
               />
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label className="text-sm font-semibold">Description</label>
             <div className="flex gap-2 border rounded-xl px-3 focus-within:ring-2 focus-within:ring-red-500">
@@ -70,39 +70,40 @@ const AddDepartments = () => {
                 required
                 placeholder="Department responsibilities..."
                 onChange={handleChange}
-                className="w-full py-3 outline-none bg-transparent resize-none"
+                className="w-full py-3 outline-none bg-transparent resize-none text-sm sm:text-base"
               />
             </div>
           </div>
 
-          <div className="flex gap-4">
+          {/* Buttons */}
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="w-1/2 border rounded-xl py-3 flex items-center justify-center gap-2"
+              className="w-1/2 border rounded-xl py-3 flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <ArrowLeft size={18} />
-              <span className="hidden sm:inline">Back</span>
+              <ArrowLeft size={18} /> Back
             </button>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-1/2 bg-red-600 text-white rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-red-700 transition disabled:opacity-60"
+              className="w-1/2 bg-red-600 text-white rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-red-700 transition disabled:opacity-60 text-sm sm:text-base"
             >
               {loading ? (
                 <>
                   <Loader2 className="animate-spin" size={18} />
-                  <span className="hidden sm:inline">Adding…</span>
+                  Adding…
                 </>
               ) : (
                 <>
                   <PlusCircle size={18} />
-                  <span className="hidden sm:inline">Add Department</span>
+                  Add
                 </>
               )}
             </button>
           </div>
+
         </form>
       </div>
     </div>

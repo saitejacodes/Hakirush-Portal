@@ -1,335 +1,201 @@
-import React, { useEffect, useState } from "react"
-import axios from "axios"
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   BriefcaseBusiness,
   Building,
   CalendarRange,
-  CheckCircle,
-  Clock,
-  Send,
   Trophy,
   Users,
-  XCircle,
   Handshake,
-} from "lucide-react"
-
+} from "lucide-react";
 import {
   PieChart,
   Pie,
   ResponsiveContainer,
   Cell,
   Tooltip,
-  Legend,
-} from "recharts"
+} from "recharts";
 
-// ====== STAT CARD ======
+/* ========== Stat Card ========== */
 const StatCard = ({ icon: Icon, label, value }) => (
-  <div className="rounded-2xl p-6 shadow-xl bg-white/70 border backdrop-blur-lg hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-between">
+  <div className="rounded-2xl p-4 sm:p-6 shadow-xl bg-white/70 border backdrop-blur-lg flex items-center justify-between">
     <div>
-      <p className="text-gray-500 text-sm font-medium">{label}</p>
-      <h2 className="text-3xl font-black mt-1">{value ?? 0}</h2>
+      <p className="text-gray-500 text-xs sm:text-sm">{label}</p>
+      <h2 className="text-xl sm:text-3xl font-black">{value ?? 0}</h2>
     </div>
-
-    <div className="p-4 rounded-2xl bg-red-800 text-white shadow">
-      <Icon size={28} />
+    <div className="p-3 sm:p-4 rounded-xl bg-red-800 text-white">
+      <Icon size={20} />
     </div>
   </div>
-)
+);
 
-// ====== SECTION WRAPPER ======
+/* ========== Section Card ========== */
 const SectionCard = ({ title, children }) => (
-  <div className="rounded-3xl p-8 shadow-xl bg-white/70 border backdrop-blur-xl">
-    <h2 className="text-2xl font-bold text-red-800 text-center mb-6">
+  <div className="rounded-3xl p-4 sm:p-8 bg-white/70 shadow-xl border backdrop-blur-xl">
+    <h2 className="text-lg sm:text-2xl font-bold text-red-800 text-center mb-4">
       {title}
     </h2>
     {children}
   </div>
-)
+);
+
+/* ========== Custom Pie Legend ========== */
+const PieLegend = ({ data, colors }) => (
+  <div className="flex flex-wrap justify-center gap-3 mt-4">
+    {data.map((item, index) => (
+      <div
+        key={index}
+        className="flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow text-xs sm:text-sm"
+      >
+        <span
+          className="w-3 h-3 rounded-full"
+          style={{ backgroundColor: colors[index % colors.length] }}
+        />
+        <span className="font-medium">
+          {item.name} ({item.value})
+        </span>
+      </div>
+    ))}
+  </div>
+);
 
 const AdminSummary = () => {
-  const [summary, setSummary] = useState(null)
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/dashboard/summary`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        )
-        setSummary(res.data)
-      } catch (error) {
-        console.log(error)
-        alert(error?.response?.data?.error || "Failed to load dashboard")
-      }
-    }
-
-    fetchSummary()
-  }, [])
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/dashboard/summary`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setSummary(res.data);
+    };
+    fetchSummary();
+  }, []);
 
   if (!summary)
-    return (
-      <p className="text-center mt-20 text-lg text-gray-500">
-        Loading dashboard…
-      </p>
-    )
+    return <p className="text-center mt-20">Loading dashboard...</p>;
 
-  // ====== SAFE SPONSOR FALLBACK ======
-  const sponsorSummary = summary?.sponsorSummary || {
-    totalSponsors: 0,
-    totalSponsoredEvents: 0,
-    collaborationSummary: {},
-  }
+  const colors = ["#991b1b", "#16a34a", "#facc15", "#6366f1", "#22c55e"];
 
-  // ====== CHART DATA ======
   const planData = [
     { name: "Annual", value: summary.totalAnnual || 0 },
     { name: "Quarterly", value: summary.totalQuarterly || 0 },
-  ]
+  ];
 
   const leaveData = [
-    { name: "Applied", value: summary.leaveSummary?.appliedFor || 0 },
-    { name: "Pending", value: summary.leaveSummary?.pending || 0 },
-    { name: "Approved", value: summary.leaveSummary?.approved || 0 },
-    { name: "Rejected", value: summary.leaveSummary?.rejected || 0 },
-  ]
+    { name: "Applied", value: summary.leaveSummary.appliedFor || 0 },
+    { name: "Pending", value: summary.leaveSummary.pending || 0 },
+    { name: "Approved", value: summary.leaveSummary.approved || 0 },
+    { name: "Rejected", value: summary.leaveSummary.rejected || 0 },
+  ];
 
   const departmentData =
-    summary?.departmentSummary?.map((d) => ({
+    summary.departmentSummary?.map((d) => ({
       name: d.department,
       value: d.employees,
-    })) || []
+    })) || [];
 
-  const sponsorCollaborationData = Object.entries(
+  const sponsorSummary = summary.sponsorSummary || {
+    totalSponsors: 0,
+    totalSponsoredEvents: 0,
+    collaborationSummary: {},
+  };
+
+  const sponsorData = Object.entries(
     sponsorSummary.collaborationSummary || {}
-  ).map(([name, value]) => ({ name, value }))
-
-  const colors = ["#991b1b", "#121212", "#22c55e", "#FFD700", "#6366f1"]
+  ).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="min-h-screen p-10 bg-gradient-to-br from-rose-100 via-white to-red-200">
+    <div className="min-h-screen px-4 py-6 sm:p-10 bg-gradient-to-br from-rose-100 via-white to-red-200">
 
-      {/* HEADER */}
-      <div className="mb-12 text-center">
-        <h1 className="text-5xl font-black text-red-800 drop-shadow">
-          Admin Dashboard
-        </h1>
-        <p className="text-gray-500 mt-2 text-lg">
-          Smart insights about your organization — at a glance
-        </p>
-      </div>
+      <h1 className="text-3xl sm:text-5xl font-black text-red-800 text-center mb-8">
+        Admin Dashboard
+      </h1>
 
-      {/* ====== TOP STATS ====== */}
+      {/* Top Stats */}
       <SectionCard title="Organization Overview">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard icon={Users} label="Total Employees" value={summary.totalEmployees} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard icon={Users} label="Employees" value={summary.totalEmployees} />
           <StatCard icon={Building} label="Departments" value={summary.totalDepartments} />
-          <StatCard icon={BriefcaseBusiness} label="Total Clients" value={summary.totalClients} />
+          <StatCard icon={BriefcaseBusiness} label="Clients" value={summary.totalClients} />
         </div>
       </SectionCard>
 
-      {/* ====== PLAN DISTRIBUTION ====== */}
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        <SectionCard title="Client Packages">
-          <div className="grid grid-cols-1 gap-6">
-            <StatCard icon={CalendarRange} label="Annual Clients" value={summary.totalAnnual} />
-            <StatCard icon={Trophy} label="Quarterly Clients" value={summary.totalQuarterly} />
-          </div>
-        </SectionCard>
-
-        <div className="rounded-3xl p-8 shadow-xl bg-white/70 border backdrop-blur-xl">
-          <h2 className="text-2xl font-bold text-red-800 text-center mb-6">
-            Plan Chart
-          </h2>
-
-          <ResponsiveContainer width="100%" height={260}>
+      {/* Plan */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SectionCard title="Client Plans">
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie
-                data={planData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {planData.map((_, index) => (
-                  <Cell key={index} fill={colors[index]} />
+              <Pie data={planData} cx="50%" cy="50%" outerRadius={90} dataKey="value">
+                {planData.map((_, i) => (
+                  <Cell key={i} fill={colors[i]} />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ====== LEAVE SUMMARY ====== */}
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <PieLegend data={planData} colors={colors} />
+        </SectionCard>
 
         <SectionCard title="Leave Summary">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-            <div className="rounded-2xl p-6 shadow-xl bg-red-800 text-white">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">Applied</p>
-                <Send />
-              </div>
-              <h2 className="text-4xl font-black mt-2">
-                {summary.leaveSummary.appliedFor}
-              </h2>
-            </div>
-
-            <div className="rounded-2xl p-6 shadow-xl bg-white border">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold text-yellow-600">Pending</p>
-                <Clock className="text-yellow-600" />
-              </div>
-              <h2 className="text-4xl font-black mt-2">
-                {summary.leaveSummary.pending}
-              </h2>
-            </div>
-
-            <div className="rounded-2xl p-6 shadow-xl bg-white border">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold text-green-600">Approved</p>
-                <CheckCircle className="text-green-600" />
-              </div>
-              <h2 className="text-4xl font-black mt-2">
-                {summary.leaveSummary.approved}
-              </h2>
-            </div>
-
-            <div className="rounded-2xl p-6 shadow-xl bg-white border">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold text-red-800">Rejected</p>
-                <XCircle className="text-red-800" />
-              </div>
-              <h2 className="text-4xl font-black mt-2">
-                {summary.leaveSummary.rejected}
-              </h2>
-            </div>
-
-          </div>
-        </SectionCard>
-
-        <div className="rounded-3xl p-8 shadow-xl bg-white/70 border backdrop-blur-xl">
-          <h2 className="text-2xl font-bold text-red-800 text-center mb-6">
-            Leave Chart
-          </h2>
-
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={leaveData} cx="50%" cy="50%" outerRadius={110} dataKey="value">
-                {leaveData.map((_, index) => (
-                  <Cell key={index} fill={colors[index]} />
+              <Pie data={leaveData} cx="50%" cy="50%" outerRadius={90} dataKey="value">
+                {leaveData.map((_, i) => (
+                  <Cell key={i} fill={colors[i]} />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+          <PieLegend data={leaveData} colors={colors} />
+        </SectionCard>
       </div>
 
-      {/* ====== DEPARTMENT SUMMARY ====== */}
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        <SectionCard title="Department – Employees">
-          <table className="w-full">
-            <tbody>
-              {summary.departmentSummary.map((dept, i) => (
-                <tr key={i} className="border-b">
-                  <td className="p-3 flex items-center gap-2">
-                    <Building size={16} className="text-rose-600" />
-                    {dept.department}
-                  </td>
-                  <td className="p-3 text-right font-bold">
-                    {dept.employees}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </SectionCard>
-
-        <div className="rounded-3xl p-8 shadow-xl bg-white/70 border backdrop-blur-xl">
-          <h2 className="text-2xl font-bold text-red-800 text-center mb-6">
-            Department Employee Chart
-          </h2>
-
-          <ResponsiveContainer width="100%" height={280}>
+      {/* Departments */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SectionCard title="Departments">
+          <ResponsiveContainer width="100%" height={240}>
             <PieChart>
-              <Pie data={departmentData} cx="50%" cy="50%" outerRadius={115} dataKey="value">
-                {departmentData.map((_, index) => (
-                  <Cell key={index} fill={colors[index % colors.length]} />
+              <Pie data={departmentData} cx="50%" cy="50%" outerRadius={100} dataKey="value">
+                {departmentData.map((_, i) => (
+                  <Cell key={i} fill={colors[i % colors.length]} />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ====== SPONSOR SECTION (ADDED) ====== */}
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        <SectionCard title="Sponsor Overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <StatCard
-              icon={Handshake}
-              label="Total Sponsors"
-              value={sponsorSummary.totalSponsors}
-            />
-            <StatCard
-              icon={Trophy}
-              label="Events Sponsored"
-              value={sponsorSummary.totalSponsoredEvents}
-            />
-          </div>
+          <PieLegend data={departmentData} colors={colors} />
         </SectionCard>
 
-        <div className="rounded-3xl p-8 shadow-xl bg-white/70 border backdrop-blur-xl">
-          <h2 className="text-2xl font-bold text-red-800 text-center mb-6">
-            Sponsor Collaboration Chart
-          </h2>
+        <SectionCard title="Sponsors">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <StatCard icon={Handshake} label="Sponsors" value={sponsorSummary.totalSponsors} />
+            <StatCard icon={Trophy} label="Events" value={sponsorSummary.totalSponsoredEvents} />
+          </div>
 
-          {sponsorCollaborationData.length ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={sponsorCollaborationData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={110}
-                  dataKey="value"
-                >
-                  {sponsorCollaborationData.map((_, index) => (
-                    <Cell
-                      key={index}
-                      fill={colors[index % colors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-center text-gray-500 mt-20">
-              No sponsor data available
-            </p>
-          )}
-        </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={sponsorData} cx="50%" cy="50%" outerRadius={90} dataKey="value">
+                {sponsorData.map((_, i) => (
+                  <Cell key={i} fill={colors[i % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
 
+          <PieLegend data={sponsorData} colors={colors} />
+        </SectionCard>
       </div>
+
     </div>
-  )
-}
+  );
+};
 
-export default AdminSummary
+export default AdminSummary;
