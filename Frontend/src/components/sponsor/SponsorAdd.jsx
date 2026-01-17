@@ -154,7 +154,6 @@ const SponsorAdd = () => {
                 Create Sponsor
               </button>
             </div>
-
           </form>
         </div>
       </div>

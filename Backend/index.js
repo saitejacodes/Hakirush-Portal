@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import connectToDatabase from "./db/db.js";
 import { fileURLToPath } from "url";
 
 import authRouter from "./routes/authRoute.js";
@@ -13,7 +14,8 @@ import attendanceRouter from "./routes/attendanceRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js";
 import holidayRouter from "./routes/holidayRoute.js";
 import sponsorRouter from "./routes/sponsorRoutes.js";
-import connectToDatabase from "./db/db.js";
+import stallRouter from "./routes/stallRoutes.js"
+import announcementRoutes from "./routes/announcementRoutes.js"
 
 connectToDatabase();
 
@@ -42,6 +44,8 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/holiday", holidayRouter);
 app.use("/api/sponsors", sponsorRouter);
+app.use("/api/stalls", stallRouter);
+app.use("/api/announcements", announcementRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running on port ${process.env.PORT}`);

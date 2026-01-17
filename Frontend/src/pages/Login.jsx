@@ -65,7 +65,7 @@ const Login = () => {
             transition={{ repeat: Infinity, duration: 3 }}
           />
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-wide">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-wide uppercase">
             Hakirush
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-red-400 text-center">

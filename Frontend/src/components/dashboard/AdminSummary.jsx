@@ -113,9 +113,10 @@ const AdminSummary = () => {
   return (
     <div className="min-h-screen px-4 py-6 sm:p-10 bg-gradient-to-br from-rose-100 via-white to-red-200">
 
-      <h1 className="text-3xl sm:text-5xl font-black text-red-800 text-center mb-8">
-        Admin Dashboard
-      </h1>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl sm:text-5xl text-red-800 font-black">Admin Dashboard</h1>
+        <p className="text-red-500 mt-2">All Workforce Operations in One Place</p>
+      </div>
 
       {/* Top Stats */}
       <SectionCard title="Organization Overview">

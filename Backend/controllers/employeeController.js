@@ -139,7 +139,7 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
-export const getEmployeesByDepartment = async (req, res) => {
+const getEmployeesByDepartment = async (req, res) => {
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
 
@@ -156,7 +156,7 @@ export const getEmployeesByDepartment = async (req, res) => {
   }
 };
 
-export const getNewEmployees = async (req, res) => {
+const getNewEmployees = async (req, res) => {
   try {
     const THIRTY_DAYS_AGO = new Date();
     THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 30);
@@ -183,9 +183,7 @@ export const getNewEmployees = async (req, res) => {
   }
 };
 
-
-
-export const getLeaveBalance = async (req, res) => {
+const getLeaveBalance = async (req, res) => {
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
 
@@ -194,7 +192,7 @@ export const getLeaveBalance = async (req, res) => {
       status: "Approved"
     });
 
-    const total = 18;
+    const total = 24;
     const balance = total - approved;
 
     return res.status(200).json({
@@ -215,5 +213,8 @@ export {
   getEmployees,
   getEmployee,
   updateEmployee,
-  deleteEmployee
+  deleteEmployee,
+  getEmployeesByDepartment,
+  getNewEmployees,
+  getLeaveBalance
 };

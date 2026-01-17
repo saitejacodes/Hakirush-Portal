@@ -197,7 +197,6 @@ const SponsorEdit = () => {
                 Update Sponsor
               </button>
             </div>
-
           </form>
         </div>
       </div>

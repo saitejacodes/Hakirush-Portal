@@ -38,6 +38,8 @@ import StallList from './components/stalls/StallList';
 import StallAdd from './components/stalls/StallAdd';
 import StallEdit from './components/stalls/StallEdit';
 import SponsorView from './components/sponsor/SponsorView';
+import AdminAnnouncement from './components/announcement/AdminAnnouncement';
+import EditAnnouncement from './components/announcement/EditAnnouncement';
 
 
 const App = () => {
@@ -82,6 +84,8 @@ const App = () => {
          <Route path='/admin-dashboard/add-stall' element={<StallAdd />} />
          <Route path="/admin-dashboard/sponsors/:id" element={<SponsorView />} />
          <Route path='/admin-dashboard/stalls/edit/:id' element={<StallEdit />}/>
+         <Route path='/admin-dashboard/announcement' element={<AdminAnnouncement />}/>
+         <Route path='/admin-dashboard/announcement/edit/:id' element={<EditAnnouncement />}/>
        </Route>
        <Route path='/employee-dashboard' 
           element={

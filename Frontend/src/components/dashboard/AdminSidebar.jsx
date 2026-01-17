@@ -1,7 +1,7 @@
 import React from "react";
 import Logo from "/favicon.png";
 import { NavLink } from "react-router-dom";
-import { X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { useSidebar } from "../../context/sidebarContext";
 import {
   LayoutDashboard,
@@ -27,6 +27,7 @@ const sidebar = [
   { link: "/admin-dashboard/holidays", icon: PartyPopper, title: "Holidays" },
   { link: "/admin-dashboard/sponsors", icon: BadgeDollarSign, title: "Sponsors" },
   { link: "/admin-dashboard/stalls", icon: Store, title: "Stalls" },
+  { link: "/admin-dashboard/announcement", icon: Bell, title: "Announcement" },
 ];
 
 const AdminSidebar = () => {
@@ -57,7 +58,7 @@ const AdminSidebar = () => {
         <div className="h-16 flex items-center gap-3 px-4 bg-gradient-to-r from-black to-gray-900 text-white">
           <img src={Logo} className="w-10 h-10 rounded-xl shrink-0" />
 
-          <span className="text-lg font-extrabold whitespace-nowrap hidden md:group-hover:block">
+          <span className="text-lg font-extrabold whitespace-nowrap text-yellow-500 uppercase hidden md:group-hover:block">
             Hakirush Portal
           </span>
 

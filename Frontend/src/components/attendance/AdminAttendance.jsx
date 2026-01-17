@@ -4,11 +4,30 @@ import { Search, CalendarDays, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
 import AttendanceHelper from "../../utils/AttendanceHelper";
 
+/* ===== HELPER (ADDED) ===== */
+const getDayType = (dateStr, holidays) => {
+  const d = new Date(dateStr);
+  const ymd = d.toISOString().split("T")[0];
+
+  if (d.getDay() === 0) {
+    return { type: "weekend", title: "Weekend (Sunday)" };
+  }
+
+  const holiday = holidays.find(
+    h => new Date(h.date).toISOString().split("T")[0] === ymd
+  );
+
+  if (holiday) {
+    return { type: "holiday", title: holiday.title };
+  }
+
+  return { type: "working", title: "" };
+};
+
 /* ========== MOBILE CARD ========== */
-const MobileAttendanceCard = ({ att, isHoliday, isWeekend, statusChange }) => (
+const MobileAttendanceCard = ({ att, dayInfo, statusChange }) => (
   <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
     <div className="flex items-center gap-3">
-
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-900 truncate">{att.name}</p>
         <p className="text-xs text-red-600 truncate">
@@ -20,8 +39,9 @@ const MobileAttendanceCard = ({ att, isHoliday, isWeekend, statusChange }) => (
         employeeId={att.employeeMongoId}
         status={att.status}
         statusChange={statusChange}
-        isHoliday={isHoliday}
-        isWeekend={isWeekend}
+        isHoliday={dayInfo.type === "holiday"}
+        isWeekend={dayInfo.type === "weekend"}
+        dayTitle={dayInfo.title}   // ✅ ADDED
       />
     </div>
   </div>
@@ -36,11 +56,8 @@ const AdminAttendance = () => {
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const isWeekend = today.getDay() === 0;
 
-  const isHolidayToday = holidays.some(
-    h => new Date(h.date).toISOString().split("T")[0] === todayStr
-  );
+  const dayInfo = getDayType(todayStr, holidays); // ✅ ADDED
 
   const fetchHolidays = async () => {
     const res = await axios.get(
@@ -91,16 +108,19 @@ const AdminAttendance = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
 
-        {/* HEADER */}
         <div className="text-center mb-8">
           <h3 className="text-3xl md:text-4xl font-extrabold text-red-800">
             Manage Attendance
           </h3>
+          {dayInfo.type !== "working" && (
+            <p className="text-sm font-semibold text-yellow-700 mt-2">
+              {dayInfo.title}
+            </p>
+          )}
         </div>
 
         <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
 
-          {/* TOP BAR */}
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <div className="relative w-full md:w-1/2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" size={18} />
@@ -118,7 +138,7 @@ const AdminAttendance = () => {
 
             <Link
               to="/admin-dashboard/attendance-report"
-              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white shadow-md hover:bg-red-700"
+              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white shadow-md"
             >
               <FileSpreadsheet size={18} className="inline mr-2" />
               Attendance Report
@@ -129,20 +149,17 @@ const AdminAttendance = () => {
             <div className="p-10 text-center text-red-600">Loading...</div>
           ) : (
             <>
-              {/* MOBILE */}
               <div className="md:hidden grid gap-4 p-4">
                 {filtered.map(att => (
                   <MobileAttendanceCard
                     key={att._id}
                     att={att}
-                    isHoliday={isHolidayToday}
-                    isWeekend={isWeekend}
+                    dayInfo={dayInfo}
                     statusChange={fetchAttendance}
                   />
                 ))}
               </div>
 
-              {/* DESKTOP */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
                   <thead className="bg-red-50">
@@ -166,8 +183,9 @@ const AdminAttendance = () => {
                             employeeId={att.employeeMongoId}
                             status={att.status}
                             statusChange={fetchAttendance}
-                            isHoliday={isHolidayToday}
-                            isWeekend={isWeekend}
+                            isHoliday={dayInfo.type === "holiday"}
+                            isWeekend={dayInfo.type === "weekend"}
+                            dayTitle={dayInfo.title}   // ✅ ADDED
                           />
                         </td>
                       </tr>

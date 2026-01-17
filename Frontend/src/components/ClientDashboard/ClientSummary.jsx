@@ -16,12 +16,14 @@ const ClientSportsPlan = () => {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔴 ADDED (ANNOUNCEMENTS)
+  const [announcements, setAnnouncements] = useState([]);
+
   useEffect(() => {
     if (!user?._id) return;
 
     const fetchClient = async () => {
       try {
-        // 🔴 IMPORTANT: fetch ALL clients
         const res = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/client`,
           {
@@ -31,7 +33,6 @@ const ClientSportsPlan = () => {
           }
         );
 
-        // 🔥 find client mapped to logged-in user
         const found = res.data.clients.find(
           (c) => c.userId?._id === user._id
         );
@@ -46,6 +47,30 @@ const ClientSportsPlan = () => {
     };
 
     fetchClient();
+  }, [user]);
+
+  // 🔴 FETCH ANNOUNCEMENTS (ADDED)
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/announcements`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        setAnnouncements(res.data.announcements || []);
+      } catch (err) {
+        console.error("Failed to load announcements", err);
+      }
+    };
+
+    fetchAnnouncements();
   }, [user]);
 
   // ---------------- UI STATES ----------------
@@ -65,6 +90,13 @@ const ClientSportsPlan = () => {
     );
 
   const plan = client.planType; // annual | quarterly
+
+  // 🔴 FILTER ANNOUNCEMENTS BASED ON PLAN (ADDED)
+  const filteredAnnouncements = announcements.filter((a) =>
+    plan === "annual"
+      ? a.type === "Annual"
+      : a.type === "Quarterly"
+  );
 
   // ---------------- MAIN UI ----------------
 
@@ -88,6 +120,46 @@ const ClientSportsPlan = () => {
           <p className="text-sm opacity-90">
             Client: {client?.userId?.name} • Budget ₹{client?.budget}
           </p>
+        </div>
+
+        {/* ================= PLAN ANNOUNCEMENTS (ADDED) ================= */}
+        <div className="rounded-3xl bg-white shadow-xl border p-6">
+          <h2 className="text-xl font-bold text-red-700 mb-4">
+            {plan === "annual"
+              ? "Annual Announcements"
+              : "Quarterly Announcements"}
+          </h2>
+
+          {filteredAnnouncements.length === 0 ? (
+            <p className="text-gray-500">No announcements available</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredAnnouncements.map((a) => (
+                <div
+                  key={a._id}
+                  className="rounded-2xl border bg-red-50 p-4 shadow-sm"
+                >
+                  <p className="font-semibold text-gray-800">
+                    {a.title}
+                  </p>
+
+                  <p className="text-sm text-gray-600 mt-1">
+                    {a.date} • {a.venue}
+                  </p>
+
+                  <span
+                    className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold
+                      ${a.status === "Upcoming" && "bg-blue-100 text-blue-700"}
+                      ${a.status === "Ongoing" && "bg-green-100 text-green-700"}
+                      ${a.status === "Completed" && "bg-gray-200 text-gray-700"}
+                    `}
+                  >
+                    {a.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AUTOMATIC CONDITIONAL RENDER */}
@@ -161,14 +233,9 @@ const QuarterlyPlan = () => {
             <p className="mt-1">{q.game}</p>
 
             <span
-              className={`
-                mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold
-                ${
-                  q.status === "Completed" && "bg-green-100 text-green-700"
-                }
-                ${
-                  q.status === "Scheduled" && "bg-blue-100 text-blue-700"
-                }
+              className={`mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold
+                ${q.status === "Completed" && "bg-green-100 text-green-700"}
+                ${q.status === "Scheduled" && "bg-blue-100 text-blue-700"}
                 ${q.status === "Planned" && "bg-yellow-100 text-yellow-700"}
                 ${q.status === "Upcoming" && "bg-purple-100 text-purple-700"}
               `}

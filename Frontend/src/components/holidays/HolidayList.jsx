@@ -9,18 +9,27 @@ const MobileHolidayCard = ({ h, deleteHoliday }) => {
     <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3 flex justify-between items-center">
       <div>
         <p className="font-semibold text-gray-900">{h.title}</p>
+
         <p className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
           <CalendarDays size={14} />
           {h.date}
         </p>
+
+        {/* ✅ OPTIONAL STATUS TEXT (does NOT change UI if you don't want) */}
+        <p className="text-[10px] text-gray-500 mt-0.5">
+          {h.status === "past" ? "Past Holiday" : "Upcoming Holiday"}
+        </p>
       </div>
 
-      <button
-        onClick={() => deleteHoliday(h._id)}
-        className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
-      >
-        <Trash2 size={16} />
-      </button>
+      {/* ✅ Delete allowed only for upcoming (optional but safe) */}
+      {h.status === "upcoming" && (
+        <button
+          onClick={() => deleteHoliday(h._id)}
+          className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
     </div>
   );
 };
@@ -42,12 +51,22 @@ const HolidayList = () => {
 
       if (res.data.success) {
         let sno = 1;
-        const formatted = res.data.holidays.map((h) => ({
-          _id: h._id,
-          sno: sno++,
-          title: h.title,
-          date: new Date(h.date).toDateString(),
-        }));
+
+        // ✅ ADDITION STARTS HERE (STATUS LOGIC)
+        const today = new Date().toISOString().split("T")[0];
+
+        const formatted = res.data.holidays.map((h) => {
+          const holidayDate = new Date(h.date).toISOString().split("T")[0];
+
+          return {
+            _id: h._id,
+            sno: sno++,
+            title: h.title,
+            date: new Date(h.date).toDateString(),
+            status: holidayDate < today ? "past" : "upcoming", // ✅ added
+          };
+        });
+        // ✅ ADDITION ENDS HERE
 
         setHolidays(formatted);
         setFiltered(formatted);
@@ -64,12 +83,14 @@ const HolidayList = () => {
 
   const deleteHoliday = async (id) => {
     if (!confirm("Delete this holiday?")) return;
+
     await axios.delete(
       `${import.meta.env.VITE_BACKEND_URL}/api/holiday/${id}`,
       {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       }
     );
+
     fetchHolidays();
   };
 
@@ -108,7 +129,9 @@ const HolidayList = () => {
           </div>
 
           {loading ? (
-            <div className="p-10 text-center text-red-600">Loading holidays...</div>
+            <div className="p-10 text-center text-red-600">
+              Loading holidays...
+            </div>
           ) : (
             <>
               {/* MOBILE */}
@@ -136,6 +159,7 @@ const HolidayList = () => {
                       <th className="px-4 py-3 text-left">S No</th>
                       <th className="px-4 py-3 text-left">Title</th>
                       <th className="px-4 py-3 text-left">Date</th>
+                      <th className="px-4 py-3 text-left">Status</th>
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
@@ -149,13 +173,26 @@ const HolidayList = () => {
                           <CalendarDays size={16} className="text-red-500" />
                           {h.date}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => deleteHoliday(h._id)}
-                            className="text-red-600 hover:text-red-800"
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                              h.status === "past"
+                                ? "bg-gray-200 text-gray-600"
+                                : "bg-green-100 text-green-700"
+                            }`}
                           >
-                            <Trash2 size={18} />
-                          </button>
+                            {h.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {h.status === "upcoming" && (
+                            <button
+                              onClick={() => deleteHoliday(h._id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

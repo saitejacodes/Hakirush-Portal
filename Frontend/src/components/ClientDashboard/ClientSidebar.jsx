@@ -52,7 +52,7 @@ const ClientSidebar = () => {
             className="
               text-lg font-extrabold whitespace-nowrap
               opacity-100 md:opacity-0 md:group-hover:opacity-100
-              transition
+              transition uppercase
               text-yellow-500
             "
           >

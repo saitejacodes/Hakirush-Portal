@@ -1,6 +1,15 @@
 import axios from "axios";
+import { useState } from "react";
+
+const statusTheme = {
+  Present: { bg: "#16a34a", light: "#dcfce7", text: "#166534" },
+  Absent: { bg: "#dc2626", light: "#fee2e2", text: "#991b1b" },
+  Sick: { bg: "#eab308", light: "#fef9c3", text: "#854d0e" },
+  Leave: { bg: "#2563eb", light: "#dbeafe", text: "#1e40af" },
+};
 
 const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeekend }) => {
+  const [selectedStatus, setSelectedStatus] = useState(null);
 
   if (isHoliday || isWeekend) {
     return (
@@ -17,38 +26,48 @@ const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeeke
         { status: newStatus },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
+
+      setSelectedStatus(newStatus);
       statusChange();
     } catch {
       alert("Attendance not allowed today");
     }
   };
 
-  const badge = {
-    Present: "bg-green-200 text-green-800",
-    Absent: "bg-red-200 text-red-800",
-    Sick: "bg-yellow-200 text-yellow-800",
-    Leave: "bg-blue-200 text-blue-800"
-  };
-
+  // Show badge if already marked
   if (status) {
+    const t = statusTheme[status];
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badge[status]}`}>
+      <span
+        className="px-3 py-1 rounded-full text-sm font-semibold"
+        style={{ backgroundColor: t.light, color: t.text }}
+      >
         {status}
       </span>
     );
   }
 
+  // Show buttons
   return (
     <div className="flex gap-2">
-      {["Present","Absent","Sick","Leave"].map(s => (
-        <button
-          key={s}
-          onClick={() => markEmployee(s)}
-          className="px-3 py-1 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700"
-        >
-          {s}
-        </button>
-      ))}
+      {["Present", "Absent", "Sick", "Leave"].map((s) => {
+        const t = statusTheme[s];
+        return (
+          <button
+            key={s}
+            onClick={() => markEmployee(s)}
+            className="px-3 py-1 text-xs rounded-lg font-semibold transition"
+            style={{
+              backgroundColor: t.bg,
+              color: "white",
+              outline: selectedStatus === s ? "2px solid black" : "none",
+              transform: selectedStatus === s ? "scale(1.05)" : "scale(1)",
+            }}
+          >
+            {s}
+          </button>
+        );
+      })}
     </div>
   );
 };

@@ -6,7 +6,8 @@ import {
   Building,
   CalendarCheck,
   Settings,
-  X
+  X,
+  Bell
 } from "lucide-react"
 import { useAuth } from "../../context/authContext"
 import { useSidebar } from "../../context/sidebarContext"
@@ -41,7 +42,6 @@ const EmployeeSidebar = () => {
           md:translate-x-0 md:w-20 md:hover:w-72
           group
         `}
-        end
       >
         {/* HEADER */}
         <div className="h-16 px-4 flex items-center gap-3
@@ -53,7 +53,7 @@ const EmployeeSidebar = () => {
             className="
               text-lg font-extrabold whitespace-nowrap
               opacity-100 md:opacity-0 md:group-hover:opacity-100
-              transition
+              transition uppercase
               text-yellow-500
             "
           >

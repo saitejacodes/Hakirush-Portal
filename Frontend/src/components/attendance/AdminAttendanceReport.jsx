@@ -10,6 +10,7 @@ const AdminAttendanceReport = () => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [holidays, setHolidays] = useState([]);
 
   /* ================= FETCH REPORT ================= */
   const fetchReport = async () => {
@@ -40,6 +41,19 @@ const AdminAttendanceReport = () => {
   useEffect(() => {
     fetchReport();
   }, [dataFilter, search]);
+
+  // ✅ ADDED: fetch holidays
+  useEffect(() => {
+    axios
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      )
+      .then(res => setHolidays(res.data.holidays || []))
+      .catch(console.error);
+  }, []);
 
   /* ================= DATE ================= */
   const handleDateChange = (e) => {
@@ -82,6 +96,26 @@ const AdminAttendanceReport = () => {
   };
 
   const finalReport = filterBySearch(report);
+
+  // ✅ ADDED: helper to detect holiday / weekend
+  const getDayType = (dateStr) => {
+    const d = new Date(dateStr);
+    const ymd = d.toISOString().split("T")[0];
+
+    if (d.getDay() === 0) {
+      return { type: "weekend", title: "Weekend (Sunday)" };
+    }
+
+    const holiday = holidays.find(
+      h => new Date(h.date).toISOString().split("T")[0] === ymd
+    );
+
+    if (holiday) {
+      return { type: "holiday", title: holiday.title };
+    }
+
+    return { type: "working", title: "" };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4">
@@ -134,65 +168,86 @@ const AdminAttendanceReport = () => {
       ) : Object.keys(finalReport).length === 0 ? (
         <p className="text-center text-red-400 py-20">No records found</p>
       ) : (
-        Object.entries(finalReport).map(([date, records]) => (
-          <div key={date} className="mb-6">
+        Object.entries(finalReport).map(([date, records]) => {
+          const info = getDayType(date);
 
-            {/* Date Header */}
-            <div className="flex items-center gap-2 text-red-700 font-bold mb-2">
-              <CalendarDays size={18} /> {date}
-            </div>
+          return (
+            <div key={date} className="mb-6">
 
-            {/* MOBILE CARDS */}
-            <div className="space-y-3 md:hidden">
-              {records.map((r, i) => (
-                <div key={i} className="bg-white rounded-2xl shadow border border-red-100 p-3 flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold">{r.employeeName}</p>
-                    <p className="text-xs text-gray-500">
-                      {r.employeeId} • {r.departmentName}
-                    </p>
-                  </div>
-                  <span className={`font-bold ${
-                    r.status === "Present" ? "text-green-600" : "text-red-600"
-                  }`}>
-                    {r.status}
+              {/* ✅ DATE HEADER WITH HOLIDAY / WEEKEND TITLE */}
+              <div className="flex items-center gap-3 text-red-700 font-bold mb-2">
+                <CalendarDays size={18} /> {date}
+
+                {info.type !== "working" && (
+                  <span className="text-xs px-2 py-1 rounded-lg bg-yellow-200 text-yellow-800">
+                    {info.title}
                   </span>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
 
-            {/* DESKTOP TABLE */}
-            <div className="hidden md:block overflow-auto">
-              <table className="w-full bg-white rounded-xl shadow">
-                <thead className="bg-red-50">
-                  <tr>
-                    <th className="p-3 text-left">S No</th>
-                    <th className="p-3 text-left">Employee ID</th>
-                    <th className="p-3 text-left">Name</th>
-                    <th className="p-3 text-left">Department</th>
-                    <th className="p-3 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((r, i) => (
-                    <tr key={i} className="border-t hover:bg-red-50">
-                      <td className="p-3">{i + 1}</td>
-                      <td className="p-3">{r.employeeId}</td>
-                      <td className="p-3">{r.employeeName}</td>
-                      <td className="p-3">{r.departmentName}</td>
-                      <td className={`p-3 font-bold ${
-                        r.status === "Present" ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {r.status}
-                      </td>
+              {/* MOBILE CARDS */}
+              <div className="space-y-3 md:hidden">
+                {records.map((r, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl shadow border border-red-100 p-3 flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="font-semibold">{r.employeeName}</p>
+                      <p className="text-xs text-gray-500">
+                        {r.employeeId} • {r.departmentName}
+                      </p>
+                    </div>
+                    <span
+                      className={`font-bold ${
+                        r.status === "Present"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block overflow-auto">
+                <table className="w-full bg-white rounded-xl shadow">
+                  <thead className="bg-red-50">
+                    <tr>
+                      <th className="p-3 text-left">S No</th>
+                      <th className="p-3 text-left">Employee ID</th>
+                      <th className="p-3 text-left">Name</th>
+                      <th className="p-3 text-left">Department</th>
+                      <th className="p-3 text-left">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {records.map((r, i) => (
+                      <tr key={i} className="border-t hover:bg-red-50">
+                        <td className="p-3">{i + 1}</td>
+                        <td className="p-3">{r.employeeId}</td>
+                        <td className="p-3">{r.employeeName}</td>
+                        <td className="p-3">{r.departmentName}</td>
+                        <td
+                          className={`p-3 font-bold ${
+                            r.status === "Present"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {r.status}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          </div>
-        ))
+            </div>
+          );
+        })
       )}
 
     </div>
