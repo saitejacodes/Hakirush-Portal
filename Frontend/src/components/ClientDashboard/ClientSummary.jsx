@@ -16,7 +16,7 @@ const ClientSportsPlan = () => {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔴 ADDED (ANNOUNCEMENTS)
+  // 🔴 ANNOUNCEMENTS
   const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const ClientSportsPlan = () => {
     fetchClient();
   }, [user]);
 
-  // 🔴 FETCH ANNOUNCEMENTS (ADDED)
+  // 🔴 FETCH ANNOUNCEMENTS
   useEffect(() => {
     if (!user) return;
 
@@ -91,12 +91,8 @@ const ClientSportsPlan = () => {
 
   const plan = client.planType; // annual | quarterly
 
-  // 🔴 FILTER ANNOUNCEMENTS BASED ON PLAN (ADDED)
-  const filteredAnnouncements = announcements.filter((a) =>
-    plan === "annual"
-      ? a.type === "Annual"
-      : a.type === "Quarterly"
-  );
+  // 🔴 NO FILTER — SAME ANNOUNCEMENTS FOR ALL
+  const filteredAnnouncements = announcements;
 
   // ---------------- MAIN UI ----------------
 
@@ -118,16 +114,14 @@ const ClientSportsPlan = () => {
           </p>
 
           <p className="text-sm opacity-90">
-            Client: {client?.userId?.name} • Budget ₹{client?.budget}
+            Client: {client?.userId?.name}
           </p>
         </div>
 
-        {/* ================= PLAN ANNOUNCEMENTS (ADDED) ================= */}
+        {/* ================= ANNOUNCEMENTS ================= */}
         <div className="rounded-3xl bg-white shadow-xl border p-6">
           <h2 className="text-xl font-bold text-red-700 mb-4">
-            {plan === "annual"
-              ? "Annual Announcements"
-              : "Quarterly Announcements"}
+            Announcements
           </h2>
 
           {filteredAnnouncements.length === 0 ? (
@@ -225,13 +219,10 @@ const QuarterlyPlan = () => {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
         {quarters.map((q) => (
           <div key={q.q} className="bg-white/80 shadow rounded-2xl p-4 border">
             <p className="font-bold text-red-700">{q.q}</p>
-
             <p className="mt-1">{q.game}</p>
-
             <span
               className={`mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold
                 ${q.status === "Completed" && "bg-green-100 text-green-700"}
@@ -280,7 +271,6 @@ const KPIGrid = () => (
 const KPI = ({ icon, label, value }) => (
   <div className="rounded-2xl shadow-xl bg-white/80 border p-6">
     <p className="text-gray-600 text-sm">{label}</p>
-
     <div className="flex justify-between items-center mt-1">
       <span className="text-3xl font-black text-red-600">{value}</span>
       <span className="text-red-500">{icon}</span>

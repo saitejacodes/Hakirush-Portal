@@ -13,6 +13,7 @@ const employeeSchema = new Schema(
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
       default: null
     },
+    designation: { type: String, required: true, trim: true },
     department: { type: Schema.Types.ObjectId, ref: "Department", required: true },
     salary: { type: Number, required: true }
   },

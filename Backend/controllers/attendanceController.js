@@ -136,6 +136,7 @@ const attendanceReport = async (req, res) => {
         employeeId: item.employeeId?.employeeId || "N/A",
         employeeName: item.employeeId?.userId?.name || "Unknown",
         departmentName: item.employeeId?.department?.dep_name || "N/A",
+        designation: item.employeeId?.designation || "N/A",
         status: item.status || "Not Marked",
       });
     });

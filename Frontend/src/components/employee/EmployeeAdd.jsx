@@ -152,6 +152,8 @@ const Add = () => {
                 ))}
               </select>
 
+              <input name="designation" placeholder="Designation (e.g. Software Engineer)" required onChange={handleChange} className="input"/>
+
               <input type="number" name="salary" placeholder="Salary" required onChange={handleChange} className="input" />
 
               <input type="password" name="password" placeholder="Account Password" required onChange={handleChange} className="input" />

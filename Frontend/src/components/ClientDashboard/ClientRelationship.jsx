@@ -87,7 +87,7 @@ const ClientRelationship = () => {
           </p>
 
           <p className="text-gray-600">
-            Client: {client?.userId?.name} • Budget ₹{client?.budget}
+            Client: {client?.userId?.name}
           </p>
         </div>
 

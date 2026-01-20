@@ -9,13 +9,15 @@ const Edit = () => {
   const [employee, setEmployee] = useState({
     name: "",
     maritalStatus: "",
+    designation: "",
     salary: "",
   });
 
   const [preview, setPreview] = useState(null);
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Load employee on mount
+  /* ================= LOAD EMPLOYEE ================= */
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
@@ -34,17 +36,17 @@ const Edit = () => {
           setEmployee({
             name: emp?.userId?.name || "",
             maritalStatus: emp?.maritalStatus || "",
+            designation: emp?.designation || "",
             salary: emp?.salary || "",
           });
 
           if (emp?.userId?.profileImage) {
             setPreview(
-              `${import.meta.env.VITE_BACKEND_URL}/uploads/${emp.userId.profileImage}`
-            );
-          }
+            `${import.meta.env.VITE_BACKEND_URL}/${emp.userId.profileImage}`
+          );
+        }
         }
       } catch (error) {
-        console.error(error);
         alert("Failed to load employee data");
       }
     };
@@ -52,11 +54,10 @@ const Edit = () => {
     fetchEmployee();
   }, [id]);
 
-  // Handle field change
+  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    // image input
     if (name === "image") {
       const file = files[0];
       setImage(file);
@@ -64,22 +65,22 @@ const Edit = () => {
       return;
     }
 
-    // text inputs
     setEmployee((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  // Submit update
+  /* ================= SUBMIT UPDATE ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const form = new FormData();
     form.append("name", employee.name);
     form.append("maritalStatus", employee.maritalStatus);
+    form.append("designation", employee.designation);
     form.append("salary", employee.salary);
-
     if (image) form.append("image", image);
 
     try {
@@ -98,8 +99,9 @@ const Edit = () => {
         navigate("/admin-dashboard/employees");
       }
     } catch (error) {
-      console.error(error.response?.data);
       alert(error.response?.data?.error || "Update failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,14 +109,16 @@ const Edit = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
 
+        {/* TITLE */}
         <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
           Edit Employee
         </h3>
 
+        {/* CARD */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
 
-            {/* Profile image */}
+            {/* PROFILE IMAGE */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
                 <img
@@ -136,20 +140,21 @@ const Edit = () => {
               </label>
             </div>
 
-            {/* Fields */}
+            {/* FORM FIELDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
               <input
-                className="border p-2 rounded"
+                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
                 name="name"
                 value={employee.name}
                 onChange={handleChange}
                 placeholder="Full Name"
+                required
               />
 
               <select
                 name="maritalStatus"
-                className="border p-2 rounded"
+                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
                 value={employee.maritalStatus}
                 onChange={handleChange}
               >
@@ -159,18 +164,33 @@ const Edit = () => {
               </select>
 
               <input
+                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                name="designation"
+                value={employee.designation}
+                onChange={handleChange}
+                placeholder="Designation (e.g. Software Engineer)"
+              />
+
+              <input
                 type="number"
                 name="salary"
-                className="border p-2 rounded"
+                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
                 value={employee.salary}
                 onChange={handleChange}
                 placeholder="Salary"
               />
             </div>
 
+            {/* SUBMIT */}
             <div className="text-center">
-              <button className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700">
-                Update Employee
+              <button
+                disabled={loading}
+                className={`px-10 py-3 rounded-xl font-semibold text-white transition
+                  ${loading
+                    ? "bg-red-300 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700 shadow-lg"}`}
+              >
+                {loading ? "Updating..." : "Update Employee"}
               </button>
             </div>
 

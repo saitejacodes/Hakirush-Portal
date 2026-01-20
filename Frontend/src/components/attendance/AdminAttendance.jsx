@@ -4,22 +4,18 @@ import { Search, CalendarDays, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
 import AttendanceHelper from "../../utils/AttendanceHelper";
 
-/* ===== HELPER (ADDED) ===== */
+/* ===== HELPER ===== */
 const getDayType = (dateStr, holidays) => {
   const d = new Date(dateStr);
   const ymd = d.toISOString().split("T")[0];
 
-  if (d.getDay() === 0) {
-    return { type: "weekend", title: "Weekend (Sunday)" };
-  }
+  if (d.getDay() === 0) return { type: "weekend", title: "Weekend (Sunday)" };
 
   const holiday = holidays.find(
     h => new Date(h.date).toISOString().split("T")[0] === ymd
   );
 
-  if (holiday) {
-    return { type: "holiday", title: holiday.title };
-  }
+  if (holiday) return { type: "holiday", title: holiday.title };
 
   return { type: "working", title: "" };
 };
@@ -30,8 +26,13 @@ const MobileAttendanceCard = ({ att, dayInfo, statusChange }) => (
     <div className="flex items-center gap-3">
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-900 truncate">{att.name}</p>
+
         <p className="text-xs text-red-600 truncate">
-          {att.department} • {att.employeeCode}
+          {att.department} • {att.designation}
+        </p>
+
+        <p className="text-[11px] text-gray-500 truncate">
+          ID: {att.employeeCode}
         </p>
       </div>
 
@@ -41,7 +42,7 @@ const MobileAttendanceCard = ({ att, dayInfo, statusChange }) => (
         statusChange={statusChange}
         isHoliday={dayInfo.type === "holiday"}
         isWeekend={dayInfo.type === "weekend"}
-        dayTitle={dayInfo.title}   // ✅ ADDED
+        dayTitle={dayInfo.title}
       />
     </div>
   </div>
@@ -54,10 +55,8 @@ const AdminAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-
-  const dayInfo = getDayType(todayStr, holidays); // ✅ ADDED
+  const todayStr = new Date().toISOString().split("T")[0];
+  const dayInfo = getDayType(todayStr, holidays);
 
   const fetchHolidays = async () => {
     const res = await axios.get(
@@ -83,6 +82,7 @@ const AdminAttendance = () => {
         employeeCode: a.employeeId?.employeeId || "N/A",
         name: a.employeeId?.userId?.name || "Unknown",
         department: a.employeeId?.department?.dep_name || "N/A",
+        designation: a.employeeId?.designation || "N/A", // ✅ ADDED
         status: a.status || null,
       }));
       setAttendance(data);
@@ -119,7 +119,7 @@ const AdminAttendance = () => {
           )}
         </div>
 
-        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
 
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <div className="relative w-full md:w-1/2">
@@ -149,6 +149,7 @@ const AdminAttendance = () => {
             <div className="p-10 text-center text-red-600">Loading...</div>
           ) : (
             <>
+              {/* MOBILE */}
               <div className="md:hidden grid gap-4 p-4">
                 {filtered.map(att => (
                   <MobileAttendanceCard
@@ -160,14 +161,16 @@ const AdminAttendance = () => {
                 ))}
               </div>
 
+              {/* DESKTOP */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
                   <thead className="bg-red-50">
                     <tr>
-                      <th className="px-4 py-3 text-left">S No</th>
-                      <th className="px-4 py-3 text-left">Name</th>
-                      <th className="px-4 py-3 text-left">Employee ID</th>
-                      <th className="px-4 py-3 text-left">Department</th>
+                      <th className="px-4 py-3">S No</th>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Employee ID</th>
+                      <th className="px-4 py-3">Department</th>
+                      <th className="px-4 py-3">Designation</th>
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
@@ -175,9 +178,10 @@ const AdminAttendance = () => {
                     {filtered.map(att => (
                       <tr key={att._id} className="hover:bg-red-50">
                         <td className="px-4 py-3">{att.sno}</td>
-                        <td className="px-4 py-3">{att.name}</td>
+                        <td className="px-4 py-3 font-medium">{att.name}</td>
                         <td className="px-4 py-3">{att.employeeCode}</td>
                         <td className="px-4 py-3">{att.department}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.designation}</td>
                         <td className="px-4 py-3 text-right">
                           <AttendanceHelper
                             employeeId={att.employeeMongoId}
@@ -185,7 +189,7 @@ const AdminAttendance = () => {
                             statusChange={fetchAttendance}
                             isHoliday={dayInfo.type === "holiday"}
                             isWeekend={dayInfo.type === "weekend"}
-                            dayTitle={dayInfo.title}   // ✅ ADDED
+                            dayTitle={dayInfo.title}
                           />
                         </td>
                       </tr>
@@ -193,7 +197,6 @@ const AdminAttendance = () => {
                   </tbody>
                 </table>
               </div>
-
             </>
           )}
         </div>

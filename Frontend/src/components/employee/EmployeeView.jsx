@@ -83,7 +83,7 @@ const View = () => {
             </h2>
 
             <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-              {employee?.department?.dep_name || "No Department"}
+              {employee?.designation || "No Designation"}
             </span>
           </div>
 
@@ -95,6 +95,7 @@ const View = () => {
             <Info label="Gender" value={employee?.gender} />
             <Info label="Blood Group" value={employee?.bloodGroup || "N/A"} />
             <Info label="Department" value={employee?.department?.dep_name || "N/A"}/>
+            <Info label="Designation" value={employee?.designation || "N/A"} />
 
             <Info
               label="Date of Birth"

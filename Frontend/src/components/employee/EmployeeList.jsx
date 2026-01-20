@@ -10,14 +10,12 @@ const MobileEmployeeCard = ({ emp, getImageUrl }) => {
     <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
       <div className="flex items-center gap-3">
 
-        {/* Avatar */}
         <img
           src={getImageUrl(emp.profileImage)}
           onError={(e) => (e.target.src = "/default-avatar.png")}
           className="w-12 h-12 rounded-full object-cover border shrink-0"
         />
 
-        {/* Name + Department */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 text-xs truncate">
             {emp.name}
@@ -25,9 +23,11 @@ const MobileEmployeeCard = ({ emp, getImageUrl }) => {
           <p className="text-xs text-red-600 truncate">
             {emp.dep_name}
           </p>
+          <p className="text-[11px] text-gray-500 truncate">
+            {emp.designation}
+          </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="shrink-0">
           <EmployeeButtons id={emp._id} />
         </div>
@@ -37,13 +37,16 @@ const MobileEmployeeCard = ({ emp, getImageUrl }) => {
   );
 };
 
+const ITEMS_PER_PAGE = 5;
 
 const List = () => {
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [empLoading, setEmpLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
+  /* ===== FETCH EMPLOYEES ===== */
   useEffect(() => {
     const fetchEmployees = async () => {
       setEmpLoading(true);
@@ -63,6 +66,7 @@ const List = () => {
             _id: emp._id,
             sno: sno++,
             dep_name: emp.department?.dep_name || "N/A",
+            designation: emp.designation || "N/A",
             name: emp.userId?.name || "Unknown",
             dob: emp.dob ? new Date(emp.dob).toDateString() : "N/A",
             profileImage: emp.userId?.profileImage || "",
@@ -88,9 +92,18 @@ const List = () => {
       (emp.name || "").toLowerCase().includes(search.toLowerCase())
     );
     setFilteredEmployees(result);
+    setCurrentPage(1);
   }, [search, employees]);
 
-  /* ===== SMART IMAGE ===== */
+  /* ===== PAGINATION ===== */
+  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedEmployees = filteredEmployees.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  /* ===== IMAGE HANDLER ===== */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
@@ -115,8 +128,7 @@ const List = () => {
           </p>
         </div>
 
-        {/* MAIN CARD */}
-        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
 
           {/* TOP BAR */}
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
@@ -126,7 +138,7 @@ const List = () => {
                 type="text"
                 placeholder="Search employee..."
                 className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5
-                           outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
+                           outline-none focus:ring-2 focus:ring-red-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -135,23 +147,22 @@ const List = () => {
             <Link
               to="/admin-dashboard/add-employee"
               className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white
-                         shadow-md hover:bg-red-700 transition active:scale-95 text-center"
+                         shadow-md hover:bg-red-700 transition"
             >
               + Add Employee
             </Link>
           </div>
 
-          {/* CONTENT */}
           {empLoading ? (
             <div className="p-10 text-center text-red-600 font-semibold">
               Loading employees...
             </div>
           ) : (
             <>
-              {/* MOBILE VIEW */}
-              <div className="md:hidden grid grid-cols-1 gap-5 px-4 pb-24">
-                {filteredEmployees.length ? (
-                  filteredEmployees.map((emp) => (
+              {/* MOBILE */}
+              <div className="md:hidden grid grid-cols-1 gap-5 px-4 pb-6">
+                {paginatedEmployees.length ? (
+                  paginatedEmployees.map((emp) => (
                     <MobileEmployeeCard
                       key={emp._id}
                       emp={emp}
@@ -165,7 +176,7 @@ const List = () => {
                 )}
               </div>
 
-              {/* DESKTOP VIEW */}
+              {/* DESKTOP */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-red-50">
@@ -174,12 +185,12 @@ const List = () => {
                       <th className="px-4 py-3 text-left">Image</th>
                       <th className="px-4 py-3 text-left">Name</th>
                       <th className="px-4 py-3 text-left">Department</th>
+                      <th className="px-4 py-3 text-left">Designation</th>
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
-                    {filteredEmployees.map((emp) => (
+                    {paginatedEmployees.map((emp) => (
                       <tr key={emp._id} className="hover:bg-red-50">
                         <td className="px-4 py-3">{emp.sno}</td>
                         <td className="px-4 py-3">
@@ -191,6 +202,7 @@ const List = () => {
                         </td>
                         <td className="px-4 py-3">{emp.name}</td>
                         <td className="px-4 py-3">{emp.dep_name}</td>
+                        <td className="px-4 py-3">{emp.designation}</td>
                         <td className="px-4 py-3 text-right">
                           <EmployeeButtons id={emp._id} />
                         </td>
@@ -199,6 +211,37 @@ const List = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* PAGINATION */}
+              {filteredEmployees.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between px-4 py-4 border-t">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg font-semibold
+                      ${currentPage === 1
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-red-100 text-red-600 hover:bg-red-200"}`}
+                  >
+                    ◀ Previous
+                  </button>
+
+                  <span className="text-sm font-semibold text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg font-semibold
+                      ${currentPage === totalPages
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-red-600 text-white hover:bg-red-700"}`}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
