@@ -9,7 +9,6 @@ const MobileEmployeeCard = ({ emp, getImageUrl }) => {
   return (
     <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
       <div className="flex items-center gap-3">
-
         <img
           src={getImageUrl(emp.profileImage)}
           onError={(e) => (e.target.src = "/default-avatar.png")}
@@ -31,7 +30,6 @@ const MobileEmployeeCard = ({ emp, getImageUrl }) => {
         <div className="shrink-0">
           <EmployeeButtons id={emp._id} />
         </div>
-
       </div>
     </div>
   );
@@ -76,7 +74,6 @@ const List = () => {
           setFilteredEmployees(data);
         }
       } catch (error) {
-        console.error(error);
         alert("Failed to load employees");
       } finally {
         setEmpLoading(false);
@@ -86,10 +83,10 @@ const List = () => {
     fetchEmployees();
   }, []);
 
-  /* ===== SEARCH FILTER ===== */
+  /* ===== SEARCH ===== */
   useEffect(() => {
     const result = employees.filter((emp) =>
-      (emp.name || "").toLowerCase().includes(search.toLowerCase())
+      emp.name.toLowerCase().includes(search.toLowerCase())
     );
     setFilteredEmployees(result);
     setCurrentPage(1);
@@ -103,15 +100,11 @@ const List = () => {
     startIndex + ITEMS_PER_PAGE
   );
 
-  /* ===== IMAGE HANDLER ===== */
+  /* ===== IMAGE HANDLER (FIXED) ===== */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/"))
-      return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
-    if (imagePath.startsWith("uploads/"))
-      return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
-    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`;
+    return "/default-avatar.png";
   };
 
   return (
@@ -218,7 +211,7 @@ const List = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-4 py-2 rounded-lg font-semibold
+                    className={`px-4 py-1 rounded-lg font-semibold
                       ${currentPage === 1
                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                         : "bg-red-100 text-red-600 hover:bg-red-200"}`}
@@ -233,7 +226,7 @@ const List = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-4 py-2 rounded-lg font-semibold
+                    className={`px-4 py-1 rounded-lg font-semibold
                       ${currentPage === totalPages
                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                         : "bg-red-600 text-white hover:bg-red-700"}`}

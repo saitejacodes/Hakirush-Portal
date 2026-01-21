@@ -10,6 +10,7 @@ const Add = () => {
   const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
 
+  /* ================= LOAD DEPARTMENTS ================= */
   useEffect(() => {
     const loadDepartments = async () => {
       try {
@@ -24,6 +25,7 @@ const Add = () => {
     loadDepartments();
   }, []);
 
+  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -36,6 +38,7 @@ const Add = () => {
     }
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -69,6 +72,7 @@ const Add = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
 
+        {/* TITLE */}
         <div className="text-center mb-8">
           <h3 className="text-4xl font-extrabold text-red-700">
             Add New Employee
@@ -78,10 +82,11 @@ const Add = () => {
           </p>
         </div>
 
+        {/* CARD */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-red-100">
           <form onSubmit={handleSubmit} className="space-y-8">
 
-            {/* Profile Image Section */}
+            {/* PROFILE IMAGE */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
                 <img
@@ -103,31 +108,71 @@ const Add = () => {
               </label>
             </div>
 
-            {/* Form Fields */}
+            {/* FORM FIELDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-              {/* personal */}
-              <input name="name" placeholder="Full Name" required onChange={handleChange} className="input" />
-              <input name="email" placeholder="Email Address" type="email" required onChange={handleChange} className="input" />
+              {/* PERSONAL */}
+              <input
+                name="name"
+                placeholder="Full Name"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <input name="employeeId" placeholder="Employee ID" required onChange={handleChange} className="input" />
+              <input
+                name="email"
+                placeholder="Email Address"
+                type="email"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <input type="date" name="dob" onChange={handleChange} required className="input" />
+              <input
+                name="employeeId"
+                placeholder="Employee ID"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <select name="gender" onChange={handleChange} required className="input">
+              <input
+                type="date"
+                name="dob"
+                required
+                onChange={handleChange}
+                className="input"
+              />
+
+              <select
+                name="gender"
+                required
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">Gender</option>
                 <option>Male</option>
                 <option>Female</option>
                 <option>Other</option>
               </select>
 
-              <select name="maritalStatus" onChange={handleChange} className="input">
+              <select
+                name="maritalStatus"
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">Marital Status</option>
                 <option>Single</option>
                 <option>Married</option>
               </select>
 
-              <select name="bloodGroup" onChange={handleChange} required className="input">
+              <select
+                name="bloodGroup"
+                required
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">Blood Group</option>
                 <option>A+</option>
                 <option>A-</option>
@@ -139,12 +184,16 @@ const Add = () => {
                 <option>O-</option>
               </select>
 
-              {/* department */}
-              <select name="department" required onChange={handleChange} className="input">
+              {/* DEPARTMENT */}
+              <select
+                name="department"
+                required
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">
                   {loadingDept ? "Loading..." : "Select Department"}
                 </option>
-
                 {departments.map((d) => (
                   <option key={d._id} value={d._id}>
                     {d.dep_name}
@@ -152,13 +201,38 @@ const Add = () => {
                 ))}
               </select>
 
-              <input name="designation" placeholder="Designation (e.g. Software Engineer)" required onChange={handleChange} className="input"/>
+              <input
+                name="designation"
+                placeholder="Designation (e.g. Software Engineer)"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <input type="number" name="salary" placeholder="Salary" required onChange={handleChange} className="input" />
+              <input
+                type="number"
+                name="salary"
+                placeholder="Salary"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <input type="password" name="password" placeholder="Account Password" required onChange={handleChange} className="input" />
+              <input
+                type="password"
+                name="password"
+                placeholder="Account Password"
+                required
+                onChange={handleChange}
+                className="input"
+              />
 
-              <select name="role" required onChange={handleChange} className="input">
+              <select
+                name="role"
+                required
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">User Role</option>
                 <option value="admin">Admin</option>
                 <option value="employee">Employee</option>
@@ -166,6 +240,7 @@ const Add = () => {
               </select>
             </div>
 
+            {/* SUBMIT */}
             <div className="text-center">
               <button className="bg-red-600 hover:bg-red-700 transition text-white px-10 py-3 rounded-2xl shadow-lg font-semibold">
                 Create Employee

@@ -1,12 +1,12 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import upload from "../middleware/upload.js";
 import {
   addSponsor,
   getSponsors,
   getSponsor,
   updateSponsor,
   deleteSponsor,
-  upload
 } from "../controllers/sponsorController.js";
 
 const router = express.Router();

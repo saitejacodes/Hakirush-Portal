@@ -41,12 +41,10 @@ const Edit = () => {
           });
 
           if (emp?.userId?.profileImage) {
-            setPreview(
-            `${import.meta.env.VITE_BACKEND_URL}/${emp.userId.profileImage}`
-          );
+            setPreview(emp.userId.profileImage); // ✅ FIX
+          }
         }
-        }
-      } catch (error) {
+      } catch {
         alert("Failed to load employee data");
       }
     };
@@ -108,17 +106,13 @@ const Edit = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
-
-        {/* TITLE */}
         <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
           Edit Employee
         </h3>
 
-        {/* CARD */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
 
-            {/* PROFILE IMAGE */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
                 <img
@@ -140,11 +134,9 @@ const Edit = () => {
               </label>
             </div>
 
-            {/* FORM FIELDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
               <input
-                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                className="border border-red-200 p-3 rounded-xl"
                 name="name"
                 value={employee.name}
                 onChange={handleChange}
@@ -154,7 +146,7 @@ const Edit = () => {
 
               <select
                 name="maritalStatus"
-                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                className="border border-red-200 p-3 rounded-xl"
                 value={employee.maritalStatus}
                 onChange={handleChange}
               >
@@ -164,31 +156,28 @@ const Edit = () => {
               </select>
 
               <input
-                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                className="border border-red-200 p-3 rounded-xl"
                 name="designation"
                 value={employee.designation}
                 onChange={handleChange}
-                placeholder="Designation (e.g. Software Engineer)"
+                placeholder="Designation"
               />
 
               <input
                 type="number"
                 name="salary"
-                className="border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                className="border border-red-200 p-3 rounded-xl"
                 value={employee.salary}
                 onChange={handleChange}
                 placeholder="Salary"
               />
             </div>
 
-            {/* SUBMIT */}
             <div className="text-center">
               <button
                 disabled={loading}
-                className={`px-10 py-3 rounded-xl font-semibold text-white transition
-                  ${loading
-                    ? "bg-red-300 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700 shadow-lg"}`}
+                className={`px-10 py-3 rounded-xl font-semibold text-white
+                  ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {loading ? "Updating..." : "Update Employee"}
               </button>

@@ -9,15 +9,12 @@ const MobileClientCard = ({ client, getImageUrl }) => {
   return (
     <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
       <div className="flex items-center gap-3">
-
-        {/* Logo */}
         <img
           src={getImageUrl(client.logo)}
           onError={(e) => (e.target.src = "/default-avatar.png")}
           className="w-12 h-12 rounded-full object-cover border shrink-0"
         />
 
-        {/* Name + Plan */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 truncate">
             {client.name}
@@ -31,14 +28,11 @@ const MobileClientCard = ({ client, getImageUrl }) => {
           </p>
         </div>
 
-        {/* Buttons */}
         <div className="shrink-0">
           <ClientButtons id={client._id} />
         </div>
-
       </div>
 
-      {/* Budget + DOJ */}
       <div className="flex justify-between mt-2 text-xs text-gray-500">
         <span>₹ {client.budget}</span>
         <span>{client.doj}</span>
@@ -83,8 +77,7 @@ const ClientList = () => {
           setClients(data);
           setFilteredClients(data);
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         alert("Failed to load clients");
       } finally {
         setLoading(false);
@@ -101,31 +94,28 @@ const ClientList = () => {
     setFilteredClients(result);
   }, [search, clients]);
 
+  /* ===== IMAGE HANDLER (CLOUDINARY SAFE) ===== */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/"))
-      return `${import.meta.env.VITE_BACKEND_URL}${imagePath}`;
-    if (imagePath.startsWith("uploads/"))
-      return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
-    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${imagePath}`;
+    return "/default-avatar.png";
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
 
-        {/* HEADER */}
         <div className="mb-6 md:mb-8 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold text-red-800">
             Manage Clients
           </h3>
-          <p className="text-red-500 mt-2">View, search and manage clients</p>
+          <p className="text-red-500 mt-2">
+            View, search and manage clients
+          </p>
         </div>
 
-        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
 
-          {/* TOP BAR */}
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <div className="relative w-full md:w-1/2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" size={18} />
@@ -140,17 +130,18 @@ const ClientList = () => {
 
             <Link
               to="/admin-dashboard/add-client"
-              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white shadow-md hover:bg-red-700"
+              className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700"
             >
               + Add Client
             </Link>
           </div>
 
           {loading ? (
-            <div className="p-10 text-center text-red-600">Loading clients...</div>
+            <div className="p-10 text-center text-red-600">
+              Loading clients...
+            </div>
           ) : (
             <>
-              {/* MOBILE */}
               <div className="md:hidden grid gap-4 p-4">
                 {filteredClients.length ? (
                   filteredClients.map((c) => (
@@ -167,7 +158,6 @@ const ClientList = () => {
                 )}
               </div>
 
-              {/* DESKTOP TABLE */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
                   <thead className="bg-red-50">
@@ -181,7 +171,6 @@ const ClientList = () => {
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     {filteredClients.map((c) => (
                       <tr key={c._id} className="hover:bg-red-50">
@@ -189,8 +178,8 @@ const ClientList = () => {
                         <td className="px-4 py-3">
                           <img
                             src={getImageUrl(c.logo)}
-                            onError={(e) => (e.target.src = "/default-avatar.png")}
                             className="w-12 h-12 rounded-full border object-cover"
+                            onError={(e) => (e.target.src = "/default-avatar.png")}
                           />
                         </td>
                         <td className="px-4 py-3">{c.name}</td>

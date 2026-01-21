@@ -1,8 +1,8 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import upload from "../middleware/upload.js";
 import {
   addEmployee,
-  upload,
   getEmployees,
   getEmployee,
   updateEmployee,
@@ -14,7 +14,6 @@ import {
 
 const router = express.Router();
 
-/* IMPORTANT: ORDER MATTERS */
 router.get("/by-department/me", authMiddleware, getEmployeesByDepartment);
 router.get("/new/recent", authMiddleware, getNewEmployees);
 router.get("/leave/balance/me", authMiddleware, getLeaveBalance);

@@ -1,20 +1,15 @@
 import Sponsor from "../models/Sponsor.js";
-import multer from "multer";
-import path from "path";
 
-/* ================= MULTER ================= */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname))
-});
-
-export const upload = multer({ storage });
-
-/* ================= ADD ================= */
+/* ================= ADD SPONSOR ================= */
 export const addSponsor = async (req, res) => {
   try {
-    const { name, collaboration, eventsSponsored, reach, upcomingEvents } = req.body;
+    const {
+      name,
+      collaboration,
+      eventsSponsored,
+      reach,
+      upcomingEvents,
+    } = req.body;
 
     const sponsor = await Sponsor.create({
       name,
@@ -22,16 +17,17 @@ export const addSponsor = async (req, res) => {
       eventsSponsored: Number(eventsSponsored) || 0,
       reach,
       upcomingEvents,
-      logo: req.file?.filename || ""
+      logo: req.file ? req.file.path : null, // ✅ Cloudinary URL
     });
 
     res.status(201).json({ success: true, sponsor });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-/* ================= GET ALL ================= */
+/* ================= GET ALL SPONSORS ================= */
 export const getSponsors = async (req, res) => {
   try {
     const sponsors = await Sponsor.find().sort({ createdAt: -1 });
@@ -41,12 +37,15 @@ export const getSponsors = async (req, res) => {
   }
 };
 
-/* ================= GET ONE ================= */
+/* ================= GET SINGLE SPONSOR ================= */
 export const getSponsor = async (req, res) => {
   try {
     const sponsor = await Sponsor.findById(req.params.id);
-    if (!sponsor)
-      return res.status(404).json({ success: false, message: "Sponsor not found" });
+    if (!sponsor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Sponsor not found" });
+    }
 
     res.status(200).json({ success: true, sponsor });
   } catch (error) {
@@ -54,24 +53,29 @@ export const getSponsor = async (req, res) => {
   }
 };
 
-/* ================= UPDATE ================= */
+/* ================= UPDATE SPONSOR ================= */
 export const updateSponsor = async (req, res) => {
   try {
     const data = { ...req.body };
-    if (req.file) data.logo = req.file.filename;
+
+    if (req.file) {
+      data.logo = req.file.path; // ✅ Cloudinary URL
+    }
 
     await Sponsor.findByIdAndUpdate(req.params.id, data);
-    res.status(200).json({ success: true });
+
+    res.status(200).json({ success: true, message: "Sponsor updated" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-/* ================= DELETE ================= */
+/* ================= DELETE SPONSOR ================= */
 export const deleteSponsor = async (req, res) => {
   try {
     await Sponsor.findByIdAndDelete(req.params.id);
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, message: "Sponsor deleted" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

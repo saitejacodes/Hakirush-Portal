@@ -41,14 +41,11 @@ const SponsorEdit = () => {
             upcomingEvents: s.upcomingEvents || "",
           });
 
-          if (s.logo) {
-            setPreview(
-              `${import.meta.env.VITE_BACKEND_URL}/uploads/${s.logo}`
-            );
-          }
+          // ✅ Cloudinary URL directly
+          if (s.logo) setPreview(s.logo);
         }
       } catch (error) {
-        console.error("FETCH SPONSOR ERROR:", error.response || error);
+        console.error("FETCH SPONSOR ERROR:", error);
         alert("Failed to load sponsor data");
       }
     };
@@ -62,6 +59,7 @@ const SponsorEdit = () => {
 
     if (name === "logo") {
       const file = files[0];
+      if (!file) return;
       setLogo(file);
       setPreview(URL.createObjectURL(file));
       return;
@@ -102,7 +100,7 @@ const SponsorEdit = () => {
         navigate("/admin-dashboard/sponsors");
       }
     } catch (error) {
-      console.error("UPDATE SPONSOR ERROR:", error.response || error);
+      console.error("UPDATE SPONSOR ERROR:", error);
       alert(error.response?.data?.error || "Update failed");
     }
   };
@@ -111,7 +109,6 @@ const SponsorEdit = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
 
-        {/* HEADER */}
         <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
           Edit Sponsor
         </h3>
@@ -126,6 +123,7 @@ const SponsorEdit = () => {
                   src={preview || "/default-avatar.png"}
                   alt="logo"
                   className="w-full h-full object-cover"
+                  onError={(e) => (e.target.src = "/default-avatar.png")}
                 />
               </div>
 
@@ -134,8 +132,8 @@ const SponsorEdit = () => {
                 <input
                   type="file"
                   name="logo"
-                  className="hidden"
                   accept="image/*"
+                  className="hidden"
                   onChange={handleChange}
                 />
               </label>
@@ -143,20 +141,19 @@ const SponsorEdit = () => {
 
             {/* FIELDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
               <input
-                className="border p-2 rounded"
                 name="name"
                 value={sponsor.name}
                 onChange={handleChange}
                 placeholder="Sponsor Name"
+                className="input"
               />
 
               <select
                 name="collaboration"
-                className="border p-2 rounded"
                 value={sponsor.collaboration}
                 onChange={handleChange}
+                className="input"
               >
                 <option value="">Collaboration Type</option>
                 <option value="Title Sponsor">Title Sponsor</option>
@@ -168,35 +165,35 @@ const SponsorEdit = () => {
               <input
                 type="number"
                 name="eventsSponsored"
-                className="border p-2 rounded"
                 value={sponsor.eventsSponsored}
                 onChange={handleChange}
                 placeholder="Events Sponsored"
+                className="input"
               />
 
               <input
                 name="reach"
-                className="border p-2 rounded"
                 value={sponsor.reach}
                 onChange={handleChange}
                 placeholder="Reach (eg: 2M impressions)"
+                className="input"
               />
 
               <input
                 name="upcomingEvents"
-                className="border p-2 rounded"
                 value={sponsor.upcomingEvents}
                 onChange={handleChange}
                 placeholder="Upcoming Events"
+                className="input"
               />
             </div>
 
-            {/* SUBMIT */}
             <div className="text-center">
-              <button className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700 transition">
+              <button className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700">
                 Update Sponsor
               </button>
             </div>
+
           </form>
         </div>
       </div>

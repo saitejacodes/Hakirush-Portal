@@ -1,21 +1,7 @@
-import multer from "multer";
 import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import path from "path";
 import Leave from "../models/Leave.js";
-
-/* ================= MULTER CONFIG ================= */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
 
 /* ================= ADD EMPLOYEE ================= */
 const addEmployee = async (req, res) => {
@@ -66,7 +52,8 @@ const addEmployee = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      profileImage: req.file ? `uploads/${req.file.filename}` : "",
+      // ✅ Cloudinary gives full URL here
+      profileImage: req.file ? req.file.path : "",
     });
 
     const employee = await Employee.create({
@@ -88,6 +75,7 @@ const addEmployee = async (req, res) => {
       employee,
     });
   } catch (error) {
+    console.error("ADD EMPLOYEE ERROR:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -101,6 +89,7 @@ const getEmployees = async (req, res) => {
 
     res.status(200).json({ success: true, employees });
   } catch (error) {
+    console.error("GET EMPLOYEES ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -129,6 +118,7 @@ const getEmployee = async (req, res) => {
 
     res.status(200).json({ success: true, employee });
   } catch (error) {
+    console.error("GET EMPLOYEE ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -147,16 +137,16 @@ const updateEmployee = async (req, res) => {
       });
     }
 
-    // update user
+    /* ---- UPDATE USER ---- */
     const userUpdate = {};
     if (name) userUpdate.name = name;
-    if (req.file) userUpdate.profileImage = `uploads/${req.file.filename}`;
+    if (req.file) userUpdate.profileImage = req.file.path; // ✅ Cloudinary URL
 
-    if (Object.keys(userUpdate).length) {
+    if (Object.keys(userUpdate).length > 0) {
       await User.findByIdAndUpdate(employee.userId, userUpdate);
     }
 
-    // update employee
+    /* ---- UPDATE EMPLOYEE ---- */
     const empUpdate = {};
     if (maritalStatus) empUpdate.maritalStatus = maritalStatus;
     if (designation) empUpdate.designation = designation;
@@ -169,6 +159,7 @@ const updateEmployee = async (req, res) => {
       message: "Employee updated successfully",
     });
   } catch (error) {
+    console.error("UPDATE EMPLOYEE ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -194,6 +185,7 @@ const deleteEmployee = async (req, res) => {
       message: "Employee deleted successfully",
     });
   } catch (error) {
+    console.error("DELETE EMPLOYEE ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -215,6 +207,7 @@ const getEmployeesByDepartment = async (req, res) => {
 
     res.status(200).json({ success: true, employees });
   } catch (error) {
+    console.error("BY DEPARTMENT ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -229,10 +222,11 @@ const getNewEmployees = async (req, res) => {
       createdAt: { $gte: THIRTY_DAYS_AGO },
     })
       .sort({ createdAt: -1 })
-      .populate("userId", "name email");
+      .populate("userId", "name email profileImage");
 
     res.status(200).json({ success: true, employees });
   } catch (error) {
+    console.error("NEW EMPLOYEES ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -262,12 +256,13 @@ const getLeaveBalance = async (req, res) => {
       balance: total - used,
     });
   } catch (error) {
+    console.error("LEAVE BALANCE ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
+/* ================= EXPORTS ================= */
 export {
-  upload,
   addEmployee,
   getEmployees,
   getEmployee,
