@@ -126,10 +126,8 @@ const getEmployee = async (req, res) => {
 /* ================= UPDATE EMPLOYEE ================= */
 const updateEmployee = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, maritalStatus, salary, designation } = req.body;
+    const employee = await Employee.findById(req.params.id).populate("userId");
 
-    const employee = await Employee.findById(id);
     if (!employee) {
       return res.status(404).json({
         success: false,
@@ -137,30 +135,29 @@ const updateEmployee = async (req, res) => {
       });
     }
 
-    /* ---- UPDATE USER ---- */
-    const userUpdate = {};
-    if (name) userUpdate.name = name;
-    if (req.file) userUpdate.profileImage = req.file.path; // ✅ Cloudinary URL
+    employee.maritalStatus = req.body.maritalStatus;
+    employee.designation = req.body.designation;
+    employee.salary = req.body.salary;
 
-    if (Object.keys(userUpdate).length > 0) {
-      await User.findByIdAndUpdate(employee.userId, userUpdate);
+    if (req.body.name) {
+      employee.userId.name = req.body.name;
     }
 
-    /* ---- UPDATE EMPLOYEE ---- */
-    const empUpdate = {};
-    if (maritalStatus) empUpdate.maritalStatus = maritalStatus;
-    if (designation) empUpdate.designation = designation;
-    if (salary !== undefined) empUpdate.salary = Number(salary);
+    // ✅ SAFE IMAGE UPDATE
+    if (req.file) {
+      employee.userId.profileImage = req.file.path;
+    }
 
-    await Employee.findByIdAndUpdate(id, empUpdate);
+    await employee.userId.save();
+    await employee.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Employee updated successfully",
-    });
+    res.json({ success: true });
   } catch (error) {
-    console.error("UPDATE EMPLOYEE ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("UPDATE ERROR:", error);
+    res.status(500).json({
+      success: false,
+      error: "Employee update failed",
+    });
   }
 };
 

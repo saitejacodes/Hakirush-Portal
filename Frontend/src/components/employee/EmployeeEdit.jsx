@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+
+/* ================= IMAGE URL HELPER ================= */
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return "/default-avatar.png";
+  if (imagePath.startsWith("blob:")) return imagePath;
+  if (imagePath.startsWith("http")) return imagePath;
+  return imagePath;
+};
 
 const Edit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [employee, setEmployee] = useState({
     name: "",
@@ -41,11 +50,11 @@ const Edit = () => {
           });
 
           if (emp?.userId?.profileImage) {
-            setPreview(emp.userId.profileImage); // ✅ FIX
+            setPreview(emp.userId.profileImage);
           }
         }
-      } catch {
-        alert("Failed to load employee data");
+      } catch (err) {
+        alert("Failed to load employee");
       }
     };
 
@@ -57,9 +66,14 @@ const Edit = () => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
-      const file = files[0];
+      const file = files?.[0];
+      if (!file) return;
+
       setImage(file);
       setPreview(URL.createObjectURL(file));
+
+      // 🔥 IMPORTANT: allow selecting SAME image again
+      e.target.value = "";
       return;
     }
 
@@ -74,17 +88,20 @@ const Edit = () => {
     e.preventDefault();
     setLoading(true);
 
-    const form = new FormData();
-    form.append("name", employee.name);
-    form.append("maritalStatus", employee.maritalStatus);
-    form.append("designation", employee.designation);
-    form.append("salary", employee.salary);
-    if (image) form.append("image", image);
+    const formData = new FormData();
+    formData.append("name", employee.name);
+    formData.append("maritalStatus", employee.maritalStatus);
+    formData.append("designation", employee.designation);
+    formData.append("salary", employee.salary);
+
+    if (image) {
+      formData.append("image", image);
+    }
 
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-        form,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -96,13 +113,14 @@ const Edit = () => {
         alert("Employee updated successfully 🎉");
         navigate("/admin-dashboard/employees");
       }
-    } catch (error) {
-      alert(error.response?.data?.error || "Update failed");
+    } catch (err) {
+      alert(err.response?.data?.error || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
@@ -112,12 +130,13 @@ const Edit = () => {
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-
+            {/* IMAGE */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
                 <img
-                  src={preview || "/default-avatar.png"}
+                  src={getImageUrl(preview)}
                   alt="avatar"
+                  onError={(e) => (e.target.src = "/default-avatar.png")}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -125,6 +144,7 @@ const Edit = () => {
               <label className="cursor-pointer text-red-600 font-semibold">
                 Change Photo
                 <input
+                  ref={fileInputRef}
                   type="file"
                   name="image"
                   className="hidden"
@@ -134,6 +154,7 @@ const Edit = () => {
               </label>
             </div>
 
+            {/* FORM */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <input
                 className="border border-red-200 p-3 rounded-xl"
@@ -177,12 +198,11 @@ const Edit = () => {
               <button
                 disabled={loading}
                 className={`px-10 py-3 rounded-xl font-semibold text-white
-                  ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
+                ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {loading ? "Updating..." : "Update Employee"}
               </button>
             </div>
-
           </form>
         </div>
       </div>
