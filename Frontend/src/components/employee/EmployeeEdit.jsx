@@ -3,14 +3,15 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
 /* ================= IMAGE URL HELPER ================= */
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return "/default-avatar.png";
-  if (imagePath.startsWith("blob:")) return imagePath;
-  if (imagePath.startsWith("http")) return imagePath;
-  return imagePath;
+const getImageUrl = (url) => {
+  if (!url) return "/default-avatar.png";
+  if (url.startsWith("blob:")) return url;
+  return `${url}?t=${Date.now()}`; // 🔥 cache bust
 };
 
-const Edit = () => {
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const EmployeeEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -22,42 +23,38 @@ const Edit = () => {
     salary: "",
   });
 
-  const [preview, setPreview] = useState(null);
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD EMPLOYEE ================= */
-  useEffect(() => {
-    const fetchEmployee = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (res.data.success) {
-          const emp = res.data.employee;
-
-          setEmployee({
-            name: emp?.userId?.name || "",
-            maritalStatus: emp?.maritalStatus || "",
-            designation: emp?.designation || "",
-            salary: emp?.salary || "",
-          });
-
-          if (emp?.userId?.profileImage) {
-            setPreview(emp.userId.profileImage);
-          }
+  /* ================= FETCH EMPLOYEE ================= */
+  const fetchEmployee = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      } catch (err) {
-        alert("Failed to load employee");
-      }
-    };
+      );
 
+      const emp = res.data.employee;
+
+      setEmployee({
+        name: emp?.userId?.name || "",
+        maritalStatus: emp?.maritalStatus || "",
+        designation: emp?.designation || "",
+        salary: emp?.salary || "",
+      });
+
+      setPreview(emp?.userId?.profileImage || null);
+    } catch (error) {
+      alert("Failed to load employee");
+    }
+  };
+
+  useEffect(() => {
     fetchEmployee();
   }, [id]);
 
@@ -65,43 +62,51 @@ const Edit = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "image") {
-      const file = files?.[0];
+    // IMAGE
+    if (name === "profileImage") {
+      const file = files[0];
       if (!file) return;
+
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Image size must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
 
       setImage(file);
       setPreview(URL.createObjectURL(file));
 
-      // 🔥 IMPORTANT: allow selecting SAME image again
+      // allow re-select same file
       e.target.value = "";
       return;
     }
 
+    // TEXT FIELDS
     setEmployee((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  /* ================= SUBMIT UPDATE ================= */
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("name", employee.name);
-    formData.append("maritalStatus", employee.maritalStatus);
-    formData.append("designation", employee.designation);
-    formData.append("salary", employee.salary);
+    const fd = new FormData();
+
+    Object.keys(employee).forEach((key) => {
+      fd.append(key, employee[key]);
+    });
 
     if (image) {
-      formData.append("image", image);
+      fd.append("profileImage", image); // ✅ MATCH BACKEND
     }
 
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-        formData,
+        fd,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -113,8 +118,11 @@ const Edit = () => {
         alert("Employee updated successfully 🎉");
         navigate("/admin-dashboard/employees");
       }
-    } catch (err) {
-      alert(err.response?.data?.error || "Update failed");
+    } catch (error) {
+      alert(
+        error.response?.data?.error ||
+          "Update failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -122,92 +130,86 @@ const Edit = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
+    <div className="min-h-screen bg-red-50 p-6">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
           Edit Employee
-        </h3>
+        </h2>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* IMAGE */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
-                <img
-                  src={getImageUrl(preview)}
-                  alt="avatar"
-                  onError={(e) => (e.target.src = "/default-avatar.png")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* IMAGE */}
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={getImageUrl(preview)}
+              alt="profile"
+              onError={(e) => (e.target.src = "/default-avatar.png")}
+              className="w-28 h-28 rounded-full object-cover border"
+            />
 
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Change Photo
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  name="image"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleChange}
-                />
-              </label>
-            </div>
-
-            {/* FORM */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <label className="cursor-pointer text-red-600 font-semibold">
+              Change Photo
               <input
-                className="border border-red-200 p-3 rounded-xl"
-                name="name"
-                value={employee.name}
+                ref={fileInputRef}
+                type="file"
+                name="profileImage"   // ✅ MATCH BACKEND
+                accept="image/*"
+                className="hidden"
                 onChange={handleChange}
-                placeholder="Full Name"
-                required
               />
+            </label>
+          </div>
 
-              <select
-                name="maritalStatus"
-                className="border border-red-200 p-3 rounded-xl"
-                value={employee.maritalStatus}
-                onChange={handleChange}
-              >
-                <option value="">Marital Status</option>
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-              </select>
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              className="input"
+              name="name"
+              value={employee.name}
+              onChange={handleChange}
+              placeholder="Full Name"
+              required
+            />
 
-              <input
-                className="border border-red-200 p-3 rounded-xl"
-                name="designation"
-                value={employee.designation}
-                onChange={handleChange}
-                placeholder="Designation"
-              />
+            <select
+              className="input"
+              name="maritalStatus"
+              value={employee.maritalStatus}
+              onChange={handleChange}
+            >
+              <option value="">Marital Status</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+            </select>
 
-              <input
-                type="number"
-                name="salary"
-                className="border border-red-200 p-3 rounded-xl"
-                value={employee.salary}
-                onChange={handleChange}
-                placeholder="Salary"
-              />
-            </div>
+            <input
+              className="input"
+              name="designation"
+              value={employee.designation}
+              onChange={handleChange}
+              placeholder="Designation"
+            />
 
-            <div className="text-center">
-              <button
-                disabled={loading}
-                className={`px-10 py-3 rounded-xl font-semibold text-white
-                ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
-              >
-                {loading ? "Updating..." : "Update Employee"}
-              </button>
-            </div>
-          </form>
-        </div>
+            <input
+              type="number"
+              className="input"
+              name="salary"
+              value={employee.salary}
+              onChange={handleChange}
+              placeholder="Salary"
+            />
+          </div>
+
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-semibold
+              ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
+          >
+            {loading ? "Updating..." : "Update Employee"}
+          </button>
+        </form>
       </div>
     </div>
   );
 };
 
-export default Edit;
+export default EmployeeEdit;

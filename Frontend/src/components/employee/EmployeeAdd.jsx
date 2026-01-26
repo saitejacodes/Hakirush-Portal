@@ -3,11 +3,14 @@ import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
 import { useNavigate } from "react-router-dom";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 const Add = () => {
   const [departments, setDepartments] = useState([]);
   const [loadingDept, setLoadingDept] = useState(false);
   const [formData, setFormData] = useState({});
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   /* ================= LOAD DEPARTMENTS ================= */
@@ -21,7 +24,6 @@ const Add = () => {
         setLoadingDept(false);
       }
     };
-
     loadDepartments();
   }, []);
 
@@ -29,28 +31,41 @@ const Add = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "image") {
+    // IMAGE
+    if (name === "profileImage") {
       const file = files[0];
-      setFormData((prev) => ({ ...prev, image: file }));
+      if (!file) return;
+
+      // ✅ Prevent Multer crash
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Image must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, profileImage: file }));
       setPreview(URL.createObjectURL(file));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
     }
+
+    // TEXT FIELDS
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const formDataObj = new FormData();
+    const fd = new FormData();
     Object.keys(formData).forEach((key) => {
-      formDataObj.append(key, formData[key]);
+      fd.append(key, formData[key]);
     });
 
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/add`,
-        formDataObj,
+        fd,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -60,195 +75,157 @@ const Add = () => {
 
       if (res.data.success) {
         alert("Employee Added Successfully 🎉");
+
+        // ✅ NO reload (important for Vercel + auth)
         navigate("/admin-dashboard/employees");
       }
     } catch (error) {
-      console.log("SERVER ERROR:", error.response?.data);
-      alert(error.response?.data?.error || "Failed to add employee");
+      alert(
+        error.response?.data?.error ||
+          "Failed to add employee. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-red-50 p-6">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
+          Add New Employee
+        </h2>
 
-        {/* TITLE */}
-        <div className="text-center mb-8">
-          <h3 className="text-4xl font-extrabold text-red-700">
-            Add New Employee
-          </h3>
-          <p className="text-red-500 mt-2">
-            Enter employee information and credentials
-          </p>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* IMAGE */}
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={preview || "/default-avatar.png"}
+              alt="profile"
+              className="w-28 h-28 rounded-full object-cover border"
+            />
 
-        {/* CARD */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-red-100">
-          <form onSubmit={handleSubmit} className="space-y-8">
-
-            {/* PROFILE IMAGE */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
-                <img
-                  src={preview || "/default-avatar.png"}
-                  alt="preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Upload Profile Photo
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleChange}
-                />
-              </label>
-            </div>
-
-            {/* FORM FIELDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-              {/* PERSONAL */}
+            <label className="text-red-600 font-semibold cursor-pointer">
+              Upload Photo
               <input
-                name="name"
-                placeholder="Full Name"
-                required
+                type="file"
+                name="profileImage"   // ✅ MATCH BACKEND
+                accept="image/*"
+                className="hidden"
                 onChange={handleChange}
-                className="input"
               />
+            </label>
+          </div>
 
-              <input
-                name="email"
-                placeholder="Email Address"
-                type="email"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              name="name"
+              placeholder="Name"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <input
-                name="employeeId"
-                placeholder="Employee ID"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+            <input
+              name="email"
+              placeholder="Email"
+              type="email"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <input
-                type="date"
-                name="dob"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+            <input
+              name="employeeId"
+              placeholder="Employee ID"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <select
-                name="gender"
-                required
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Gender</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-              </select>
+            <input
+              type="date"
+              name="dob"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <select
-                name="maritalStatus"
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Marital Status</option>
-                <option>Single</option>
-                <option>Married</option>
-              </select>
+            <select
+              name="gender"
+              required
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
 
-              <select
-                name="bloodGroup"
-                required
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Blood Group</option>
-                <option>A+</option>
-                <option>A-</option>
-                <option>B+</option>
-                <option>B-</option>
-                <option>AB+</option>
-                <option>AB-</option>
-                <option>O+</option>
-                <option>O-</option>
-              </select>
-
-              {/* DEPARTMENT */}
-              <select
-                name="department"
-                required
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">
-                  {loadingDept ? "Loading..." : "Select Department"}
+            <select
+              name="department"
+              required
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">
+                {loadingDept ? "Loading..." : "Select Department"}
+              </option>
+              {departments.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {d.dep_name}
                 </option>
-                {departments.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.dep_name}
-                  </option>
-                ))}
-              </select>
+              ))}
+            </select>
 
-              <input
-                name="designation"
-                placeholder="Designation (e.g. Software Engineer)"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+            <input
+              name="designation"
+              placeholder="Designation"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <input
-                type="number"
-                name="salary"
-                placeholder="Salary"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+            <input
+              type="number"
+              name="salary"
+              placeholder="Salary"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <input
-                type="password"
-                name="password"
-                placeholder="Account Password"
-                required
-                onChange={handleChange}
-                className="input"
-              />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+              onChange={handleChange}
+              className="input"
+            />
 
-              <select
-                name="role"
-                required
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">User Role</option>
-                <option value="admin">Admin</option>
-                <option value="employee">Employee</option>
-                <option value="client">Client</option>
-              </select>
-            </div>
+            <select
+              name="role"
+              required
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">Role</option>
+              <option value="admin">Admin</option>
+              <option value="employee">Employee</option>
+            </select>
+          </div>
 
-            {/* SUBMIT */}
-            <div className="text-center">
-              <button className="bg-red-600 hover:bg-red-700 transition text-white px-10 py-3 rounded-2xl shadow-lg font-semibold">
-                Create Employee
-              </button>
-            </div>
-
-          </form>
-        </div>
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-semibold
+              ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
+          >
+            {loading ? "Creating..." : "Create Employee"}
+          </button>
+        </form>
       </div>
     </div>
   );

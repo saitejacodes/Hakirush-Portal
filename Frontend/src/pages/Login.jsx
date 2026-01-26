@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../context/authContext";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -105,21 +106,26 @@ const Login = () => {
               </label>
 
               <div className="relative">
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  type={showPass ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow focus:ring-2 focus:ring-red-200 outline-none text-sm sm:text-base"
-                  required
-                />
+               <input
+                 onChange={(e) => setPassword(e.target.value)}
+                 type={showPass ? "text" : "password"}
+                 placeholder="••••••••"
+                 className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 shadow focus:ring-2 focus:ring-red-200 outline-none text-sm sm:text-base"
+                 required
+               />
 
-                <span
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-3 sm:top-4 cursor-pointer text-gray-500 text-xs sm:text-sm"
-                >
-                  {showPass ? "Hide" : "Show"}
-                </span>
-              </div>
+               <button
+                 type="button"
+                 onClick={() => setShowPass(!showPass)}
+                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600 transition"
+               >
+                 {showPass ? (
+                   <EyeOff size={20} />
+                 ) : (
+                   <Eye size={20} />
+                 )}
+               </button>
+             </div>
             </div>
 
             <div className="flex justify-end text-xs sm:text-sm">

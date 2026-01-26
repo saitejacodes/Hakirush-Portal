@@ -2,6 +2,7 @@ import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import Leave from "../models/Leave.js";
+import uploadToImageKit from "../utils/uploadToImageKit.js";
 
 /* ================= ADD EMPLOYEE ================= */
 const addEmployee = async (req, res) => {
@@ -21,39 +22,28 @@ const addEmployee = async (req, res) => {
       bloodGroup,
     } = req.body;
 
-    if (
-      !name ||
-      !email ||
-      !employeeId ||
-      !department ||
-      !designation ||
-      !salary ||
-      !password ||
-      !role
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields",
-      });
+    if (!name || !email || !employeeId || !department || !designation || !salary || !password || !role) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
     const exists = await User.findOne({ email });
     if (exists) {
-      return res.status(400).json({
-        success: false,
-        error: "User already exists",
-      });
+      return res.status(400).json({ success: false, error: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    let profileImage = "";
+    if (req.file?.buffer) {
+      profileImage = await uploadToImageKit(req.file, "employees");
+    }
 
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
-      // ✅ Cloudinary gives full URL here
-      profileImage: req.file ? req.file.path : "",
+      profileImage,
     });
 
     const employee = await Employee.create({
@@ -69,14 +59,10 @@ const addEmployee = async (req, res) => {
       dateOfJoining: new Date(),
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Employee created successfully",
-      employee,
-    });
-  } catch (error) {
-    console.error("ADD EMPLOYEE ERROR:", error);
-    return res.status(500).json({ success: false, error: error.message });
+    res.status(201).json({ success: true, employee });
+  } catch (err) {
+    console.error("ADD EMPLOYEE ERROR:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -87,10 +73,9 @@ const getEmployees = async (req, res) => {
       .populate("userId", "-password")
       .populate("department");
 
-    res.status(200).json({ success: true, employees });
-  } catch (error) {
-    console.error("GET EMPLOYEES ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, employees });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -110,80 +95,99 @@ const getEmployee = async (req, res) => {
     }
 
     if (!employee) {
-      return res.status(404).json({
-        success: false,
-        message: "Employee not found",
-      });
+      return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    res.status(200).json({ success: true, employee });
-  } catch (error) {
-    console.error("GET EMPLOYEE ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, employee });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-/* ================= UPDATE EMPLOYEE ================= */
+/* ================= UPDATE EMPLOYEE (ADMIN) ================= */
 const updateEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).populate("userId");
+    const { id } = req.params;
+
+    let employee = await Employee.findById(id).populate("userId");
+    if (!employee) {
+      employee = await Employee.findOne({ userId: id }).populate("userId");
+    }
 
     if (!employee) {
-      return res.status(404).json({
-        success: false,
-        error: "Employee not found",
-      });
+      return res.status(404).json({ success: false, error: "Employee not found" });
     }
 
-    employee.maritalStatus = req.body.maritalStatus;
-    employee.designation = req.body.designation;
-    employee.salary = req.body.salary;
+    const { name, maritalStatus, designation, salary } = req.body;
 
-    if (req.body.name) {
-      employee.userId.name = req.body.name;
-    }
+    if (name !== undefined) employee.userId.name = name;
+    if (maritalStatus !== undefined) employee.maritalStatus = maritalStatus;
+    if (designation !== undefined) employee.designation = designation;
+    if (salary !== undefined) employee.salary = Number(salary);
 
-    // ✅ SAFE IMAGE UPDATE
-    if (req.file) {
-      employee.userId.profileImage = req.file.path;
+    if (req.file?.buffer) {
+      employee.userId.profileImage = await uploadToImageKit(req.file, "employees");
     }
 
     await employee.userId.save();
     await employee.save();
 
     res.json({ success: true });
-  } catch (error) {
-    console.error("UPDATE ERROR:", error);
-    res.status(500).json({
-      success: false,
-      error: "Employee update failed",
-    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/* ================= EDIT EMPLOYEE PROFILE ================= */
+const editEmployeeProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, experience } = req.body;
+
+    let employee = await Employee.findById(id);
+    if (!employee) employee = await Employee.findOne({ userId: id });
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    if (name !== undefined) {
+      await User.updateOne({ _id: employee.userId }, { $set: { name } });
+    }
+
+    if (req.file?.buffer) {
+      const imageUrl = await uploadToImageKit(req.file, "employees");
+      await User.updateOne(
+        { _id: employee.userId },
+        { $set: { profileImage: imageUrl } }
+      );
+    }
+
+    if (experience !== undefined) {
+      await Employee.updateOne(
+        { _id: employee._id },
+        { $set: { experience } }
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
 /* ================= DELETE EMPLOYEE ================= */
 const deleteEmployee = async (req, res) => {
   try {
-    const { id } = req.params;
+    const emp = await Employee.findById(req.params.id);
+    if (!emp) return res.status(404).json({ success: false });
 
-    const employee = await Employee.findById(id);
-    if (!employee) {
-      return res.status(404).json({
-        success: false,
-        message: "Employee not found",
-      });
-    }
+    await User.findByIdAndDelete(emp.userId);
+    await Employee.findByIdAndDelete(emp._id);
 
-    await User.findByIdAndDelete(employee.userId);
-    await Employee.findByIdAndDelete(id);
-
-    res.status(200).json({
-      success: true,
-      message: "Employee deleted successfully",
-    });
-  } catch (error) {
-    console.error("DELETE EMPLOYEE ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -191,21 +195,22 @@ const deleteEmployee = async (req, res) => {
 const getEmployeesByDepartment = async (req, res) => {
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
+
     if (!emp) {
-      return res.status(404).json({
-        success: false,
-        message: "Employee not found",
-      });
+      return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
     const employees = await Employee.find({ department: emp.department })
       .populate("userId", "name email profileImage")
-      .populate("department", "dep_name");
+      .populate("department", "dep_name description");
 
-    res.status(200).json({ success: true, employees });
-  } catch (error) {
-    console.error("BY DEPARTMENT ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({
+      success: true,
+      department: emp.department,
+      employees,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -216,15 +221,14 @@ const getNewEmployees = async (req, res) => {
     THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 30);
 
     const employees = await Employee.find({
-      createdAt: { $gte: THIRTY_DAYS_AGO },
+      dateOfJoining: { $gte: THIRTY_DAYS_AGO },
     })
-      .sort({ createdAt: -1 })
+      .sort({ dateOfJoining: -1 })
       .populate("userId", "name email profileImage");
 
-    res.status(200).json({ success: true, employees });
-  } catch (error) {
-    console.error("NEW EMPLOYEES ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, employees });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -232,12 +236,7 @@ const getNewEmployees = async (req, res) => {
 const getLeaveBalance = async (req, res) => {
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
-    if (!emp) {
-      return res.status(404).json({
-        success: false,
-        message: "Employee profile not found",
-      });
-    }
+    if (!emp) return res.status(404).json({ success: false });
 
     const used = await Leave.countDocuments({
       employeeId: emp._id,
@@ -246,24 +245,18 @@ const getLeaveBalance = async (req, res) => {
 
     const total = 24;
 
-    res.status(200).json({
-      success: true,
-      total,
-      used,
-      balance: total - used,
-    });
-  } catch (error) {
-    console.error("LEAVE BALANCE ERROR:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, total, used, balance: total - used });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-/* ================= EXPORTS ================= */
 export {
   addEmployee,
   getEmployees,
   getEmployee,
   updateEmployee,
+  editEmployeeProfile,
   deleteEmployee,
   getEmployeesByDepartment,
   getNewEmployees,

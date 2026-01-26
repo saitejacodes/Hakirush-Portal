@@ -1,6 +1,7 @@
 import Client from "../models/Client.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import uploadToImageKit from "../utils/uploadToImageKit.js";
 
 /* ================= ADD CLIENT ================= */
 export const addClient = async (req, res) => {
@@ -18,12 +19,17 @@ export const addClient = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let imageUrl = "";
+    if (req.file?.buffer) {
+      imageUrl = await uploadToImageKit(req.file, "clients");
+    }
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role: "client",
-      profileImage: req.file ? req.file.path : "", // ✅ Cloudinary URL
+      profileImage: imageUrl, // ✅ ImageKit URL
     });
 
     const client = await Client.create({
@@ -31,11 +37,16 @@ export const addClient = async (req, res) => {
       dateOfJoining,
       budget,
       planType,
-      companyLogo: req.file ? req.file.path : "", // ✅ Cloudinary URL
+      companyLogo: imageUrl, // ✅ ImageKit URL
     });
 
-    res.status(201).json({ success: true, message: "Client added", client });
+    res.status(201).json({
+      success: true,
+      message: "Client added",
+      client,
+    });
   } catch (err) {
+    console.error("ADD CLIENT ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -54,7 +65,9 @@ export const getClients = async (req, res) => {
 export const getClient = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id).populate("userId", "-password");
-    if (!client) return res.status(404).json({ success: false, error: "Client not found" });
+    if (!client) {
+      return res.status(404).json({ success: false, error: "Client not found" });
+    }
     res.json({ success: true, client });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -68,25 +81,37 @@ export const updateClient = async (req, res) => {
     const { name, budget, dateOfJoining, planType } = req.body;
 
     const client = await Client.findById(id);
-    if (!client) return res.status(404).json({ success: false, error: "Client not found" });
+    if (!client) {
+      return res.status(404).json({ success: false, error: "Client not found" });
+    }
 
+    /* ---------- USER UPDATE ---------- */
     const userUpdate = {};
-    if (name) userUpdate.name = name;
-    if (req.file) userUpdate.profileImage = req.file.path;
+    if (name !== undefined) userUpdate.name = name;
 
-    if (Object.keys(userUpdate).length)
+    if (req.file?.buffer) {
+      userUpdate.profileImage = await uploadToImageKit(req.file, "clients");
+    }
+
+    if (Object.keys(userUpdate).length) {
       await User.findByIdAndUpdate(client.userId, userUpdate);
+    }
 
+    /* ---------- CLIENT UPDATE ---------- */
     const clientUpdate = {};
-    if (budget) clientUpdate.budget = budget;
-    if (dateOfJoining) clientUpdate.dateOfJoining = dateOfJoining;
-    if (planType) clientUpdate.planType = planType;
-    if (req.file) clientUpdate.companyLogo = req.file.path;
+    if (budget !== undefined) clientUpdate.budget = budget;
+    if (dateOfJoining !== undefined) clientUpdate.dateOfJoining = dateOfJoining;
+    if (planType !== undefined) clientUpdate.planType = planType;
+
+    if (req.file?.buffer) {
+      clientUpdate.companyLogo = userUpdate.profileImage;
+    }
 
     await Client.findByIdAndUpdate(id, clientUpdate);
 
     res.json({ success: true, message: "Client updated" });
   } catch (err) {
+    console.error("UPDATE CLIENT ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -95,7 +120,9 @@ export const updateClient = async (req, res) => {
 export const deleteClient = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id);
-    if (!client) return res.status(404).json({ success: false, error: "Client not found" });
+    if (!client) {
+      return res.status(404).json({ success: false, error: "Client not found" });
+    }
 
     await User.findByIdAndDelete(client.userId);
     await Client.findByIdAndDelete(client._id);

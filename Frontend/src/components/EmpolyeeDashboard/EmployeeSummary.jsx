@@ -2,7 +2,6 @@ import axios from "axios";
 import {
   Users,
   CalendarDays,
-  Star,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -17,7 +16,6 @@ const EmployeeSummary = () => {
 
   const [department, setDepartment] = useState(null);
   const [deptEmployees, setDeptEmployees] = useState([]);
-  const [newEmployees, setNewEmployees] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [leaveBalance, setLeaveBalance] = useState(0);
   const [attendance, setAttendance] = useState([]);
@@ -29,10 +27,7 @@ const EmployeeSummary = () => {
   /* ---------- DATE FORMAT ---------- */
   const toYMD = (d) => {
     const date = new Date(d);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(date.getDate()).padStart(2, "0")}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
 
   /* ---------- FETCH DASHBOARD DATA ---------- */
@@ -43,17 +38,15 @@ const EmployeeSummary = () => {
 
     Promise.all([
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/new/recent`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/leave/balance/me`, { headers })
     ])
-      .then(([d1, d2, d3, d4]) => {
+      .then(([d1, d2, d3]) => {
         setDeptEmployees(d1?.data?.employees || []);
-        setNewEmployees(d2?.data?.employees || []);
-        setHolidays(d3?.data?.holidays || []);
         setDepartment(d1?.data?.department || null);
+        setHolidays(d2?.data?.holidays || []);
 
-        const leave = d4?.data || {};
+        const leave = d3?.data || {};
         setLeaveBalance(leave.balance ?? (leave.total - leave.used) ?? 0);
       })
       .catch(console.error);
@@ -127,12 +120,6 @@ const EmployeeSummary = () => {
 
   if (loading || !user) return <p>Loading...</p>;
 
-  const isWithin30Days = (date) => {
-    if (!date) return false;
-    const diffDays = (new Date() - new Date(date)) / (1000 * 60 * 60 * 24);
-    return diffDays <= 30;
-  };
-
   return (
     <div className="min-h-screen bg-red-100 px-4 sm:px-6 py-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -141,31 +128,13 @@ const EmployeeSummary = () => {
           Dashboard Overview
         </h1>
 
-        {department && (
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
-            <div className="flex items-center gap-2 text-red-700">
-              <Building2 />
-              <h2 className="text-xl font-bold">{department.dep_name}</h2>
-            </div>
-            <p className="text-gray-600 mt-1">{department.description}</p>
-          </div>
-        )}
-
         {/* ---------- WIDGETS ---------- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
 
           <Widget title="Department Employees" icon={<Users />}>
             {deptEmployees.map(e => (
               <Chip key={e._id} color="red">{e?.userId?.name}</Chip>
             ))}
-          </Widget>
-
-          <Widget title="New Joinees" icon={<Star />}>
-            {newEmployees
-              .filter(e => isWithin30Days(e.joiningDate || e.createdAt))
-              .map(e => (
-                <Chip key={e._id} color="green">{e?.userId?.name}</Chip>
-              ))}
           </Widget>
 
           <Widget title="Upcoming Holidays" icon={<CalendarDays />}>
@@ -189,56 +158,33 @@ const EmployeeSummary = () => {
           </Widget>
 
           <Widget title="Leave Balance" icon={<CalendarMinus />}>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-4xl font-black text-red-700">{leaveBalance}</p>
-                <p className="text-xs text-gray-500">Days Remaining</p>
-              </div>
+            <div>
+              <p className="text-4xl font-black text-red-700">{leaveBalance}</p>
+              <p className="text-xs text-gray-500">Days Remaining</p>
             </div>
           </Widget>
 
         </div>
 
         {/* ---------- CALENDAR ---------- */}
-        <div className="bg-white rounded-3xl p-6 shadow-2xl relative"> 
-          
-          {hoverDay && (
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2
-                            px-3 py-1 text-xs sm:text-sm
-                            rounded-xl bg-black text-white
-                            shadow-lg z-20 whitespace-nowrap">
-              {getDayTooltip(hoverDay)}
-            </div>
-          )}
-
-          <div className="grid grid-cols-3 items-center mb-4">
-            <h2 className="text-left text-xl sm:text-2xl font-extrabold text-red-700">
+        <div className="bg-white rounded-3xl p-6 shadow-2xl">
+          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-red-700">
               Attendance Calendar
             </h2>
 
-          <p className="text-center text-xl sm:text-md font-bold text-red-600 tracking-wide">
-            {calendarMonth.toLocaleString("default", { month: "long" })}{" "}
-            {calendarMonth.getFullYear()}
-          </p>
+            <p className="text-left sm:text-center text-lg font-bold text-red-600">
+              {calendarMonth.toLocaleString("default", { month: "long" })} {calendarMonth.getFullYear()}
+            </p>
 
-          <div className="flex justify-end gap-2">
-            <NavBtn
-              onClick={() =>
-                setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-              }
-            >
-              <ChevronLeft />
-            </NavBtn>
+            <div className="flex sm:justify-end gap-2">
+              <NavBtn onClick={() => setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
+                <ChevronLeft />
+              </NavBtn>
 
-            <NavBtn onClick={() => setCalendarMonth(new Date())}>
-              Today
-            </NavBtn>
+              <NavBtn onClick={() => setCalendarMonth(new Date())}>Today</NavBtn>
 
-              <NavBtn
-                onClick={() =>
-                  setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-                }
-              >
+              <NavBtn onClick={() => setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
                 <ChevronRight />
               </NavBtn>
             </div>
@@ -253,13 +199,12 @@ const EmployeeSummary = () => {
           <div className="grid grid-cols-7 gap-2">
             {generateCalendar().map((day, i) => {
               const status = getDayStatus(day);
-
               return (
                 <div
                   key={i}
                   onMouseEnter={() => day && setHoverDay(day)}
                   onMouseLeave={() => setHoverDay(null)}
-                  className={`h-10 sm:h-12 flex items-center justify-center rounded-xl
+                  className={`relative h-9 sm:h-12 flex items-center justify-center rounded-xl
                     font-semibold cursor-pointer text-xs sm:text-base
                     ${!day && "bg-transparent cursor-default"}
                     ${status === "present" && "bg-green-500 text-white"}
@@ -271,6 +216,11 @@ const EmployeeSummary = () => {
                   `}
                 >
                   {day || ""}
+                  {hoverDay === day && day && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-lg bg-black text-white">
+                      {getDayTooltip(day)}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -285,19 +235,20 @@ const EmployeeSummary = () => {
 /* ---------- UI COMPONENTS ---------- */
 
 const Widget = ({ title, icon, children }) => (
-  <div className="bg-white rounded-3xl p-5 shadow-lg">
+  <div className="bg-white rounded-3xl p-5 shadow-lg flex flex-col">
     <h3 className="flex items-center gap-2 font-bold mb-4 text-sm">
       <span className="p-2 bg-red-100 rounded-xl">{icon}</span>
       {title}
     </h3>
-    <div className="flex flex-col gap-2">{children}</div>
+    <div className="flex flex-col gap-2 overflow-y-auto max-h-40 pr-1">
+      {children}
+    </div>
   </div>
 );
 
 const Chip = ({ children, color }) => {
   const c = {
     red: "bg-red-600",
-    green: "bg-green-600",
     yellow: "bg-yellow-500"
   };
   return (
@@ -308,7 +259,7 @@ const Chip = ({ children, color }) => {
 };
 
 const NavBtn = ({ children, onClick }) => (
-  <button onClick={onClick} className="px-3 py-1 bg-red-100 rounded-xl font-semibold cursor-pointer">
+  <button onClick={onClick} className="px-3 py-1 bg-red-100 rounded-xl font-semibold">
     {children}
   </button>
 );

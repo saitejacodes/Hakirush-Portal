@@ -40,6 +40,8 @@ import StallEdit from './components/stalls/StallEdit';
 import SponsorView from './components/sponsor/SponsorView';
 import AdminAnnouncement from './components/announcement/AdminAnnouncement';
 import EditAnnouncement from './components/announcement/EditAnnouncement';
+import EmployeeProfile from './components/EmpolyeeDashboard/EmployeeProfile';
+import EditEmployeeProfile from './components/EmpolyeeDashboard/EditEmployeeProfile';
 
 
 const App = () => {
@@ -96,7 +98,8 @@ const App = () => {
           </PrivateRoutes>
         } >
           <Route index element={<EmpolyeeSummary />} />
-          <Route path='/employee-dashboard/profile/:id' element={<EmplyeeView />} />
+          <Route path='/employee-dashboard/profile/:id' element={<EmployeeProfile />} />
+          <Route path='/employee-dashboard/profile/:id/edit' element={<EditEmployeeProfile />} />
           <Route path='/employee-dashboard/leaves/:id' element={<EmployeeLeaveList />} />
           <Route path='/employee-dashboard/add-leave' element={<EmployeeLeaveAdd />} />
           <Route path='/employee-dashboard/setting' element={<EmployeeSetting />} />

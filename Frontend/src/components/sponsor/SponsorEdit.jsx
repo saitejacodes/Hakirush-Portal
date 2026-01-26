@@ -2,6 +2,16 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/* ================= IMAGE HELPER ================= */
+const getImageUrl = (url) => {
+  if (!url) return "/default-avatar.png";
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return `${url}?t=${Date.now()}`; // 🔥 cache bust
+  return "/default-avatar.png";
+};
+
 const SponsorEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -14,8 +24,10 @@ const SponsorEdit = () => {
     upcomingEvents: "",
   });
 
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState("/default-avatar.png");
   const [logo, setLogo] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   /* ================= LOAD SPONSOR ================= */
   useEffect(() => {
@@ -41,12 +53,12 @@ const SponsorEdit = () => {
             upcomingEvents: s.upcomingEvents || "",
           });
 
-          // ✅ Cloudinary URL directly
-          if (s.logo) setPreview(s.logo);
+          setPreview(getImageUrl(s.logo));
         }
       } catch (error) {
-        console.error("FETCH SPONSOR ERROR:", error);
-        alert("Failed to load sponsor data");
+        alert("Failed to load sponsor");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -58,10 +70,18 @@ const SponsorEdit = () => {
     const { name, value, files } = e.target;
 
     if (name === "logo") {
-      const file = files[0];
+      const file = files?.[0];
       if (!file) return;
+
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Logo must be under 10MB");
+        e.target.value = "";
+        return;
+      }
+
       setLogo(file);
-      setPreview(URL.createObjectURL(file));
+      setPreview(URL.createObjectURL(file)); // 🔥 instant preview
+      e.target.value = ""; // allow same file reselect
       return;
     }
 
@@ -74,6 +94,7 @@ const SponsorEdit = () => {
   /* ================= UPDATE ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
 
     const form = new FormData();
     form.append("name", sponsor.name);
@@ -97,13 +118,22 @@ const SponsorEdit = () => {
 
       if (res.data.success) {
         alert("Sponsor updated successfully 🎉");
-        navigate("/admin-dashboard/sponsors");
+        navigate("/admin-dashboard/sponsors", { replace: true });
       }
     } catch (error) {
-      console.error("UPDATE SPONSOR ERROR:", error);
       alert(error.response?.data?.error || "Update failed");
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
@@ -120,10 +150,10 @@ const SponsorEdit = () => {
             <div className="flex flex-col items-center gap-3">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
                 <img
-                  src={preview || "/default-avatar.png"}
+                  src={preview}
                   alt="logo"
-                  className="w-full h-full object-cover"
                   onError={(e) => (e.target.src = "/default-avatar.png")}
+                  className="w-full h-full object-cover"
                 />
               </div>
 
@@ -189,8 +219,12 @@ const SponsorEdit = () => {
             </div>
 
             <div className="text-center">
-              <button className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700">
-                Update Sponsor
+              <button
+                disabled={saving}
+                className={`px-8 py-3 rounded-xl text-white font-semibold
+                ${saving ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
+              >
+                {saving ? "Updating..." : "Update Sponsor"}
               </button>
             </div>
 

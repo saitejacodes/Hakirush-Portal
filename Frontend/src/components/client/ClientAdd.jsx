@@ -12,8 +12,10 @@ const AddClient = () => {
 
     if (name === "image") {
       const file = files[0];
+      if (!file) return;
       setFormData((p) => ({ ...p, image: file }));
       setPreview(URL.createObjectURL(file));
+      e.target.value = "";
     } else {
       setFormData((p) => ({ ...p, [name]: value }));
     }

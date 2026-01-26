@@ -21,12 +21,11 @@ const sidebar = [
   { link: "/admin-dashboard/departments", icon: Building, title: "Departments" },
   { link: "/admin-dashboard/employees", icon: User, title: "Employees" },
   { link: "/admin-dashboard/clients", icon: UserSquare, title: "Clients" },
-  { link: "/admin-dashboard/attendance", icon: UserCheck, title: "Attendance" },
-  { link: "/admin-dashboard/attendance-report", icon: ClipboardList, title: "Attendance Report" },
-  { link: "/admin-dashboard/leaves", icon: CalendarCheck, title: "Leaves" },
-  { link: "/admin-dashboard/holidays", icon: PartyPopper, title: "Holidays" },
   { link: "/admin-dashboard/sponsors", icon: BadgeDollarSign, title: "Sponsors" },
   { link: "/admin-dashboard/stalls", icon: Store, title: "Stalls" },
+  { link: "/admin-dashboard/attendance", icon: UserCheck, title: "Attendance" },
+  { link: "/admin-dashboard/leaves", icon: CalendarCheck, title: "Leaves" },
+  { link: "/admin-dashboard/holidays", icon: PartyPopper, title: "Holidays" },
   { link: "/admin-dashboard/announcement", icon: Bell, title: "Announcement" },
 ];
 

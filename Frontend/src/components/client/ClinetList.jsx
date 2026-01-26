@@ -4,8 +4,16 @@ import { Link } from "react-router-dom";
 import { ClientButtons } from "../../utils/ClientHelper";
 import { Search } from "lucide-react";
 
+/* ========== IMAGE HELPER ========== */
+const getImageUrl = (url) => {
+  if (!url) return "/default-avatar.png";
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return `${url}?t=${Date.now()}`;
+  return "/default-avatar.png";
+};
+
 /* ========== MOBILE CARD ========== */
-const MobileClientCard = ({ client, getImageUrl }) => {
+const MobileClientCard = ({ client }) => {
   return (
     <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
       <div className="flex items-center gap-3">
@@ -28,9 +36,7 @@ const MobileClientCard = ({ client, getImageUrl }) => {
           </p>
         </div>
 
-        <div className="shrink-0">
-          <ClientButtons id={client._id} />
-        </div>
+        <ClientButtons id={client._id} />
       </div>
 
       <div className="flex justify-between mt-2 text-xs text-gray-500">
@@ -41,12 +47,16 @@ const MobileClientCard = ({ client, getImageUrl }) => {
   );
 };
 
+const ITEMS_PER_PAGE = 5;
+
 const ClientList = () => {
   const [clients, setClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
+  /* ===== FETCH CLIENTS ===== */
   useEffect(() => {
     const fetchClients = async () => {
       setLoading(true);
@@ -71,7 +81,7 @@ const ClientList = () => {
               ? new Date(c.dateOfJoining).toDateString()
               : "N/A",
             logo: c.companyLogo || "",
-            planType: c.planType || "",
+            planType: c.planType || "N/A",
           }));
 
           setClients(data);
@@ -87,24 +97,28 @@ const ClientList = () => {
     fetchClients();
   }, []);
 
+  /* ===== SEARCH ===== */
   useEffect(() => {
     const result = clients.filter((c) =>
-      (c.name || "").toLowerCase().includes(search.toLowerCase())
+      c.name.toLowerCase().includes(search.toLowerCase())
     );
     setFilteredClients(result);
+    setCurrentPage(1);
   }, [search, clients]);
 
-  /* ===== IMAGE HANDLER (CLOUDINARY SAFE) ===== */
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "/default-avatar.png";
-    if (imagePath.startsWith("http")) return imagePath;
-    return "/default-avatar.png";
-  };
+  /* ===== PAGINATION ===== */
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedClients = filteredClients.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
 
+        {/* HEADER */}
         <div className="mb-6 md:mb-8 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold text-red-800">
             Manage Clients
@@ -116,13 +130,18 @@ const ClientList = () => {
 
         <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
 
+          {/* TOP BAR */}
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <div className="relative w-full md:w-1/2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400"
+                size={18}
+              />
               <input
                 type="text"
                 placeholder="Search client..."
-                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-red-500"
+                className="w-full rounded-xl border border-red-300 pl-10 pr-4 py-2.5
+                           focus:ring-2 focus:ring-red-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -137,19 +156,16 @@ const ClientList = () => {
           </div>
 
           {loading ? (
-            <div className="p-10 text-center text-red-600">
+            <div className="p-10 text-center text-red-600 font-semibold">
               Loading clients...
             </div>
           ) : (
             <>
-              <div className="md:hidden grid gap-4 p-4">
-                {filteredClients.length ? (
-                  filteredClients.map((c) => (
-                    <MobileClientCard
-                      key={c._id}
-                      client={c}
-                      getImageUrl={getImageUrl}
-                    />
+              {/* MOBILE */}
+              <div className="md:hidden grid gap-4 px-4 pb-6">
+                {paginatedClients.length ? (
+                  paginatedClients.map((c) => (
+                    <MobileClientCard key={c._id} client={c} />
                   ))
                 ) : (
                   <div className="text-center text-red-400 py-20">
@@ -158,9 +174,10 @@ const ClientList = () => {
                 )}
               </div>
 
+              {/* DESKTOP */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
-                  <thead className="bg-red-50">
+                  <thead className="sticky top-0 bg-red-50">
                     <tr>
                       <th className="px-4 py-3 text-left">S No</th>
                       <th className="px-4 py-3 text-left">Logo</th>
@@ -171,15 +188,18 @@ const ClientList = () => {
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
+
                   <tbody>
-                    {filteredClients.map((c) => (
+                    {paginatedClients.map((c) => (
                       <tr key={c._id} className="hover:bg-red-50">
                         <td className="px-4 py-3">{c.sno}</td>
                         <td className="px-4 py-3">
                           <img
                             src={getImageUrl(c.logo)}
                             className="w-12 h-12 rounded-full border object-cover"
-                            onError={(e) => (e.target.src = "/default-avatar.png")}
+                            onError={(e) =>
+                              (e.target.src = "/default-avatar.png")
+                            }
                           />
                         </td>
                         <td className="px-4 py-3">{c.name}</td>
@@ -194,6 +214,43 @@ const ClientList = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* PAGINATION */}
+              {filteredClients.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between px-4 py-4 border-t">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-1 rounded-lg font-semibold
+                      ${
+                        currentPage === 1
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-red-100 text-red-600 hover:bg-red-200"
+                      }`}
+                  >
+                    ◀ Previous
+                  </button>
+
+                  <span className="text-sm font-semibold text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(p + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-1 rounded-lg font-semibold
+                      ${
+                        currentPage === totalPages
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-red-600 text-white hover:bg-red-700"
+                      }`}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

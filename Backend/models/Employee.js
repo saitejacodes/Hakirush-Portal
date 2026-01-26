@@ -15,7 +15,8 @@ const employeeSchema = new Schema(
     },
     designation: { type: String, required: true, trim: true },
     department: { type: Schema.Types.ObjectId, ref: "Department", required: true },
-    salary: { type: Number, required: true }
+    salary: { type: Number, required: true },
+    experience: { type: String, default: "" },
   },
   { timestamps: true }   
 );

@@ -1,12 +1,15 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-const View = () => {
-  const { id } = useParams();
+const EmployeeProfile = () => {
+  const { id } = useParams(); // employeeId OR userId
+  const navigate = useNavigate();
+
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /* ================= FETCH EMPLOYEE ================= */
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
@@ -22,7 +25,8 @@ const View = () => {
         if (response.data?.success) {
           setEmployee(response.data.employee);
         }
-      } catch {
+      } catch (error) {
+        console.error(error);
         alert("Failed to load employee");
       } finally {
         setLoading(false);
@@ -32,43 +36,66 @@ const View = () => {
     fetchEmployee();
   }, [id]);
 
+  /* ================= IMAGE HANDLER ================= */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
-    if (imagePath.startsWith("http")) return imagePath;
-    return "/default-avatar.png";
+    if (imagePath.startsWith("http") || imagePath.includes("cloudinary")) {
+      return imagePath;
+    }
+    return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
   };
 
-  if (loading)
+  /* ================= LOADING ================= */
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
         Loading profile…
       </div>
     );
+  }
 
-  if (!employee)
+  /* ================= NOT FOUND ================= */
+  if (!employee) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
         Employee not found
       </div>
     );
+  }
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-3xl mx-auto">
 
         <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
-          Employee Profile
+          View Profile
         </h3>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 border border-red-100">
 
+          {/* Edit Button */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() =>
+                navigate(`/employee-dashboard/profile/${employee._id}/edit`)
+              }
+              className="px-5 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+            >
+              Edit Profile
+            </button>
+          </div>
+
+          {/* Profile */}
           <div className="flex flex-col items-center gap-3">
             <div className="w-32 h-32 rounded-full border-4 border-red-200 shadow-lg overflow-hidden">
               <img
                 src={getImageUrl(employee?.userId?.profileImage)}
                 alt="profile"
                 className="w-full h-full object-cover"
-                onError={(e) => (e.target.src = "/default-avatar.png")}
+                onError={(e) => {
+                  e.target.src = "/default-avatar.png";
+                }}
               />
             </div>
 
@@ -81,15 +108,19 @@ const View = () => {
             </span>
           </div>
 
+          {/* Info */}
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Info label="Employee ID" value={employee?.employeeId} />
             <Info label="Email" value={employee?.userId?.email} />
             <Info label="Gender" value={employee?.gender} />
             <Info label="Blood Group" value={employee?.bloodGroup || "N/A"} />
-            <Info label="Department" value={employee?.department?.dep_name || "N/A"} />
+            <Info
+              label="Department"
+              value={employee?.department?.dep_name || "N/A"}
+            />
             <Info label="Designation" value={employee?.designation || "N/A"} />
             <Info label="Marital Status" value={employee?.maritalStatus} />
-            <Info label="Experience(Years)" value={employee.experience} />
+            <Info label="Experience(Years)" value={` ${employee?.experience || 0}`} />
             <Info label="Salary" value={`₹ ${employee?.salary || 0}`} />
           </div>
 
@@ -98,6 +129,8 @@ const View = () => {
     </div>
   );
 };
+
+/* ================= INFO CARD ================= */
 
 const Info = ({ label, value }) => (
   <div className="bg-red-50 rounded-xl p-4 border border-red-100">
@@ -110,4 +143,4 @@ const Info = ({ label, value }) => (
   </div>
 );
 
-export default View;
+export default EmployeeProfile;
