@@ -40,11 +40,10 @@ const ClientSidebar = () => {
           md:translate-x-0 md:w-20 md:hover:w-72
           group
         `}
-        end
       >
         {/* HEADER */}
         <div className="h-16 px-4 flex items-center gap-3
-          bg-gradient-to-r from-black to-gray-900 text-white">
+          bg-linear-to-r from-black to-gray-900 text-white">
 
           <img src={Logo} className="w-10 h-10 rounded-xl" />
 
@@ -74,7 +73,7 @@ const ClientSidebar = () => {
             <NavLink
               key={i}
               to={item.link}
-              end
+              end={true}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `
@@ -87,7 +86,7 @@ const ClientSidebar = () => {
               }
             >
               {/* ICON */}
-              <item.icon size={20} className="min-w-[20px]" />
+              <item.icon size={20} className="min-w-5" />
 
               {/* TITLE */}
               <span

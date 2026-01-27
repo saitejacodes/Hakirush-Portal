@@ -53,16 +53,11 @@ const View = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-3xl mx-auto">
-
-        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
-          Employee Profile
-        </h3>
-
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-red-100">
-
-          <div className="flex flex-col items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl mx-auto">
+        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-10 drop-shadow-sm">Employee Profile</h3>
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-10 border border-red-100">
+          <div className="flex flex-col items-center gap-4">
             <div className="w-32 h-32 rounded-full border-4 border-red-200 shadow-lg overflow-hidden">
               <img
                 src={getImageUrl(employee?.userId?.profileImage)}
@@ -71,17 +66,10 @@ const View = () => {
                 onError={(e) => (e.target.src = "/default-avatar.png")}
               />
             </div>
-
-            <h2 className="text-2xl font-bold text-gray-800">
-              {employee?.userId?.name}
-            </h2>
-
-            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-              {employee?.designation || "No Designation"}
-            </span>
+            <h2 className="text-2xl font-bold text-gray-800 mt-2">{employee?.userId?.name}</h2>
+            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold mt-1">{employee?.designation || "No Designation"}</span>
           </div>
-
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-7">
             <Info label="Employee ID" value={employee?.employeeId} />
             <Info label="Email" value={employee?.userId?.email} />
             <Info label="Gender" value={employee?.gender} />
@@ -90,9 +78,8 @@ const View = () => {
             <Info label="Designation" value={employee?.designation || "N/A"} />
             <Info label="Marital Status" value={employee?.maritalStatus} />
             <Info label="Experience(Years)" value={employee.experience} />
-            <Info label="Salary" value={`₹ ${employee?.salary || 0}`} />
+            <Info label="Salary" value={`\u20b9 ${employee?.salary || 0}`} />
           </div>
-
         </div>
       </div>
     </div>

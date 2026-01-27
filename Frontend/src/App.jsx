@@ -42,6 +42,7 @@ import AdminAnnouncement from './components/announcement/AdminAnnouncement';
 import EditAnnouncement from './components/announcement/EditAnnouncement';
 import EmployeeProfile from './components/EmpolyeeDashboard/EmployeeProfile';
 import EditEmployeeProfile from './components/EmpolyeeDashboard/EditEmployeeProfile';
+import StallView from './components/stalls/StallView';
 
 
 const App = () => {
@@ -83,6 +84,7 @@ const App = () => {
          <Route path='/admin-dashboard/add-sponsor' element={<SponsorAdd />} />
          <Route path='/admin-dashboard/sponsors/edit/:id' element={<SponsorEdit />}/>
          <Route path='/admin-dashboard/stalls' element={<StallList />} />
+         <Route path='/admin-dashboard/stalls/:id' element={<StallView />} />
          <Route path='/admin-dashboard/add-stall' element={<StallAdd />} />
          <Route path="/admin-dashboard/sponsors/:id" element={<SponsorView />} />
          <Route path='/admin-dashboard/stalls/edit/:id' element={<StallEdit />}/>

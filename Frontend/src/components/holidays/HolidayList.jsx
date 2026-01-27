@@ -99,7 +99,7 @@ const HolidayList = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 px-3 py-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-red-50 via-white to-red-100 px-3 py-4 md:p-6">
       <div className="w-full max-w-6xl mx-auto">
 
         <div className="text-center mb-6 md:mb-8">

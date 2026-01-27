@@ -15,6 +15,7 @@ import dashboardRouter from "./routes/dashboardRoute.js";
 import holidayRouter from "./routes/holidayRoute.js";
 import sponsorRouter from "./routes/sponsorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js"
+import stallRoutes from "./routes/stallRoutes.js"
 
 connectToDatabase();
 
@@ -43,6 +44,13 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/holiday", holidayRouter);
 app.use("/api/sponsors", sponsorRouter);
+
+app.use("/api/stalls", stallRoutes);
+
+// Simple test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({ success: true, message: "Backend is working!" });
+});
 app.use("/api/announcements", announcementRoutes);
 
 app.listen(process.env.PORT, () => {

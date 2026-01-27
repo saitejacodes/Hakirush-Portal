@@ -136,7 +136,7 @@ const SponsorEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-4xl mx-auto">
 
         <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">

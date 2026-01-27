@@ -87,7 +87,7 @@ const LeaveDetails = () => {
       : "bg-yellow-100 text-yellow-700";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-3xl mx-auto">
         <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
           Leave Details

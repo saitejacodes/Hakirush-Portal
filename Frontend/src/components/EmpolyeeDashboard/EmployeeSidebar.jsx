@@ -45,7 +45,7 @@ const EmployeeSidebar = () => {
       >
         {/* HEADER */}
         <div className="h-16 px-4 flex items-center gap-3
-          bg-gradient-to-r from-black to-gray-900 text-white">
+          bg-linear-to-r from-black to-gray-900 text-white">
           
           <img src={Logo} className="w-10 h-10 rounded-xl" />
 
@@ -88,7 +88,7 @@ const EmployeeSidebar = () => {
               }
             >
               {/* ICON */}
-              <item.icon size={20} className="min-w-[20px]" />
+              <item.icon size={20} className="min-w-5" />
 
               {/* TITLE */}
               <span

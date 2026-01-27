@@ -18,8 +18,9 @@ const AuthProvider = ({ children }) => {
           return
         }
 
-        const response = await axios.get(
+        const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/verify`,
+          {},
           {
             headers: { Authorization: `Bearer ${token}` }
           }

@@ -17,25 +17,25 @@ import {
 
 /* ========== Stat Card ========== */
 const StatCard = ({ icon: Icon, label, value }) => (
-  <div className="rounded-3xl p-5 sm:p-7 shadow-xl bg-white/80 border backdrop-blur-xl flex items-center justify-between hover:shadow-2xl transition">
+  <div className="rounded-3xl p-6 sm:p-8 shadow-2xl bg-white/90 border border-red-100 backdrop-blur-xl flex items-center justify-between hover:scale-[1.03] hover:shadow-3xl transition-all duration-300">
     <div>
-      <p className="text-gray-500 text-xs uppercase tracking-wide">
+      <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">
         {label}
       </p>
-      <h2 className="text-2xl sm:text-4xl font-black text-gray-800">
+      <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-800 drop-shadow-sm">
         {value ?? 0}
       </h2>
     </div>
-    <div className="p-4 rounded-2xl bg-red-800 text-white shadow-lg">
-      <Icon size={22} />
+    <div className="p-4 rounded-2xl bg-gradient-to-br from-red-700 to-red-500 text-white shadow-xl flex items-center justify-center">
+      {Icon && <Icon size={28} />}
     </div>
   </div>
 );
 
 /* ========== Section Card ========== */
 const SectionCard = ({ title, children }) => (
-  <div className="rounded-[2rem] p-5 sm:p-9 bg-white/80 shadow-2xl border backdrop-blur-xl">
-    <h2 className="text-lg sm:text-2xl font-extrabold text-red-800 text-center mb-6 tracking-tight">
+  <div className="rounded-4xl p-6 sm:p-10 bg-white/90 shadow-2xl border border-red-100 backdrop-blur-xl">
+    <h2 className="text-xl sm:text-3xl font-extrabold text-red-800 text-center mb-7 tracking-tight drop-shadow-sm">
       {title}
     </h2>
     {children}
@@ -44,18 +44,18 @@ const SectionCard = ({ title, children }) => (
 
 /* ========== Custom Pie Legend ========== */
 const PieLegend = ({ data, colors }) => (
-  <div className="flex flex-wrap justify-center gap-3 mt-6">
+  <div className="flex flex-wrap justify-center gap-3 mt-7">
     {data.map((item, index) => (
       <div
         key={index}
-        className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow text-xs sm:text-sm"
+        className="flex items-center gap-2 bg-white/95 px-4 py-1.5 rounded-full shadow-md border border-gray-100 text-xs sm:text-sm hover:scale-105 transition"
       >
         <span
-          className="w-3 h-3 rounded-full"
+          className="w-3 h-3 rounded-full border border-gray-200"
           style={{ backgroundColor: colors[index % colors.length] }}
         />
         <span className="font-semibold text-gray-700">
-          {item.name} ({item.value})
+          {item.name} <span className="text-gray-400">({item.value})</span>
         </span>
       </div>
     ))}
@@ -120,90 +120,118 @@ const AdminSummary = () => {
     sponsorSummary.collaborationSummary || {}
   ).map(([name, value]) => ({ name, value }));
 
-  return (
-    <div className="min-h-screen px-4 py-6 sm:p-10 bg-gradient-to-br from-rose-100 via-white to-red-200">
+  // Stall summary data
+  const stallSummary = summary.stallSummary || {
+    totalStalls: 0,
+    totalStallEvents: 0,
+    typeSummary: {},
+  };
+  const stallTypeData = Object.entries(stallSummary.typeSummary || {}).map(([name, value]) => ({ name, value }));
 
-      <div className="text-center mb-10">
-        <h1 className="text-3xl sm:text-5xl text-red-800 font-black tracking-tight">
+  return (
+    <div className="min-h-screen px-2 py-4 sm:p-8 bg-linear-to-br from-rose-100 via-white to-red-200">
+      <div className="text-center mb-12">
+        <h1 className="text-3xl sm:text-5xl text-red-800 font-black tracking-tight drop-shadow-md">
           Admin Dashboard
         </h1>
-        <p className="text-red-500 mt-3 text-sm sm:text-base">
+        <p className="text-red-500 mt-3 text-base sm:text-lg font-medium">
           All Workforce Operations in One Place
         </p>
       </div>
 
       <SectionCard title="Organization Overview">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <StatCard icon={Users} label="Employees" value={summary.totalEmployees} />
           <StatCard icon={Building} label="Departments" value={summary.totalDepartments} />
           <StatCard icon={BriefcaseBusiness} label="Clients" value={summary.totalClients} />
         </div>
       </SectionCard>
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <SectionCard title="Client Plans">
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={planData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={95}
-                dataKey="value"
-              >
-                {planData.map((_, i) => (
-                  <Cell key={i} fill={pieColors[i]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <PieLegend data={planData} colors={pieColors} />
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={planData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
+                  label={false}
+                  labelLine={false}
+                >
+                  {planData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, background: '#fff', border: '1px solid #eee', color: '#333', fontWeight: 600 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <PieLegend data={planData} colors={pieColors} />
+          </div>
         </SectionCard>
 
         <SectionCard title="Leave Summary">
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={leaveData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={95}
-                dataKey="value"
-              >
-                {leaveData.map((_, i) => (
-                  <Cell key={i} fill={pieColors[i]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <PieLegend data={leaveData} colors={pieColors} />
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={leaveData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
+                  label={false}
+                  labelLine={false}
+                >
+                  {leaveData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, background: '#fff', border: '1px solid #eee', color: '#333', fontWeight: 600 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <PieLegend data={leaveData} colors={pieColors} />
+          </div>
         </SectionCard>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <SectionCard title="Departments">
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={departmentData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={105}
-                dataKey="value"
-              >
-                {departmentData.map((_, i) => (
-                  <Cell key={i} fill={pieColors[i % pieColors.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <PieLegend data={departmentData} colors={pieColors} />
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={270}>
+              <PieChart>
+                <Pie
+                  data={departmentData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
+                  label={false}
+                  labelLine={false}
+                >
+                  {departmentData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, background: '#fff', border: '1px solid #eee', color: '#333', fontWeight: 600 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <PieLegend data={departmentData} colors={pieColors} />
+          </div>
         </SectionCard>
 
         <SectionCard title="Sponsors">
@@ -211,26 +239,66 @@ const AdminSummary = () => {
             <StatCard icon={Handshake} label="Sponsors" value={sponsorSummary.totalSponsors} />
             <StatCard icon={Trophy} label="Events" value={sponsorSummary.totalSponsoredEvents} />
           </div>
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={sponsorData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
+                  label={false}
+                  labelLine={false}
+                >
+                  {sponsorData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, background: '#fff', border: '1px solid #eee', color: '#333', fontWeight: 600 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <PieLegend data={sponsorData} colors={pieColors} />
+          </div>
+        </SectionCard>
+      </div>
 
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={sponsorData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={95}
-                dataKey="value"
-              >
-                {sponsorData.map((_, i) => (
-                  <Cell key={i} fill={pieColors[i % pieColors.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-
-          <PieLegend data={sponsorData} colors={pieColors} />
+      {/* Stall Summary Section */}
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <SectionCard title="Stalls">
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <StatCard icon={BriefcaseBusiness} label="Stalls" value={stallSummary.totalStalls} />
+            <StatCard icon={Trophy} label="Events" value={stallSummary.totalStallEvents} />
+          </div>
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={stallTypeData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
+                  label={({ name, percent }) => percent > 0 ? `${name}` : ''}
+                  labelLine={false}
+                >
+                  {stallTypeData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, background: '#fff', border: '1px solid #eee', color: '#333', fontWeight: 600 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <PieLegend data={stallTypeData} colors={pieColors} />
+          </div>
         </SectionCard>
       </div>
     </div>

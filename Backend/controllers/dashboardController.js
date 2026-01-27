@@ -3,6 +3,7 @@ import Client from "../models/Client.js";
 import Department from "../models/Department.js";
 import Leave from "../models/Leave.js";
 import Sponsor from "../models/Sponsor.js";
+import Stall from "../models/Stall.js";
 
 const getSummary = async (req, res) => {
   try {
@@ -80,6 +81,22 @@ const sponsorSummary = {
 };
 
 
+
+    /* ========== STALL SUMMARY ========== */
+    const stalls = await Stall.find();
+    const totalStalls = stalls.length;
+    const totalStallEvents = stalls.reduce((sum, s) => sum + Number(s.eventCount || 0), 0);
+    const typeSummary = stalls.reduce((acc, s) => {
+      const key = s.type || "Unknown";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    const stallSummary = {
+      totalStalls,
+      totalStallEvents,
+      typeSummary,
+    };
+
     /* ========== RESPONSE ========== */
     return res.status(200).json({
       success: true,
@@ -95,6 +112,7 @@ const sponsorSummary = {
       leaveSummary,
       departmentSummary,
       sponsorSummary,
+      stallSummary,
     });
 
   } catch (error) {

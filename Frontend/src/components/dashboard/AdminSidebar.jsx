@@ -54,7 +54,7 @@ const AdminSidebar = () => {
         `}
       >
         {/* HEADER */}
-        <div className="h-16 flex items-center gap-3 px-4 bg-gradient-to-r from-black to-gray-900 text-white">
+        <div className="h-16 flex items-center gap-3 px-4 bg-linear-to-r from-black to-gray-900 text-white">
           <img src={Logo} className="w-10 h-10 rounded-xl shrink-0" />
 
           <span className="text-lg font-extrabold whitespace-nowrap text-yellow-500 uppercase hidden md:group-hover:block">

@@ -12,6 +12,7 @@ const getImageUrl = (url) => {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const EmployeeEdit = () => {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -27,6 +28,66 @@ const EmployeeEdit = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Fetch employee on mount
+  useEffect(() => {
+    fetchEmployee();
+    // eslint-disable-next-line
+  }, [id]);
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === "profileImage") {
+      const file = files[0];
+      if (!file) return;
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Image size must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+      e.target.value = "";
+      return;
+    }
+    setEmployee((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData();
+    Object.keys(employee).forEach((key) => {
+      fd.append(key, employee[key]);
+    });
+    if (image) {
+      fd.append("profileImage", image);
+    }
+    try {
+      const res = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
+        fd,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (res.data.success) {
+        alert("Employee updated successfully 🎉");
+        navigate("/admin-dashboard/employees");
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.error ||
+        "Update failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* ================= FETCH EMPLOYEE ================= */
   const fetchEmployee = async () => {
     try {
@@ -38,90 +99,18 @@ const EmployeeEdit = () => {
           },
         }
       );
-
       const emp = res.data.employee;
-
       setEmployee({
         name: emp?.userId?.name || "",
         maritalStatus: emp?.maritalStatus || "",
         designation: emp?.designation || "",
         salary: emp?.salary || "",
       });
-
       setPreview(emp?.userId?.profileImage || null);
-    } catch (error) {
-      alert("Failed to load employee");
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployee();
-  }, [id]);
-
-  /* ================= HANDLE CHANGE ================= */
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-
-    // IMAGE
-    if (name === "profileImage") {
-      const file = files[0];
-      if (!file) return;
-
-      if (file.size > MAX_FILE_SIZE) {
-        alert("Image size must be less than 10MB");
-        e.target.value = "";
-        return;
-      }
-
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
-
-      // allow re-select same file
-      e.target.value = "";
-      return;
-    }
-
-    // TEXT FIELDS
-    setEmployee((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  /* ================= SUBMIT ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const fd = new FormData();
-
-    Object.keys(employee).forEach((key) => {
-      fd.append(key, employee[key]);
-    });
-
-    if (image) {
-      fd.append("profileImage", image); // ✅ MATCH BACKEND
-    }
-
-    try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-        fd,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (res.data.success) {
-        alert("Employee updated successfully 🎉");
-        navigate("/admin-dashboard/employees");
-      }
     } catch (error) {
       alert(
         error.response?.data?.error ||
-          "Update failed. Please try again."
+        "Update failed. Please try again."
       );
     } finally {
       setLoading(false);

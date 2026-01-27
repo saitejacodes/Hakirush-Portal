@@ -2,12 +2,7 @@ import Holiday from "../models/Holiday.js";
 
 export const getUpcomingHolidays = async (req, res) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const holidays = await Holiday.find({
-      date: { $gte: today }
-    }).sort({ date: 1 });
+    const holidays = await Holiday.find().sort({ date: 1 });
 
     return res.status(200).json({
       success: true,
@@ -64,19 +59,19 @@ export const deleteHoliday = async (req, res) => {
 export const getAllHolidays = async (req, res) => {
   try {
     const holidays = await Holiday.find().sort({ date: 1 });
-
     const today = new Date().toISOString().split("T")[0];
 
     const holidaysWithStatus = holidays.map(h => ({
       ...h._doc,
-      status: h.date.toISOString().split("T")[0] < today
-        ? "Past"
-        : "Upcoming"
+      status:
+        h.date.toISOString().split("T")[0] < today
+          ? "past"
+          : "upcoming"
     }));
 
     return res.status(200).json({
       success: true,
-      holidays
+      holidays: holidaysWithStatus
     });
   } catch (error) {
     return res.status(500).json({

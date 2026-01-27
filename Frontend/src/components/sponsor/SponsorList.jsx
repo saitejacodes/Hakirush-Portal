@@ -101,7 +101,7 @@ const SponsorList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}

@@ -22,7 +22,7 @@ const AddHoliday = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-100 to-white flex justify-center items-center px-3 py-4">
+    <div className="min-h-screen bg-linear-to-br from-red-100 to-white flex justify-center items-center px-3 py-4">
 
       <div className="w-full max-w-xl bg-white/70 backdrop-blur-xl border rounded-3xl shadow-2xl p-8">
 
