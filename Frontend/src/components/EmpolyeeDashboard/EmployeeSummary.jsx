@@ -24,9 +24,9 @@ const EmployeeSummary = () => {
 
   const toYMD = (d) => {
     const date = new Date(d);
-    return `${date.getFullYear()}-${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -114,17 +114,18 @@ const EmployeeSummary = () => {
   if (loading || !user) return <p>Loading...</p>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-yellow-50 px-4 py-10">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-yellow-50
+                    px-2 sm:px-4 py-6 sm:py-10 overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto space-y-8 sm:space-y-12 overflow-x-hidden">
 
-        <h1 className="text-3xl font-extrabold text-red-800 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-red-800 tracking-tight">
           Dashboard Overview
         </h1>
 
         {/* ---------- WIDGETS ---------- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           <Widget title="Department Employees" icon={<Users />}>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               {deptEmployees.map(e => (
                 <Chip key={e._id}>{e?.userId?.name}</Chip>
               ))}
@@ -136,8 +137,7 @@ const EmployeeSummary = () => {
               ? <Empty>No upcoming holidays</Empty>
               : upcomingHolidays.map(h => (
                   <Chip key={h._id} yellow>{h.title}</Chip>
-                ))
-            }
+                ))}
           </Widget>
 
           <Widget title="Announcements" icon={<PartyPopper />}>
@@ -145,17 +145,11 @@ const EmployeeSummary = () => {
               <Empty>No announcements</Empty>
             ) : (
               announcements.map(a => (
-                <div
-                  key={a._id}
-                  className="rounded-2xl p-3 bg-white/70 backdrop-blur border shadow-sm"
-                >
-                  <p className="font-bold text-sm text-red-700">{a.title}</p>
-                  <p className="text-xs text-gray-500">
+                <div key={a._id} className="rounded-xl p-2 bg-white/70 border shadow-sm">
+                  <p className="font-bold text-xs sm:text-sm text-red-700">{a.title}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">
                     {a.type} • {a.date}
                   </p>
-                  <span className="inline-block mt-2 px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                    {a.status}
-                  </span>
                 </div>
               ))
             )}
@@ -163,8 +157,8 @@ const EmployeeSummary = () => {
 
           <Widget title="Leave Balance" icon={<CalendarMinus />}>
             <div className="text-center">
-              <p className="text-6xl font-black text-red-700">{leaveBalance}</p>
-              <p className="text-xs text-gray-500 tracking-wide">
+              <p className="text-5xl sm:text-6xl font-black text-red-700">{leaveBalance}</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 tracking-wide">
                 DAYS REMAINING
               </p>
             </div>
@@ -172,66 +166,65 @@ const EmployeeSummary = () => {
         </div>
 
         {/* ---------- CALENDAR ---------- */}
-        <div className="bg-white/80 backdrop-blur rounded-3xl p-6 shadow-xl">
+        <div className="bg-white/80 backdrop-blur rounded-2xl sm:rounded-3xl
+                        p-3 sm:p-6 shadow-xl max-w-full overflow-hidden mb-10">
 
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-red-700">Attendance</h2>
+          {/* HEADER */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-red-700 text-center sm:text-left">
+              Attendance
+            </h2>
 
-            <p className="text-xl font-extrabold text-red-600">
+            <p className="text-base sm:text-xl font-extrabold text-red-600 text-center">
               {calendarMonth.toLocaleString("default", { month: "long" })}{" "}
               {calendarMonth.getFullYear()}
             </p>
 
-            <div className="flex gap-2">
+            <div className="flex justify-center gap-1 sm:gap-2 flex-wrap">
               <NavBtn onClick={() =>
                 setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
               }>
-                <ChevronLeft />
+                <ChevronLeft size={16} />
               </NavBtn>
-
-              <NavBtn onClick={() => setCalendarMonth(new Date())}>
-                Today
-              </NavBtn>
-
+              <NavBtn onClick={() => setCalendarMonth(new Date())}>Today</NavBtn>
               <NavBtn onClick={() =>
                 setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
               }>
-                <ChevronRight />
+                <ChevronRight size={16} />
               </NavBtn>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 text-xs font-semibold text-center gap-2 mb-3">
-            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => (
-              <div key={d} className="rounded-xl py-2 bg-red-100 text-red-700">
+          {/* CALENDAR */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-sm">
+            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d,i) => (
+              <div key={i} className="py-1 sm:py-2 rounded bg-red-100 text-red-700 font-semibold">
                 {d}
               </div>
             ))}
-          </div>
 
-          <div className="grid grid-cols-7 gap-2">
             {generateCalendar().map((day, i) => {
               const status = getDayStatus(day);
               return (
                 <div
                   key={i}
-                  onMouseEnter={() => day && setHoverDay(day)}
-                  onMouseLeave={() => setHoverDay(null)}
-                  className={`
-                    relative h-12 flex items-center justify-center rounded-xl
-                    font-semibold transition-all duration-150
+                  className={`relative h-8 sm:h-12 flex items-center justify-center rounded
+                    font-semibold
                     ${!day && "bg-transparent"}
                     ${status === "present" && "bg-green-500 text-white"}
                     ${status === "absent" && "bg-red-500 text-white"}
                     ${status === "leave" && "bg-yellow-400 text-white"}
                     ${status === "holiday" && "bg-yellow-400 text-white"}
                     ${status === "weekend" && "bg-gray-400 text-white"}
-                    ${status === "none" && "bg-gray-100 hover:bg-gray-200"}
+                    ${status === "none" && "bg-gray-100"}
                   `}
+                  onClick={() => day && setHoverDay(hoverDay === day ? null : day)}
                 >
                   {day}
                   {hoverDay === day && day && (
-                    <div className="absolute -top-9 px-2 py-1 text-xs rounded-lg bg-black text-white">
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2
+                                    px-2 py-1 text-[10px] rounded bg-black text-white
+                                    whitespace-nowrap z-20">
                       {getDayTooltip(day)}
                     </div>
                   )}
@@ -241,7 +234,6 @@ const EmployeeSummary = () => {
           </div>
 
         </div>
-
       </div>
     </div>
   );
@@ -250,9 +242,10 @@ const EmployeeSummary = () => {
 /* ---------- UI HELPERS ---------- */
 
 const Widget = ({ title, icon, children }) => (
-  <div className="bg-white/80 backdrop-blur rounded-3xl p-5 shadow-lg space-y-3 hover:shadow-xl transition">
-    <div className="flex items-center gap-2 font-bold text-sm">
-      <span className="p-2 rounded-xl bg-gradient-to-br from-red-100 to-yellow-100 text-red-700">
+  <div className="bg-white/80 backdrop-blur rounded-2xl sm:rounded-3xl
+                  p-3 sm:p-5 shadow-lg space-y-2 sm:space-y-3">
+    <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
+      <span className="p-1.5 sm:p-2 rounded-xl bg-red-100 text-red-700">
         {icon}
       </span>
       {title}
@@ -262,24 +255,20 @@ const Widget = ({ title, icon, children }) => (
 );
 
 const Chip = ({ children, yellow }) => (
-  <span
-    className={`px-3 py-1 rounded-xl text-sm font-medium text-white
-      ${yellow ? "bg-yellow-500" : "bg-red-600"}
-    `}
-  >
+  <span className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-sm font-medium text-white
+    ${yellow ? "bg-yellow-500" : "bg-red-600"}`}>
     {children}
   </span>
 );
 
 const Empty = ({ children }) => (
-  <p className="text-sm text-gray-400">{children}</p>
+  <p className="text-xs text-gray-400">{children}</p>
 );
 
 const NavBtn = ({ children, onClick }) => (
   <button
     onClick={onClick}
-    className="px-3 py-1 rounded-xl bg-red-100 hover:bg-red-200 transition"
-  >
+    className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-xs">
     {children}
   </button>
 );

@@ -19,11 +19,11 @@ const SponsorView = () => {
           }
         );
 
-        if (res.data.success) {
+        if (res.data?.success) {
           setSponsor(res.data.sponsor);
         }
-      } catch (error) {
-        alert(error.response?.data?.error || "Failed to load sponsor");
+      } catch {
+        alert("Failed to load sponsor");
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ const SponsorView = () => {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
-        Loading sponsor profile…
+        Loading profile…
       </div>
     );
 
@@ -53,17 +53,17 @@ const SponsorView = () => {
     );
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl mx-auto">
 
-        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
+        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-10 drop-shadow-sm">
           Sponsor Profile
         </h3>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-red-100">
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-10 border border-red-100">
 
-          {/* LOGO */}
-          <div className="flex flex-col items-center gap-3">
+          {/* HEADER */}
+          <div className="flex flex-col items-center gap-4">
             <div className="w-32 h-32 rounded-full border-4 border-red-200 shadow-lg overflow-hidden">
               <img
                 src={getImageUrl(sponsor.logo)}
@@ -73,17 +73,17 @@ const SponsorView = () => {
               />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800 mt-2">
               {sponsor.name}
             </h2>
 
-            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold mt-1">
               {sponsor.collaboration || "No Collaboration"}
             </span>
           </div>
 
-          {/* DETAILS */}
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* INFO GRID */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-7">
             <Info label="Sponsor Name" value={sponsor.name} />
             <Info label="Collaboration Type" value={sponsor.collaboration} />
             <Info label="Events Sponsored" value={sponsor.eventsSponsored} />
@@ -98,6 +98,7 @@ const SponsorView = () => {
               }
             />
           </div>
+
         </div>
       </div>
     </div>

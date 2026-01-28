@@ -70,27 +70,38 @@ const EmployeeSetting = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-red-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-8">
-        <h2 className="text-2xl font-bold text-center mb-6 text-red-600">
-          Change Password
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-100 px-4">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur rounded-3xl shadow-2xl border border-red-100 p-8">
 
-        {error && (
-          <p className="mb-3 text-sm text-red-600 bg-red-100 p-2 rounded-lg">
-            {error}
+        {/* HEADER */}
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-extrabold text-red-700">
+            Change Password
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Keep your account secure
           </p>
+        </div>
+
+        {/* ALERTS */}
+        {error && (
+          <div className="mb-4 rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-medium">
+            {error}
+          </div>
         )}
 
         {success && (
-          <p className="mb-3 text-sm text-green-700 bg-green-100 p-2 rounded-lg">
+          <div className="mb-4 rounded-xl bg-green-100 text-green-700 px-4 py-3 text-sm font-medium">
             {success}
-          </p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* OLD PASSWORD */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Old Password
             </label>
             <input
@@ -99,12 +110,17 @@ const EmployeeSetting = () => {
               value={setting.oldPassword}
               onChange={handleChange}
               placeholder="Enter old password"
-              className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="
+                w-full rounded-xl border border-gray-300
+                px-4 py-2.5
+                focus:outline-none focus:ring-2 focus:ring-red-500
+              "
             />
           </div>
 
+          {/* NEW PASSWORD */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               New Password
             </label>
             <input
@@ -113,12 +129,17 @@ const EmployeeSetting = () => {
               value={setting.newPassword}
               onChange={handleChange}
               placeholder="Enter new password"
-              className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="
+                w-full rounded-xl border border-gray-300
+                px-4 py-2.5
+                focus:outline-none focus:ring-2 focus:ring-red-500
+              "
             />
           </div>
 
+          {/* CONFIRM PASSWORD */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Confirm Password
             </label>
             <input
@@ -127,17 +148,32 @@ const EmployeeSetting = () => {
               value={setting.confirmPassword}
               onChange={handleChange}
               placeholder="Confirm new password"
-              className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="
+                w-full rounded-xl border border-gray-300
+                px-4 py-2.5
+                focus:outline-none focus:ring-2 focus:ring-red-500
+              "
             />
           </div>
 
+          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl font-semibold shadow-md transition disabled:opacity-60"
+            className="
+              w-full rounded-2xl
+              bg-red-600 text-white
+              py-3 font-semibold
+              hover:bg-red-700
+              active:scale-95
+              transition-all
+              shadow-md
+              disabled:opacity-60
+            "
           >
-            {loading ? "Changing..." : "Change Password"}
+            {loading ? "Changing Password..." : "Change Password"}
           </button>
+
         </form>
       </div>
     </div>

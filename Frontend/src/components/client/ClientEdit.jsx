@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -8,89 +8,95 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const getImageUrl = (url) => {
   if (!url) return "/default-avatar.png";
   if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return `${url}?t=${Date.now()}`; // 🔥 cache bust
+  if (url.startsWith("http")) return `${url}?t=${Date.now()}`;
   return "/default-avatar.png";
 };
 
 const EditClient = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [client, setClient] = useState({
     planType: "",
     budget: "",
   });
 
-  const [preview, setPreview] = useState("/default-avatar.png");
   const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD CLIENT ================= */
+  /* ================= FETCH CLIENT ================= */
   useEffect(() => {
-    const fetchClient = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (res.data.success) {
-          const c = res.data.client;
-          setClient({
-            planType: c.planType || "",
-            budget: c.budget || "",
-          });
-
-          setPreview(getImageUrl(c.companyLogo));
-        }
-      } catch (err) {
-        alert("Failed to load client");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClient();
+    // eslint-disable-next-line
   }, [id]);
 
-  /* ================= IMAGE CHANGE ================= */
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const fetchClient = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-    if (file.size > MAX_FILE_SIZE) {
-      alert("Image must be less than 10MB");
+      if (res.data.success) {
+        const c = res.data.client;
+        setClient({
+          planType: c.planType || "",
+          budget: c.budget || "",
+        });
+        setPreview(c.companyLogo || null);
+      }
+    } catch (err) {
+      alert("Failed to load client");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= HANDLE CHANGE ================= */
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    if (name === "companyLogo") {
+      const file = files[0];
+      if (!file) return;
+
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Image size must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
+
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
       e.target.value = "";
       return;
     }
 
-    setImage(file);
-    setPreview(URL.createObjectURL(file)); // 🔥 instant UI update
-    e.target.value = ""; // allow re-select same image
-  };
-
-  /* ================= FORM CHANGE ================= */
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setClient((p) => ({ ...p, [name]: value }));
+    setClient((prev) => ({ ...prev, [name]: value }));
   };
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
+
+    const fd = new FormData();
+    Object.keys(client).forEach((key) => {
+      fd.append(key, client[key]);
+    });
+
+    if (image) {
+      fd.append("companyLogo", image); // ✅ backend match
+    }
 
     try {
-      const fd = new FormData();
-      fd.append("planType", client.planType);
-      fd.append("budget", client.budget);
-      if (image) fd.append("image", image);
-
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/client/${id}`,
         fd,
@@ -103,18 +109,16 @@ const EditClient = () => {
 
       if (res.data.success) {
         alert("Client updated successfully 🎉");
-
-        // ✅ go back to client list
-        navigate("/admin-dashboard/clients", { replace: true });
+        navigate("/admin-dashboard/clients");
       }
     } catch (err) {
       alert(err.response?.data?.error || "Update failed");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading && !preview) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
         Loading…
@@ -122,74 +126,75 @@ const EditClient = () => {
     );
   }
 
+  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-red-50 p-6">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
 
-        <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
+        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
           Edit Client
-        </h3>
+        </h2>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* IMAGE */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
-                <img
-                  src={preview}
-                  alt="logo"
-                  onError={(e) => (e.target.src = "/default-avatar.png")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {/* IMAGE */}
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={getImageUrl(preview)}
+              alt="logo"
+              onError={(e) => (e.target.src = "/default-avatar.png")}
+              className="w-28 h-28 rounded-full object-cover border"
+            />
 
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Change Logo
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </label>
-            </div>
-
-            {/* FORM */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <select
-                name="planType"
-                value={client.planType}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Select Plan</option>
-                <option value="annual">Annual</option>
-                <option value="quarterly">Quarterly</option>
-              </select>
-
+            <label className="cursor-pointer text-red-600 font-semibold">
+              Change Logo
               <input
-                type="number"
-                name="budget"
-                value={client.budget}
+                ref={fileInputRef}
+                type="file"
+                name="companyLogo"
+                accept="image/*"
+                className="hidden"
                 onChange={handleChange}
-                placeholder="Budget"
-                className="input"
               />
-            </div>
+            </label>
+          </div>
 
-            <div className="text-center">
-              <button
-                disabled={saving}
-                className={`px-8 py-3 rounded-xl text-white font-semibold
-                ${saving ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
-              >
-                {saving ? "Updating..." : "Update Client"}
-              </button>
-            </div>
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <select
+              className="input"
+              name="planType"
+              value={client.planType}
+              onChange={handleChange}
+            >
+              <option value="">Select Plan</option>
+              <option value="annual">Annual</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
 
-          </form>
-        </div>
+            <input
+              type="number"
+              className="input"
+              name="budget"
+              value={client.budget}
+              onChange={handleChange}
+              placeholder="Budget"
+            />
+          </div>
+
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-semibold
+              ${
+                loading
+                  ? "bg-red-300"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
+          >
+            {loading ? "Updating..." : "Update Client"}
+          </button>
+
+        </form>
       </div>
     </div>
   );

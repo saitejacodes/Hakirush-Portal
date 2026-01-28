@@ -109,7 +109,7 @@ const LeaveDetails = () => {
             </h2>
 
             <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-              {leave?.employeeId?.department?.dep_name || "No Department"}
+              {leave?.employeeId?.designation || "No Designation"}
             </span>
 
             <span

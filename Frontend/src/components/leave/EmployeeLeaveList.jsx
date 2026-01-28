@@ -3,9 +3,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 
-/* ===== STATUS COLORS (OLD ONE) ===== */
+/* ================= STATUS COLOR ================= */
 const getStatusClass = (status) => {
   if (!status) return "bg-gray-100 text-gray-700";
+
   switch (status.toLowerCase()) {
     case "pending":
       return "bg-yellow-100 text-yellow-700";
@@ -18,7 +19,7 @@ const getStatusClass = (status) => {
   }
 };
 
-/* ===== DATE FORMAT ===== */
+/* ================= DATE FORMAT ================= */
 const formatDate = (value) => {
   if (!value) return "—";
 
@@ -38,44 +39,40 @@ const formatDate = (value) => {
 };
 
 /* ================= MOBILE CARD ================= */
-const MobileLeaveCard = ({ leave, index }) => {
-  return (
-    <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
-      <div className="flex justify-between items-start gap-3">
-        <div className="flex-1">
-          <p className="font-semibold text-gray-900 text-sm">
-            {index + 1}. {leave.leaveType}
-          </p>
+const MobileLeaveCard = ({ leave, index }) => (
+  <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3">
+    <div className="flex justify-between gap-3">
+      <div className="flex-1">
+        <p className="font-semibold text-gray-900 text-sm">
+          {index + 1}. {leave.leaveType}
+        </p>
 
-          <p className="text-xs text-gray-500">
-            {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
-          </p>
+        <p className="text-xs text-gray-500">
+          {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
+        </p>
 
-          <p className="text-xs text-gray-400">
-            Applied:{" "}
-            {formatDate(
-              leave.appliedDate ||
-                leave.appliedOn ||
-                leave.createdAt
-            )}
-          </p>
+        <p className="text-xs text-gray-400">
+          Applied:{" "}
+          {formatDate(
+            leave.appliedDate || leave.appliedOn || leave.createdAt
+          )}
+        </p>
 
-          <p className="text-sm text-gray-700 mt-1">
-            {leave.reason || "—"}
-          </p>
-        </div>
-
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(
-            leave.status
-          )}`}
-        >
-          {leave.status}
-        </span>
+        <p className="text-sm text-gray-700 mt-1">
+          {leave.reason || "—"}
+        </p>
       </div>
+
+      <span
+        className={`px-3 py-1 h-fit rounded-full text-xs font-semibold ${getStatusClass(
+          leave.status
+        )}`}
+      >
+        {leave.status}
+      </span>
     </div>
-  );
-};
+  </div>
+);
 
 const EmployeeLeaveList = () => {
   const { id } = useParams();
@@ -86,7 +83,7 @@ const EmployeeLeaveList = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  /* ===== FETCH LEAVES ===== */
+  /* ================= FETCH LEAVES ================= */
   useEffect(() => {
     const fetchLeaves = async () => {
       try {
@@ -103,8 +100,7 @@ const EmployeeLeaveList = () => {
           setLeaves(res.data.leaves || []);
           setFilteredLeaves(res.data.leaves || []);
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
         alert("Failed to fetch leaves");
       } finally {
         setLoading(false);
@@ -114,14 +110,15 @@ const EmployeeLeaveList = () => {
     fetchLeaves();
   }, [id, user.role]);
 
-  /* ===== SEARCH FILTER ===== */
+  /* ================= SEARCH ================= */
   useEffect(() => {
-    const result = leaves.filter((l) =>
-      (l.leaveType || "")
-        .toLowerCase()
-        .includes(search.toLowerCase())
+    setFilteredLeaves(
+      leaves.filter((l) =>
+        (l.leaveType || "")
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      )
     );
-    setFilteredLeaves(result);
   }, [search, leaves]);
 
   return (
@@ -129,34 +126,36 @@ const EmployeeLeaveList = () => {
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
-        <div className="mb-6 md:mb-8 text-center">
+        <div className="mb-6 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold text-red-700">
             My Leave Requests
           </h3>
-          <p className="text-red-500 mt-2">
+          <p className="text-red-500 mt-1">
             Track your leave applications
           </p>
         </div>
 
         {/* MAIN CARD */}
-        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100 backdrop-blur">
+        <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
 
-          {/* TOP BAR */}
+          {/* TOP BAR (Employee List Style) */}
           <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <input
               type="text"
               placeholder="Search leave type..."
-              className="w-full md:w-1/2 rounded-xl border border-red-300 px-4 py-2.5
-                         outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="w-full md:w-1/2 rounded-xl border border-red-300
+                         px-4 py-2.5 outline-none
+                         focus:ring-2 focus:ring-red-500"
             />
 
             {user.role === "employee" && (
               <Link
                 to="/employee-dashboard/add-leave"
-                className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white
-                           shadow-md hover:bg-red-700 transition active:scale-95 text-center"
+                className="rounded-xl bg-red-600 px-6 py-2.5
+                           font-semibold text-white
+                           hover:bg-red-700 transition"
               >
                 + Apply Leave
               </Link>
@@ -171,7 +170,7 @@ const EmployeeLeaveList = () => {
           ) : (
             <>
               {/* MOBILE */}
-              <div className="md:hidden grid grid-cols-1 gap-5 px-4 pb-24">
+              <div className="md:hidden grid gap-4 px-4 pb-24">
                 {filteredLeaves.length ? (
                   filteredLeaves.map((leave, index) => (
                     <MobileLeaveCard
@@ -187,7 +186,7 @@ const EmployeeLeaveList = () => {
                 )}
               </div>
 
-              {/* DESKTOP – SAME AS MANAGE EMPLOYEES */}
+              {/* DESKTOP – EMPLOYEE LIST STYLE */}
               <div className="hidden md:block max-h-[60vh] overflow-auto">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-red-50">
@@ -204,11 +203,18 @@ const EmployeeLeaveList = () => {
 
                   <tbody>
                     {filteredLeaves.map((leave, index) => (
-                      <tr key={leave._id} className="hover:bg-red-50">
+                      <tr
+                        key={leave._id}
+                        className="hover:bg-red-50 transition"
+                      >
                         <td className="px-4 py-3">{index + 1}</td>
                         <td className="px-4 py-3">{leave.leaveType}</td>
-                        <td className="px-4 py-3">{formatDate(leave.startDate)}</td>
-                        <td className="px-4 py-3">{formatDate(leave.endDate)}</td>
+                        <td className="px-4 py-3">
+                          {formatDate(leave.startDate)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(leave.endDate)}
+                        </td>
                         <td className="px-4 py-3 max-w-xs truncate">
                           {leave.reason || "—"}
                         </td>
@@ -219,8 +225,6 @@ const EmployeeLeaveList = () => {
                               leave.createdAt
                           )}
                         </td>
-
-                        {/* ✅ OLD STATUS STYLE */}
                         <td className="px-4 py-3 text-right">
                           <span
                             className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusClass(

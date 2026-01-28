@@ -127,16 +127,7 @@ const Login = () => {
                </button>
              </div>
             </div>
-
-            <div className="flex justify-end text-xs sm:text-sm">
-              <a
-                href="/forgot-password"
-                className="text-red-500 hover:text-red-700"
-              >
-                Forgot password?
-              </a>
-            </div>
-
+            
             <motion.button
               type="submit"
               disabled={loading}

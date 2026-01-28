@@ -1,86 +1,93 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { CalendarPlus, ArrowLeft, Loader2 } from "lucide-react";
 
 const AddHoliday = () => {
-  const [holiday, setHoliday] = useState({ title: "", date: "" });
+  const [holiday, setHoliday] = useState({
+    title: "",
+    date: "",
+  });
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  /* ================= HANDLE CHANGE ================= */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setHoliday((prev) => ({ ...prev, [name]: value }));
+  };
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/holiday/add`,
-      holiday,
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-    );
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/holiday/add`,
+        holiday,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-    navigate("/admin-dashboard/holidays");
+      if (res.data?.success) {
+        alert("Holiday Added Successfully 🎉");
+        navigate("/admin-dashboard/holidays");
+      }
+    } catch (error) {
+      alert(error.response?.data?.error || "Failed to add holiday");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-red-100 to-white flex justify-center items-center px-3 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl bg-white/95 p-10 rounded-3xl shadow-2xl border border-red-100">
 
-      <div className="w-full max-w-xl bg-white/70 backdrop-blur-xl border rounded-3xl shadow-2xl p-8">
+        {/* HEADER */}
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-red-700 mb-8 drop-shadow-sm">
+          Add New Holiday
+        </h2>
 
-        <div className="flex flex-col items-center mb-6">
-          <div className="bg-red-200 rounded-2xl w-14 h-14 flex justify-center items-center text-red-600 shadow">
-            <CalendarPlus size={30} />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
 
-          <h2 className="text-3xl font-bold mt-3">Add Holiday</h2>
-        </div>
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          <div>
-            <label className="text-sm font-semibold">Holiday Title</label>
             <input
+              name="title"
+              placeholder="Holiday Title"
               required
-              placeholder="Independence Day"
-              className="w-full border rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-red-500 outline-none"
-              onChange={e => setHoliday({ ...holiday, title: e.target.value })}
+              onChange={handleChange}
+              className="input bg-white/80"
             />
-          </div>
 
-          <div>
-            <label className="text-sm font-semibold">Date</label>
             <input
               type="date"
+              name="date"
               required
-              className="w-full border rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-red-500 outline-none"
-              onChange={e => setHoliday({ ...holiday, date: e.target.value })}
+              onChange={handleChange}
+              className="input bg-white/80"
             />
+
           </div>
 
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="w-1/2 border rounded-xl py-3 flex items-center justify-center gap-2"
-            >
-              <ArrowLeft size={18} />
-              Back
-            </button>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-1/2 bg-red-600 text-white rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-red-700 disabled:opacity-60"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Adding…
-                </>
-              ) : (
-                "Add Holiday"
-              )}
-            </button>
-          </div>
+          {/* SUBMIT */}
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-xl text-white font-semibold text-lg shadow transition-all duration-200
+              ${
+                loading
+                  ? "bg-red-300"
+                  : "bg-gradient-to-br from-red-600 to-red-500 hover:scale-105 hover:bg-red-700"
+              }`}
+          >
+            {loading ? "Creating..." : "Create Holiday"}
+          </button>
 
         </form>
       </div>

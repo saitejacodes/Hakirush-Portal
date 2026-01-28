@@ -3,17 +3,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 const EmployeeProfile = () => {
-  const { id } = useParams(); // employeeId OR userId
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= FETCH EMPLOYEE ================= */
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const response = await axios.get(
+        const res = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
           {
             headers: {
@@ -21,12 +20,10 @@ const EmployeeProfile = () => {
             },
           }
         );
-
-        if (response.data?.success) {
-          setEmployee(response.data.employee);
+        if (res.data?.success) {
+          setEmployee(res.data.employee);
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
         alert("Failed to load employee");
       } finally {
         setLoading(false);
@@ -36,46 +33,38 @@ const EmployeeProfile = () => {
     fetchEmployee();
   }, [id]);
 
-  /* ================= IMAGE HANDLER ================= */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
-    if (imagePath.startsWith("http") || imagePath.includes("cloudinary")) {
-      return imagePath;
-    }
-    return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
+    if (imagePath.startsWith("http")) return imagePath;
+    return "/default-avatar.png";
   };
 
-  /* ================= LOADING ================= */
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
         Loading profile…
       </div>
     );
-  }
 
-  /* ================= NOT FOUND ================= */
-  if (!employee) {
+  if (!employee)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
         Employee not found
       </div>
     );
-  }
 
-  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl mx-auto">
 
-        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-8">
-          View Profile
+        <h3 className="text-4xl font-extrabold text-center text-red-700 mb-10 drop-shadow-sm">
+          Employee Profile
         </h3>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-red-100">
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-10 border border-red-100">
 
-          {/* Edit Button */}
-          <div className="flex justify-end mb-4">
+          {/* EDIT BUTTON */}
+          <div className="flex justify-end mb-6">
             <button
               onClick={() =>
                 navigate(`/employee-dashboard/profile/${employee._id}/edit`)
@@ -86,51 +75,43 @@ const EmployeeProfile = () => {
             </button>
           </div>
 
-          {/* Profile */}
-          <div className="flex flex-col items-center gap-3">
+          {/* HEADER */}
+          <div className="flex flex-col items-center gap-4">
             <div className="w-32 h-32 rounded-full border-4 border-red-200 shadow-lg overflow-hidden">
               <img
                 src={getImageUrl(employee?.userId?.profileImage)}
                 alt="profile"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = "/default-avatar.png";
-                }}
+                onError={(e) => (e.target.src = "/default-avatar.png")}
               />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800 mt-2">
               {employee?.userId?.name}
             </h2>
 
-            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+            <span className="px-4 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold mt-1">
               {employee?.designation || "No Designation"}
             </span>
           </div>
 
-          {/* Info */}
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Info label="Employee ID" value={employee?.employeeId} />
-            <Info label="Email" value={employee?.userId?.email} />
-            <Info label="Gender" value={employee?.gender} />
-            <Info label="Blood Group" value={employee?.bloodGroup || "N/A"} />
-            <Info
-              label="Department"
-              value={employee?.department?.dep_name || "N/A"}
-            />
-            <Info label="Designation" value={employee?.designation || "N/A"} />
-            <Info label="Marital Status" value={employee?.maritalStatus} />
-            <Info label="Experience(Years)" value={` ${employee?.experience || 0}`} />
-            <Info label="Salary" value={`₹ ${employee?.salary || 0}`} />
+          {/* INFO GRID */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-7">
+            <Info label="Employee ID" value={employee.employeeId} />
+            <Info label="Email" value={employee.userId?.email} />
+            <Info label="Gender" value={employee.gender} />
+            <Info label="Blood Group" value={employee.bloodGroup || "N/A"} />
+            <Info label="Department" value={employee.department?.dep_name || "N/A"} />
+            <Info label="Designation" value={employee.designation || "N/A"} />
+            <Info label="Marital Status" value={employee.maritalStatus} />
+            <Info label="Experience (Years)" value={employee.experience} />
+            <Info label="Salary" value={`₹ ${employee.salary || 0}`} />
           </div>
-
         </div>
       </div>
     </div>
   );
 };
-
-/* ================= INFO CARD ================= */
 
 const Info = ({ label, value }) => (
   <div className="bg-red-50 rounded-xl p-4 border border-red-100">

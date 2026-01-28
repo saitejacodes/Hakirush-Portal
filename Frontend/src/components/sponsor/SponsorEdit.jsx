@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -8,13 +8,14 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const getImageUrl = (url) => {
   if (!url) return "/default-avatar.png";
   if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return `${url}?t=${Date.now()}`; // 🔥 cache bust
+  if (url.startsWith("http")) return `${url}?t=${Date.now()}`;
   return "/default-avatar.png";
 };
 
 const SponsorEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [sponsor, setSponsor] = useState({
     name: "",
@@ -24,46 +25,45 @@ const SponsorEdit = () => {
     upcomingEvents: "",
   });
 
-  const [preview, setPreview] = useState("/default-avatar.png");
   const [logo, setLogo] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD SPONSOR ================= */
+  /* ================= FETCH SPONSOR ================= */
   useEffect(() => {
-    const fetchSponsor = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (res.data.success) {
-          const s = res.data.sponsor;
-
-          setSponsor({
-            name: s.name || "",
-            collaboration: s.collaboration || "",
-            eventsSponsored: s.eventsSponsored || "",
-            reach: s.reach || "",
-            upcomingEvents: s.upcomingEvents || "",
-          });
-
-          setPreview(getImageUrl(s.logo));
-        }
-      } catch (error) {
-        alert("Failed to load sponsor");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSponsor();
+    // eslint-disable-next-line
   }, [id]);
+
+  const fetchSponsor = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (res.data.success) {
+        const s = res.data.sponsor;
+        setSponsor({
+          name: s.name || "",
+          collaboration: s.collaboration || "",
+          eventsSponsored: s.eventsSponsored || "",
+          reach: s.reach || "",
+          upcomingEvents: s.upcomingEvents || "",
+        });
+        setPreview(s.logo || null);
+      }
+    } catch {
+      alert("Failed to load sponsor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
@@ -74,41 +74,37 @@ const SponsorEdit = () => {
       if (!file) return;
 
       if (file.size > MAX_FILE_SIZE) {
-        alert("Logo must be under 10MB");
+        alert("Image size must be less than 10MB");
         e.target.value = "";
         return;
       }
 
       setLogo(file);
-      setPreview(URL.createObjectURL(file)); // 🔥 instant preview
-      e.target.value = ""; // allow same file reselect
+      setPreview(URL.createObjectURL(file));
+      e.target.value = "";
       return;
     }
 
-    setSponsor((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setSponsor((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= UPDATE ================= */
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
 
-    const form = new FormData();
-    form.append("name", sponsor.name);
-    form.append("collaboration", sponsor.collaboration);
-    form.append("eventsSponsored", sponsor.eventsSponsored);
-    form.append("reach", sponsor.reach);
-    form.append("upcomingEvents", sponsor.upcomingEvents);
-
-    if (logo) form.append("logo", logo);
+    const fd = new FormData();
+    Object.keys(sponsor).forEach((key) => {
+      fd.append(key, sponsor[key]);
+    });
+    if (logo) {
+      fd.append("logo", logo);
+    }
 
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
-        form,
+        fd,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -118,16 +114,16 @@ const SponsorEdit = () => {
 
       if (res.data.success) {
         alert("Sponsor updated successfully 🎉");
-        navigate("/admin-dashboard/sponsors", { replace: true });
+        navigate("/admin-dashboard/sponsors");
       }
     } catch (error) {
       alert(error.response?.data?.error || "Update failed");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading && !preview) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
         Loading…
@@ -135,101 +131,98 @@ const SponsorEdit = () => {
     );
   }
 
+  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-linear-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-red-50 p-6">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
 
-        <h3 className="text-4xl font-extrabold text-red-700 text-center mb-6">
+        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
           Edit Sponsor
-        </h3>
+        </h2>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* LOGO */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
-                <img
-                  src={preview}
-                  alt="logo"
-                  onError={(e) => (e.target.src = "/default-avatar.png")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {/* IMAGE */}
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={getImageUrl(preview)}
+              alt="logo"
+              onError={(e) => (e.target.src = "/default-avatar.png")}
+              className="w-28 h-28 rounded-full object-cover border"
+            />
 
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Change Logo
-                <input
-                  type="file"
-                  name="logo"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleChange}
-                />
-              </label>
-            </div>
-
-            {/* FIELDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <label className="cursor-pointer text-red-600 font-semibold">
+              Change Logo
               <input
-                name="name"
-                value={sponsor.name}
+                ref={fileInputRef}
+                type="file"
+                name="logo"
+                accept="image/*"
+                className="hidden"
                 onChange={handleChange}
-                placeholder="Sponsor Name"
-                className="input"
               />
+            </label>
+          </div>
 
-              <select
-                name="collaboration"
-                value={sponsor.collaboration}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Collaboration Type</option>
-                <option value="Title Sponsor">Title Sponsor</option>
-                <option value="Associate Sponsor">Associate Sponsor</option>
-                <option value="Event Sponsor">Event Sponsor</option>
-                <option value="Media Partner">Media Partner</option>
-              </select>
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              className="input"
+              name="name"
+              value={sponsor.name}
+              onChange={handleChange}
+              placeholder="Sponsor Name"
+              required
+            />
 
-              <input
-                type="number"
-                name="eventsSponsored"
-                value={sponsor.eventsSponsored}
-                onChange={handleChange}
-                placeholder="Events Sponsored"
-                className="input"
-              />
+            <select
+              className="input"
+              name="collaboration"
+              value={sponsor.collaboration}
+              onChange={handleChange}
+            >
+              <option value="">Collaboration Type</option>
+              <option value="Title Sponsor">Title Sponsor</option>
+              <option value="Associate Sponsor">Associate Sponsor</option>
+              <option value="Event Sponsor">Event Sponsor</option>
+              <option value="Media Partner">Media Partner</option>
+            </select>
 
-              <input
-                name="reach"
-                value={sponsor.reach}
-                onChange={handleChange}
-                placeholder="Reach (eg: 2M impressions)"
-                className="input"
-              />
+            <input
+              type="number"
+              className="input"
+              name="eventsSponsored"
+              value={sponsor.eventsSponsored}
+              onChange={handleChange}
+              placeholder="Events Sponsored"
+            />
 
-              <input
-                name="upcomingEvents"
-                value={sponsor.upcomingEvents}
-                onChange={handleChange}
-                placeholder="Upcoming Events"
-                className="input"
-              />
-            </div>
+            <input
+              className="input"
+              name="reach"
+              value={sponsor.reach}
+              onChange={handleChange}
+              placeholder="Reach (eg: 2M impressions)"
+            />
 
-            <div className="text-center">
-              <button
-                disabled={saving}
-                className={`px-8 py-3 rounded-xl text-white font-semibold
-                ${saving ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
-              >
-                {saving ? "Updating..." : "Update Sponsor"}
-              </button>
-            </div>
+            <input
+              className="input"
+              name="upcomingEvents"
+              value={sponsor.upcomingEvents}
+              onChange={handleChange}
+              placeholder="Upcoming Events"
+            />
+          </div>
 
-          </form>
-        </div>
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-semibold
+              ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
+          >
+            {loading ? "Updating..." : "Update Sponsor"}
+          </button>
+
+        </form>
       </div>
     </div>
   );

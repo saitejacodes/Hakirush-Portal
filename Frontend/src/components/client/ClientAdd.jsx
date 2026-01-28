@@ -2,30 +2,45 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 const AddClient = () => {
   const [formData, setFormData] = useState({});
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  /* ===== HANDLE CHANGE ===== */
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "image") {
+    if (name === "companyLogo") {
       const file = files[0];
       if (!file) return;
-      setFormData((p) => ({ ...p, image: file }));
+
+      if (file.size > MAX_FILE_SIZE) {
+        alert("Image must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, companyLogo: file }));
       setPreview(URL.createObjectURL(file));
-      e.target.value = "";
-    } else {
-      setFormData((p) => ({ ...p, [name]: value }));
+      return;
     }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /* ===== SUBMIT ===== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const fd = new FormData();
-    Object.keys(formData).forEach((k) => fd.append(k, formData[k]));
+    Object.keys(formData).forEach((key) => {
+      fd.append(key, formData[key]);
+    });
 
     try {
       const res = await axios.post(
@@ -42,65 +57,116 @@ const AddClient = () => {
         alert("Client Added Successfully 🎉");
         navigate("/admin-dashboard/clients");
       }
-    } catch (err) {
-      alert(err.response?.data?.error || "Failed to add client");
+    } catch (error) {
+      alert(
+        error.response?.data?.error ||
+          "Failed to add client. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ===== UI ===== */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+      <div className="w-full max-w-3xl bg-white/95 p-10 rounded-3xl shadow-2xl border border-red-100">
 
-        <h3 className="text-4xl font-extrabold text-red-700 text-center mb-8">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-red-700 mb-8 drop-shadow-sm">
           Add New Client
-        </h3>
+        </h2>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-red-100">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
 
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-red-200 shadow">
-                <img
-                  src={preview || "/default-avatar.png"}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {/* IMAGE */}
+          <div className="flex flex-col items-center gap-4">
+            <img
+              src={preview || "/default-avatar.png"}
+              alt="logo"
+              className="w-28 h-28 rounded-full object-cover border-4 border-red-200 shadow"
+            />
 
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Upload Company Logo
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleChange}
-                />
-              </label>
-            </div>
+            <label className="text-red-600 font-semibold cursor-pointer hover:underline">
+              Upload Company Logo
+              <input
+                type="file"
+                name="companyLogo"
+                accept="image/*"
+                className="hidden"
+                onChange={handleChange}
+              />
+            </label>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <input name="name" placeholder="Client Name" required onChange={handleChange} className="input" />
-              <input name="email" placeholder="Email" type="email" required onChange={handleChange} className="input" />
-              <input type="password" name="password" placeholder="Password" required onChange={handleChange} className="input" />
-              <input type="date" name="dateOfJoining" onChange={handleChange} className="input" />
+          {/* FORM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <input
+              name="name"
+              placeholder="Client Name"
+              required
+              onChange={handleChange}
+              className="input bg-white/80"
+            />
 
-              <select name="planType" onChange={handleChange} className="input">
-                <option value="">Select Plan</option>
-                <option value="annual">Annual</option>
-                <option value="quarterly">Quarterly</option>
-              </select>
+            <input
+              name="email"
+              placeholder="Email"
+              type="email"
+              required
+              onChange={handleChange}
+              className="input bg-white/80"
+            />
 
-              <input type="number" name="budget" placeholder="Budget" onChange={handleChange} className="input" />
-            </div>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+              onChange={handleChange}
+              className="input bg-white/80"
+            />
 
-            <div className="text-center">
-              <button className="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-2xl shadow-lg font-semibold">
-                Create Client
-              </button>
-            </div>
+            <input
+              type="date"
+              name="dateOfJoining"
+              onChange={handleChange}
+              className="input bg-white/80"
+            />
 
-          </form>
-        </div>
+            <select
+              name="planType"
+              onChange={handleChange}
+              className="input bg-white/80"
+            >
+              <option value="">Select Plan</option>
+              <option value="annual">Annual</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
+
+            <input
+              type="number"
+              name="budget"
+              placeholder="Budget"
+              onChange={handleChange}
+              className="input bg-white/80"
+            />
+          </div>
+
+          {/* BUTTON */}
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-xl text-white font-semibold text-lg shadow
+              transition-all duration-200
+              ${
+                loading
+                  ? "bg-red-300"
+                  : "bg-gradient-to-br from-red-600 to-red-500 hover:scale-105 hover:bg-red-700"
+              }`}
+          >
+            {loading ? "Creating..." : "Create Client"}
+          </button>
+
+        </form>
       </div>
     </div>
   );

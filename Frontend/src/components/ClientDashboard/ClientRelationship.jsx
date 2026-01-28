@@ -20,7 +20,7 @@ const ClientRelationship = () => {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // fetch client for logged in user
+  /* ================= FETCH CLIENT ================= */
   useEffect(() => {
     if (!user?._id) return;
 
@@ -35,14 +35,12 @@ const ClientRelationship = () => {
           }
         );
 
-        // find client linked to this user
         const found = res.data.clients.find(
           (c) => c.userId?._id === user._id
         );
 
         setClient(found || null);
-      } catch (err) {
-        console.error(err);
+      } catch {
         alert("Failed to load client relationship plan");
       } finally {
         setLoading(false);
@@ -52,47 +50,52 @@ const ClientRelationship = () => {
     fetchClient();
   }, [user]);
 
-  // -------------------- UI STATES --------------------
-
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
+      <div className="min-h-screen flex items-center justify-center text-lg text-red-500">
         Loading relationship plan…
       </div>
     );
 
   if (!client)
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-red-600">
+      <div className="min-h-screen flex items-center justify-center text-lg text-red-600">
         Client not found for this login
       </div>
     );
 
-  const plan = client.planType; // annual | quarterly
+  const plan = client.planType;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-100 px-4 py-8">
+      <div className="max-w-6xl mx-auto space-y-10">
 
-        {/* HEADER */}
-        <div className="text-center space-y-2">
-          <Handshake size={60} className="mx-auto text-red-600" />
-          <h1 className="text-4xl font-extrabold text-red-700">
+        {/* ================= HERO HEADER ================= */}
+        <div className="relative overflow-hidden rounded-3xl p-8 shadow-2xl text-white
+          bg-gradient-to-r from-red-700 via-red-600 to-orange-500">
+
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
+
+          <Handshake size={56} className="relative mb-4" />
+
+          <h1 className="relative text-3xl sm:text-4xl font-extrabold tracking-tight">
             Client Relationship Program
           </h1>
 
-          <p className="text-gray-600">
-            Plan Type:
-            <span className="font-bold uppercase text-red-700"> {plan}</span>
-          </p>
-
-          <p className="text-gray-600">
-            Client: {client?.userId?.name}
-          </p>
+          <div className="relative mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+            <span className="px-4 py-1 rounded-full bg-white/20 backdrop-blur">
+              Plan: <span className="uppercase">{plan}</span>
+            </span>
+            <span className="px-4 py-1 rounded-full bg-white/20 backdrop-blur">
+              Client: {client?.userId?.name}
+            </span>
+          </div>
         </div>
 
-        {/* CONDITIONAL RENDER */}
-        {plan === "annual" ? <AnnualPlan /> : <QuarterlyPlan />}
+        {/* ================= PLAN CONTENT ================= */}
+        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-red-100 p-6 sm:p-8">
+          {plan === "annual" ? <AnnualPlan /> : <QuarterlyPlan />}
+        </div>
 
       </div>
     </div>
@@ -102,33 +105,31 @@ const ClientRelationship = () => {
 export default ClientRelationship;
 
 /* ============================================================
-                        ANNUAL PLAN VIEW
+                        ANNUAL PLAN
 ============================================================ */
 
 const AnnualPlan = () => (
-  <>
+  <div className="space-y-8">
+
     {/* SNAPSHOT */}
-    <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <InfoCard
-        icon={<CalendarDays className="text-red-600" />}
+        icon={<CalendarDays />}
         title="Engagement Period"
         text="Full Annual Partnership"
       />
-
       <InfoCard
-        icon={<LineChart className="text-red-600" />}
+        icon={<LineChart />}
         title="Engagement Level"
         text="Strategic Partner"
       />
-
       <InfoCard
-        icon={<Star className="text-red-600" />}
+        icon={<Star />}
         title="Success Focus"
         text="Long-term Growth"
       />
-    </section>
+    </div>
 
-    {/* OBJECTIVES */}
     <SectionTitle text="Annual Partnership Objectives" />
 
     <ListCard
@@ -141,17 +142,17 @@ const AnnualPlan = () => (
       ]}
     />
 
-    {/* CTA */}
     <CTA />
-  </>
+  </div>
 );
 
 /* ============================================================
-                      QUARTERLY PLAN VIEW
+                      QUARTERLY PLAN
 ============================================================ */
 
 const QuarterlyPlan = () => (
-  <>
+  <div className="space-y-6">
+
     <SectionTitle text="Quarter-wise Relationship Strategy" />
 
     <Roadmap
@@ -191,7 +192,7 @@ const QuarterlyPlan = () => (
     />
 
     <CTA />
-  </>
+  </div>
 );
 
 /* ============================================================
@@ -199,30 +200,41 @@ const QuarterlyPlan = () => (
 ============================================================ */
 
 const SectionTitle = ({ text }) => (
-  <h2 className="text-2xl font-bold text-gray-800 mt-6">{text}</h2>
+  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mt-6">
+    {text}
+  </h2>
 );
 
 const InfoCard = ({ icon, title, text }) => (
-  <div className="bg-white/80 rounded-2xl shadow-xl border p-6 text-center space-y-2">
-    <div className="flex justify-center">{icon}</div>
-    <h3 className="font-bold text-lg">{title}</h3>
+  <div className="bg-gradient-to-br from-white to-red-50 rounded-2xl
+    shadow-xl border border-red-100 p-6 text-center space-y-2">
+
+    <div className="flex justify-center text-red-600">{icon}</div>
+
+    <h3 className="font-bold text-lg text-gray-800">{title}</h3>
+
     <p className="text-gray-600 text-sm">{text}</p>
   </div>
 );
 
 const ListCard = ({ items }) => (
-  <div className="bg-white/80 rounded-2xl shadow-xl border p-6 space-y-2">
+  <div className="bg-gradient-to-br from-white to-red-50 rounded-2xl
+    shadow-xl border border-red-100 p-6 space-y-3">
+
     {items.map((it, i) => (
       <p key={i} className="flex gap-2 items-center text-gray-700 text-sm">
-        <CheckCircle2 className="text-red-600" size={16} /> {it}
+        <CheckCircle2 className="text-red-600" size={16} />
+        {it}
       </p>
     ))}
   </div>
 );
 
 const Roadmap = ({ quarter, points }) => (
-  <div className="bg-white/80 rounded-2xl shadow-xl border p-5 mt-3">
-    <p className="font-bold text-red-600">{quarter}</p>
+  <div className="bg-gradient-to-br from-white to-red-50
+    rounded-2xl shadow-xl border border-red-100 p-5">
+
+    <p className="font-bold text-red-700">{quarter}</p>
 
     <ul className="mt-2 space-y-1 text-sm text-gray-700">
       {points.map((p, i) => (
@@ -236,8 +248,10 @@ const Roadmap = ({ quarter, points }) => (
 );
 
 const CTA = () => (
-  <div className="text-center bg-white/80 border rounded-3xl shadow-xl p-8 space-y-3 mt-6">
-    <Rocket className="mx-auto text-red-600" />
+  <div className="text-center bg-gradient-to-br from-white to-red-50
+    border border-red-100 rounded-3xl shadow-xl p-8 space-y-3 mt-6">
+
+    <Rocket className="mx-auto text-red-600" size={32} />
 
     <h2 className="text-2xl font-bold text-red-700">
       Ready to Elevate Our Partnership?
@@ -247,7 +261,8 @@ const CTA = () => (
       Schedule your strategy meeting with our relationship manager.
     </p>
 
-    <button className="mt-2 px-6 py-3 rounded-2xl bg-red-600 text-white font-semibold hover:bg-red-700 transition flex gap-2 mx-auto">
+    <button className="mt-2 px-6 py-3 rounded-2xl bg-red-600 text-white
+      font-semibold hover:bg-red-700 transition flex gap-2 mx-auto">
       Book Strategy Call <ArrowRight />
     </button>
   </div>

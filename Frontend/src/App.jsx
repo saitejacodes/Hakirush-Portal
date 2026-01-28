@@ -30,7 +30,6 @@ import Unauthorized from "./pages/Unauthorized";
 import HolidaysList from "./components/holidays/HolidayList"
 import AddHoliday from './components/holidays/AddHolidays';
 import ClientRelationship from './components/ClientDashboard/ClientRelationship';
-import ForgotPassword from './pages/ForgotPassword';
 import SponsorList from './components/sponsor/SponsorList';
 import SponsorAdd from './components/sponsor/SponsorAdd';
 import SponsorEdit from './components/sponsor/SponsorEdit'
@@ -118,7 +117,6 @@ const App = () => {
             <Route path='/client-dashboard/ourrelationship/:id' element={<ClientRelationship />}/>
             <Route path='/client-dashboard/setting' element={<EmployeeSetting />} />
         </Route>
-        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
     </BrowserRouter>

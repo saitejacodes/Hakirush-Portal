@@ -9,7 +9,6 @@ import {
   User,
   UserSquare,
   UserCheck,
-  ClipboardList,
   CalendarCheck,
   PartyPopper,
   BadgeDollarSign,
@@ -34,10 +33,10 @@ const AdminSidebar = () => {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* MOBILE OVERLAY */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -45,8 +44,10 @@ const AdminSidebar = () => {
       <aside
         className={`
           fixed md:sticky top-0 left-0 z-50 h-screen
-          bg-white border-r shadow-xl
-          transition-all duration-300
+          bg-white/90 backdrop-blur-xl
+          border-r border-red-100
+          shadow-2xl
+          transition-all duration-300 ease-in-out
           ${open ? "translate-x-0 w-72" : "-translate-x-full w-72"}
           md:translate-x-0 md:w-20 md:hover:w-72
           overflow-hidden
@@ -54,20 +55,30 @@ const AdminSidebar = () => {
         `}
       >
         {/* HEADER */}
-        <div className="h-16 flex items-center gap-3 px-4 bg-linear-to-r from-black to-gray-900 text-white">
-          <img src={Logo} className="w-10 h-10 rounded-xl shrink-0" />
+        <div className="h-16 flex items-center gap-3 px-4
+          bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white">
 
-          <span className="text-lg font-extrabold whitespace-nowrap text-yellow-500 uppercase hidden md:group-hover:block">
+          <img
+            src={Logo}
+            className="w-10 h-10 rounded-xl shadow-md shrink-0"
+            alt="Logo"
+          />
+
+          <span className="text-lg font-extrabold tracking-wide whitespace-nowrap
+            hidden md:group-hover:block uppercase">
             Hakirush Portal
           </span>
 
-          <button className="ml-auto md:hidden" onClick={() => setOpen(false)}>
+          <button
+            className="ml-auto md:hidden p-2 rounded-lg hover:bg-white/20"
+            onClick={() => setOpen(false)}
+          >
             <X />
           </button>
         </div>
 
-        {/* MENU */}
-        <nav className="mt-6 px-2 space-y-1">
+        {/* NAVIGATION */}
+        <nav className="mt-6 px-3 space-y-1">
           {sidebar.map((item, i) => (
             <NavLink
               key={i}
@@ -77,22 +88,23 @@ const AdminSidebar = () => {
               className={({ isActive }) =>
                 `
                 flex items-center gap-4 px-4 py-3 rounded-xl
+                text-sm font-semibold
                 transition-all duration-200
                 ${
                   isActive
-                    ? "bg-red-600 text-white shadow-lg"
-                    : "text-gray-700 hover:bg-red-50"
+                    ? "bg-red-600 text-white shadow-lg scale-[1.02]"
+                    : "text-gray-700 hover:bg-red-50 hover:text-red-700"
                 }
                 `
               }
             >
-              {/* ICON — always visible */}
+              {/* ICON */}
               <div className="w-8 flex justify-center shrink-0">
                 <item.icon size={20} />
               </div>
 
-              {/* TEXT — only visible on expand */}
-              <span className="whitespace-nowrap block md:hidden md:group-hover:block">
+              {/* TEXT */}
+              <span className="whitespace-nowrap hidden md:group-hover:block">
                 {item.title}
               </span>
             </NavLink>
