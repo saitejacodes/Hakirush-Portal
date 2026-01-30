@@ -6,35 +6,28 @@ import {
   addClient,
   getClients,
   getClient,
+  getMyClient,
   updateClient,
   deleteClient,
 } from "../controllers/clientController.js";
 
 const router = express.Router();
 
-/* ================= ROUTE LOG ================= */
-router.use((req, res, next) => {
-  console.log("CLIENT ROUTE:", req.method, req.originalUrl);
-  next();
-});
-
-/* ================= ROUTES ================= */
-
 router.get("/", authMiddleware, getClients);
+router.get("/me", authMiddleware, getMyClient);
+router.get("/:id", authMiddleware, getClient);
 
 router.post(
   "/add",
   authMiddleware,
-  upload.single("image"), // 🔥 same as frontend
+  upload.single("companyLogo"),
   addClient
 );
-
-router.get("/:id", authMiddleware, getClient);
 
 router.put(
   "/:id",
   authMiddleware,
-  upload.single("image"), // 🔥 same as frontend
+  upload.single("companyLogo"),
   updateClient
 );
 

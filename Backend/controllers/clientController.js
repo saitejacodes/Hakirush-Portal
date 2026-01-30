@@ -4,55 +4,69 @@ import bcrypt from "bcrypt";
 import uploadToImageKit from "../utils/uploadToImageKit.js";
 
 /* ================= ADD CLIENT ================= */
-export const addClient = async (req, res) => {
+const addClient = async (req, res) => {
   try {
-    const { name, email, password, dateOfJoining, budget, planType } = req.body;
+    const {
+      name,
+      email,
+      password,
+      dateOfJoining,
+      planType,
+      budget,
+    } = req.body;
 
-    if (!name || !email || !password || !dateOfJoining || !budget || !planType) {
-      return res.status(400).json({ success: false, error: "Missing fields" });
+    /* ===== VALIDATION ===== */
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Required fields missing" });
     }
 
-    const exists = await User.findOne({ email });
-    if (exists) {
-      return res.status(400).json({ success: false, error: "User already exists" });
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: "Company logo required" });
     }
 
+    /* ===== CHECK USER ===== */
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    /* ===== HASH PASSWORD ===== */
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let imageUrl = "";
-    if (req.file?.buffer) {
-      imageUrl = await uploadToImageKit(req.file, "clients");
-    }
-
+    /* ===== CREATE USER ===== */
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role: "client",
-      profileImage: imageUrl, // ✅ ImageKit URL
     });
 
+    /* ===== UPLOAD LOGO ===== */
+    const logoUrl = await uploadToImageKit(req.file, "clients");
+
+    /* ===== CREATE CLIENT ===== */
     const client = await Client.create({
       userId: user._id,
+      name,
+      email,
       dateOfJoining,
-      budget,
       planType,
-      companyLogo: imageUrl, // ✅ ImageKit URL
+      budget,
+      companyLogo: logoUrl,
     });
 
     res.status(201).json({
       success: true,
-      message: "Client added",
       client,
     });
-  } catch (err) {
-    console.error("ADD CLIENT ERROR:", err);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (error) {
+    console.error("ADD CLIENT ERROR:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 /* ================= GET ALL CLIENTS ================= */
-export const getClients = async (req, res) => {
+const getClients = async (req, res) => {
   try {
     const clients = await Client.find().populate("userId", "-password");
     res.json({ success: true, clients });
@@ -62,9 +76,12 @@ export const getClients = async (req, res) => {
 };
 
 /* ================= GET SINGLE CLIENT ================= */
-export const getClient = async (req, res) => {
+const getClient = async (req, res) => {
   try {
-    const client = await Client.findById(req.params.id).populate("userId", "-password");
+    const client = await Client.findById(req.params.id).populate(
+      "userId",
+      "-password"
+    );
     if (!client) {
       return res.status(404).json({ success: false, error: "Client not found" });
     }
@@ -74,50 +91,57 @@ export const getClient = async (req, res) => {
   }
 };
 
-/* ================= UPDATE CLIENT ================= */
-export const updateClient = async (req, res) => {
+/* ================= GET LOGGED-IN CLIENT ================= */
+const getMyClient = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, budget, dateOfJoining, planType } = req.body;
-
-    const client = await Client.findById(id);
+    const client = await Client.findOne({ userId: req.user.id }).populate(
+      "userId",
+      "-password"
+    );
     if (!client) {
-      return res.status(404).json({ success: false, error: "Client not found" });
+      return res.status(404).json({ success: false });
     }
+    res.json({ success: true, client });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
-    /* ---------- USER UPDATE ---------- */
-    const userUpdate = {};
-    if (name !== undefined) userUpdate.name = name;
+/* ================= UPDATE CLIENT ================= */
+const updateClient = async (req, res) => {
+  try {
+    const { budget, planType } = req.body;
+
+    const update = {};
+
+    if (budget !== undefined) update.budget = budget;
+
+    if (planType !== undefined) {
+      if (!["Annual", "Quarterly"].includes(planType)) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid plan type" });
+      }
+      update.planType = planType;
+    }
 
     if (req.file?.buffer) {
-      userUpdate.profileImage = await uploadToImageKit(req.file, "clients");
+      update.companyLogo = await uploadToImageKit(req.file, "clients");
     }
 
-    if (Object.keys(userUpdate).length) {
-      await User.findByIdAndUpdate(client.userId, userUpdate);
-    }
+    update.updatedAt = new Date();
 
-    /* ---------- CLIENT UPDATE ---------- */
-    const clientUpdate = {};
-    if (budget !== undefined) clientUpdate.budget = budget;
-    if (dateOfJoining !== undefined) clientUpdate.dateOfJoining = dateOfJoining;
-    if (planType !== undefined) clientUpdate.planType = planType;
-
-    if (req.file?.buffer) {
-      clientUpdate.companyLogo = userUpdate.profileImage;
-    }
-
-    await Client.findByIdAndUpdate(id, clientUpdate);
+    await Client.findByIdAndUpdate(req.params.id, update);
 
     res.json({ success: true, message: "Client updated" });
   } catch (err) {
-    console.error("UPDATE CLIENT ERROR:", err);
+    console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
 
 /* ================= DELETE CLIENT ================= */
-export const deleteClient = async (req, res) => {
+const deleteClient = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id);
     if (!client) {
@@ -132,3 +156,12 @@ export const deleteClient = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+export {
+  addClient,
+  getClients,
+  getClient,
+  getMyClient,
+  updateClient,
+  deleteClient
+}

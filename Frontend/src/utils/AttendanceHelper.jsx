@@ -4,7 +4,6 @@ import { useState } from "react";
 const statusTheme = {
   Present: { bg: "#16a34a", light: "#dcfce7", text: "#166534" },
   Absent: { bg: "#dc2626", light: "#fee2e2", text: "#991b1b" },
-  Sick: { bg: "#eab308", light: "#fef9c3", text: "#854d0e" },
   Leave: { bg: "#2563eb", light: "#dbeafe", text: "#1e40af" },
 };
 
@@ -34,7 +33,6 @@ const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeeke
     }
   };
 
-  // Show badge if already marked
   if (status) {
     const t = statusTheme[status];
     return (
@@ -47,10 +45,9 @@ const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeeke
     );
   }
 
-  // Show buttons
   return (
     <div className="flex gap-2">
-      {["Present", "Absent", "Sick", "Leave"].map((s) => {
+      {["Present", "Absent", "Leave"].map((s) => {
         const t = statusTheme[s];
         return (
           <button

@@ -38,8 +38,8 @@ export const ClientButtons = ({ id, refresh }) => {
       {/* Edit */}
       <button
         onClick={() => navigate(`/admin-dashboard/clients/edit/${id}`)}
-        className="p-2 rounded-lg bg-red-600 text-white
-                   hover:bg-red-700 shadow-md transition text-sm font-semibold"
+        className="p-2 rounded-lg border border-red-400 text-red-600 
+                   hover:bg-red-100 transition text-sm font-medium"
       >
         <Edit2 size={16} />
       </button>
@@ -47,8 +47,8 @@ export const ClientButtons = ({ id, refresh }) => {
       {/* Delete */}
       <button
         onClick={deleteClient}
-        className="p-2 rounded-lg bg-white text-red-600
-                   border border-red-400 hover:bg-red-50 transition text-sm font-semibold"
+        className="p-2 rounded-lg bg-red-600 text-white
+                   hover:bg-red-700 shadow-md transition text-sm font-semibold"
       >
         <Trash2 size={16} />
       </button>

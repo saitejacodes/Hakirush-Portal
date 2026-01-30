@@ -59,8 +59,7 @@ const EmployeeSidebar = () => {
 
           <img src={Logo} className="w-10 h-10 rounded-xl shadow shrink-0" />
 
-          <span className="text-lg font-extrabold tracking-wide whitespace-nowrap
-            hidden md:group-hover:block uppercase">
+          <span className="text-lg font-extrabold tracking-wide whitespace-nowrap uppercase block md:hidden md:group-hover:block">
             Hakirush Portal
           </span>
 
@@ -79,10 +78,13 @@ const EmployeeSidebar = () => {
               key={i}
               to={item.link}
               end
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               className={({ isActive }) =>
                 `
-                flex items-center gap-4 px-4 py-3 rounded-xl
+                flex items-center gap-4 p-3 rounded-xl
                 text-sm font-semibold
                 transition-all duration-200
                 ${
@@ -97,7 +99,7 @@ const EmployeeSidebar = () => {
                 <item.icon size={20} />
               </div>
 
-              <span className="whitespace-nowrap hidden md:group-hover:block">
+              <span className="whitespace-nowrap block md:hidden md:group-hover:block">
                 {item.title}
               </span>
             </NavLink>

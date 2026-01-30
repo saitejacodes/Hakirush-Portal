@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Eye, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
@@ -28,6 +28,19 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
 
   return (
     <div className="flex gap-2 justify-end">
+
+      <button
+        title="View Department Employees"
+        onClick={() => {
+          console.log("Navigating with ID:", id);
+          navigate(`/admin-dashboard/department/${id}/employees`);
+        }}
+        className="p-2 rounded-xl border border-red-200 text-red-600 
+                   hover:bg-red-100/70 hover:shadow transition-all
+                   active:scale-95 backdrop-blur"
+      >
+        <Eye size={16} />
+      </button>
 
       <button
         title="Edit Department"

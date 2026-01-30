@@ -64,8 +64,7 @@ const AdminSidebar = () => {
             alt="Logo"
           />
 
-          <span className="text-lg font-extrabold tracking-wide whitespace-nowrap
-            hidden md:group-hover:block uppercase">
+          <span className="text-lg font-extrabold tracking-wide whitespace-nowrap uppercase block md:hidden md:group-hover:block">
             Hakirush Portal
           </span>
 
@@ -83,11 +82,14 @@ const AdminSidebar = () => {
             <NavLink
               key={i}
               to={item.link}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               end
               className={({ isActive }) =>
                 `
-                flex items-center gap-4 px-4 py-3 rounded-xl
+                flex items-center gap-4 p-3 rounded-xl
                 text-sm font-semibold
                 transition-all duration-200
                 ${
@@ -104,7 +106,7 @@ const AdminSidebar = () => {
               </div>
 
               {/* TEXT */}
-              <span className="whitespace-nowrap hidden md:group-hover:block">
+              <span className="whitespace-nowrap block md:hidden md:group-hover:block">
                 {item.title}
               </span>
             </NavLink>

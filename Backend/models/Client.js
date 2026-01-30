@@ -5,7 +5,7 @@ const clientSchema = new Schema({
   dateOfJoining: { type: Date, required: true },
   companyLogo: { type: String },
   budget: { type: Number, required: true },
-  planType: { type: String, enum: ["annual", "quarterly"], required: true },
+  planType: { type: String, enum: ["Annual", "Quarterly"], required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

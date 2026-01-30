@@ -118,10 +118,11 @@ const updateEmployee = async (req, res) => {
       return res.status(404).json({ success: false, error: "Employee not found" });
     }
 
-    const { name, maritalStatus, designation, salary } = req.body;
+    const { name, maritalStatus, department, designation, salary } = req.body;
 
     if (name !== undefined) employee.userId.name = name;
     if (maritalStatus !== undefined) employee.maritalStatus = maritalStatus;
+    if (department !== undefined) employee.department = department;
     if (designation !== undefined) employee.designation = designation;
     if (salary !== undefined) employee.salary = Number(salary);
 
@@ -214,6 +215,28 @@ const getEmployeesByDepartment = async (req, res) => {
   }
 };
 
+/* ================= GET EMPLOYEES BY DEPARTMENT (ADMIN) ================= */
+const getEmployeesByDepartmentId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const employees = await Employee.find({ department: id })
+      .populate("userId", "name email profileImage")
+      .populate("department", "dep_name");
+
+    res.status(200).json({
+      success: true,
+      employees,
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
 /* ================= GET NEW EMPLOYEES ================= */
 const getNewEmployees = async (req, res) => {
   try {
@@ -259,6 +282,7 @@ export {
   editEmployeeProfile,
   deleteEmployee,
   getEmployeesByDepartment,
+  getEmployeesByDepartmentId,
   getNewEmployees,
   getLeaveBalance,
 };

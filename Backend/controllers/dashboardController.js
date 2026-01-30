@@ -13,8 +13,8 @@ const getSummary = async (req, res) => {
     const totalClients = await Client.countDocuments();
     const totalSponsors = await Sponsor.countDocuments();
 
-    const totalAnnual = await Client.countDocuments({ planType: "annual" });
-    const totalQuarterly = await Client.countDocuments({ planType: "quarterly" });
+    const totalAnnual = await Client.countDocuments({ planType: "Annual" });
+    const totalQuarterly = await Client.countDocuments({ planType: "Quarterly" });
 
     /* ========== LEAVE SUMMARY ========== */
     const employeeAppliedForLeave = await Leave.distinct("employeeId");

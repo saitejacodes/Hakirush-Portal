@@ -155,7 +155,7 @@ const ClientSportsPlan = () => {
 
         {/* ================= PLAN ================= */}
         <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-red-100 p-6">
-          {plan === "annual" ? <AnnualPlan /> : <QuarterlyPlan />}
+          {plan === "Annual" ? <AnnualPlan /> : <QuarterlyPlan />}
         </div>
       </div>
     </div>

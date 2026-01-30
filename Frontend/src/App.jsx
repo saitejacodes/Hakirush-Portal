@@ -1,47 +1,54 @@
 import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
 import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import EmployeeDashboard from './pages/EmployeeDashboard';
 import PrivateRoutes from './utils/PrivateRoutes';
 import RoleBaseRoutes from './utils/RoleBaseRoutes';
+import EmployeeSetting from './pages/Setting';
+import Unauthorized from "./pages/Unauthorized";
+
+// Admin Imports
+import AdminDashboard from './pages/AdminDashboard';
 import AdminSummary from './components/dashboard/AdminSummary';
 import DepartmentList from './components/departments/DepartmentList';
 import AddDepartments from './components/departments/AddDepartments';
 import EditDepartment from './components/departments/EditDepartment';
+import DepartmentEmployees from './components/departments/DepartmentEmployees';
 import EmplyeeList from './components/employee/EmployeeList';
 import EmplyeeAdd from './components/employee/EmployeeAdd';
 import EmplyeeView from './components/employee/EmployeeView';
 import EmplyeeEdit from './components/employee/EmployeeEdit';
-import ClientList from './components/client/ClinetList'
-import ClientAdd from './components/client/ClientAdd'
-import ViewClient from './components/client/ClientView';
-import EmpolyeeSummary from './components/EmpolyeeDashboard/EmployeeSummary'
-import EmployeeLeaveList from './components/leave/EmployeeLeaveList';
-import EmployeeLeaveAdd from './components/leave/EmployeeLeaveAdd';
-import EmployeeSetting from './components/EmpolyeeDashboard/EmployeeSetting';
-import AdminLeaveTable from './components/leave/AdminLeaveTable';
-import LeaveDetails from './components/leave/LeaveDetails';
-import AdminAttendence from './components/attendance/AdminAttendance';
-import AdminAttendenceReport from './components/attendance/AdminAttendanceReport';
+import ClientList from './components/client/ClinetList';
+import ClientAdd from './components/client/ClientAdd';
 import ClientEdit from './components/client/ClientEdit';
-import ClientDashboard from './pages/ClientDashboard';
-import ClientSummary from './components/ClientDashboard/ClientSummary'
-import Unauthorized from "./pages/Unauthorized";
-import HolidaysList from "./components/holidays/HolidayList"
-import AddHoliday from './components/holidays/AddHolidays';
-import ClientRelationship from './components/ClientDashboard/ClientRelationship';
+import ViewClient from './components/client/ClientView';
 import SponsorList from './components/sponsor/SponsorList';
 import SponsorAdd from './components/sponsor/SponsorAdd';
-import SponsorEdit from './components/sponsor/SponsorEdit'
+import SponsorEdit from './components/sponsor/SponsorEdit';
+import SponsorView from './components/sponsor/SponsorView';
 import StallList from './components/stalls/StallList';
 import StallAdd from './components/stalls/StallAdd';
 import StallEdit from './components/stalls/StallEdit';
-import SponsorView from './components/sponsor/SponsorView';
+import StallView from './components/stalls/StallView';
+import AdminAttendence from './components/attendance/AdminAttendance';
+import AdminAttendenceReport from './components/attendance/AdminAttendanceReport';
+import EmployeeLeaveList from './components/leave/EmployeeLeaveList';
+import AdminLeaveTable from './components/leave/AdminLeaveTable';
+import LeaveDetails from './components/leave/LeaveDetails';
+import HolidaysList from "./components/holidays/HolidayList";
+import AddHoliday from './components/holidays/AddHolidays';
 import AdminAnnouncement from './components/announcement/AdminAnnouncement';
 import EditAnnouncement from './components/announcement/EditAnnouncement';
+
+// Employee Imports
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmpolyeeSummary from './components/EmpolyeeDashboard/EmployeeSummary';
+import EmployeeLeaveAdd from './components/leave/EmployeeLeaveAdd';
 import EmployeeProfile from './components/EmpolyeeDashboard/EmployeeProfile';
 import EditEmployeeProfile from './components/EmpolyeeDashboard/EditEmployeeProfile';
-import StallView from './components/stalls/StallView';
+
+// Client Imports
+import ClientDashboard from './pages/ClientDashboard';
+import ClientSummary from './components/ClientDashboard/ClientSummary';
+import ClientRelationship from './components/ClientDashboard/ClientRelationship';
 
 
 const App = () => {
@@ -62,7 +69,7 @@ const App = () => {
          <Route path="/admin-dashboard/departments" element={<DepartmentList />} />
          <Route path="/admin-dashboard/add-department" element={<AddDepartments />} />
          <Route path="/admin-dashboard/department/:id" element={<EditDepartment />} />
-         <Route path="/admin-dashboard/department/:id" element={<EditDepartment />} />
+         <Route path="/admin-dashboard/department/:id/employees" element={<DepartmentEmployees />} />
          <Route path='/admin-dashboard/employees' element={<EmplyeeList />}/>
          <Route path='/admin-dashboard/add-employee' element={<EmplyeeAdd />} />
          <Route path='/admin-dashboard/employees/:id' element={<EmplyeeView />}/>

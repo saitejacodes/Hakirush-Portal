@@ -3,14 +3,11 @@ import axios from "axios";
 import { useAuth } from "../../context/authContext";
 
 import {
-  Handshake,
-  Target,
   CalendarDays,
   LineChart,
   Rocket,
   ClipboardList,
   Star,
-  MessageCircleMore,
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
@@ -76,8 +73,6 @@ const ClientRelationship = () => {
 
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
 
-          <Handshake size={56} className="relative mb-4" />
-
           <h1 className="relative text-3xl sm:text-4xl font-extrabold tracking-tight">
             Client Relationship Program
           </h1>
@@ -94,7 +89,7 @@ const ClientRelationship = () => {
 
         {/* ================= PLAN CONTENT ================= */}
         <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-red-100 p-6 sm:p-8">
-          {plan === "annual" ? <AnnualPlan /> : <QuarterlyPlan />}
+          {plan === "Annual" ? <AnnualPlan /> : <QuarterlyPlan />}
         </div>
 
       </div>

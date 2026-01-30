@@ -17,25 +17,35 @@ import {
 
 /* ========== Stat Card ========== */
 const StatCard = ({ icon: Icon, label, value }) => (
-  <div className="rounded-3xl p-6 sm:p-8 shadow-2xl bg-white/90 border border-red-100 backdrop-blur-xl flex items-center justify-between hover:scale-[1.03] hover:shadow-3xl transition-all duration-300">
+  <div
+    className="
+      rounded-2xl sm:rounded-3xl
+      p-4 sm:p-6
+      shadow-lg sm:shadow-2xl
+      bg-white/95 border border-red-100
+      flex items-center justify-between
+      transition-all duration-300
+    "
+  >
     <div>
-      <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">
+      <p className="text-[10px] sm:text-xs uppercase tracking-widest text-gray-500">
         {label}
       </p>
-      <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-800 drop-shadow-sm">
+      <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-800">
         {value ?? 0}
       </h2>
     </div>
-    <div className="p-4 rounded-2xl bg-gradient-to-br from-red-700 to-red-500 text-white shadow-xl flex items-center justify-center">
-      {Icon && <Icon size={28} />}
+
+    <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-red-600 to-red-500 text-white shadow-md">
+      {Icon && <Icon size={22} className="sm:w-7 sm:h-7" />}
     </div>
   </div>
 );
 
 /* ========== Section Card ========== */
 const SectionCard = ({ title, children }) => (
-  <div className="rounded-4xl p-6 sm:p-10 bg-white/90 shadow-2xl border border-red-100 backdrop-blur-xl">
-    <h2 className="text-xl sm:text-3xl font-extrabold text-red-800 text-center mb-7 tracking-tight drop-shadow-sm">
+  <div className="rounded-3xl p-4 sm:p-8 bg-white/95 shadow-xl border border-red-100">
+    <h2 className="text-lg sm:text-2xl font-extrabold text-red-800 text-center mb-5">
       {title}
     </h2>
     {children}
@@ -150,7 +160,7 @@ const AdminSummary = () => {
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <SectionCard title="Client Plans">
           <div className="flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={220} className="sm:h-[260px]">
               <PieChart>
                 <Pie
                   data={planData}
@@ -235,7 +245,7 @@ const AdminSummary = () => {
         </SectionCard>
 
         <SectionCard title="Sponsors">
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
             <StatCard icon={Handshake} label="Sponsors" value={sponsorSummary.totalSponsors} />
             <StatCard icon={Trophy} label="Events" value={sponsorSummary.totalSponsoredEvents} />
           </div>
@@ -270,7 +280,7 @@ const AdminSummary = () => {
       {/* Stall Summary Section */}
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <SectionCard title="Stalls">
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
             <StatCard icon={BriefcaseBusiness} label="Stalls" value={stallSummary.totalStalls} />
             <StatCard icon={Trophy} label="Events" value={stallSummary.totalStallEvents} />
           </div>
@@ -287,7 +297,7 @@ const AdminSummary = () => {
                   dataKey="value"
                   stroke="#fff"
                   strokeWidth={3}
-                  label={({ name, percent }) => percent > 0 ? `${name}` : ''}
+                  label={false}
                   labelLine={false}
                 >
                   {stallTypeData.map((_, i) => (

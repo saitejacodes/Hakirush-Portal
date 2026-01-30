@@ -139,8 +139,8 @@ const AddClient = () => {
               className="input bg-white/80"
             >
               <option value="">Select Plan</option>
-              <option value="annual">Annual</option>
-              <option value="quarterly">Quarterly</option>
+              <option value="Annual">Annual</option>
+              <option value="Quarterly">Quarterly</option>
             </select>
 
             <input

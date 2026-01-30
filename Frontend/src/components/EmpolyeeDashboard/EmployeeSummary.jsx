@@ -209,7 +209,7 @@ const EmployeeSummary = () => {
                 <div
                   key={i}
                   className={`relative h-8 sm:h-12 flex items-center justify-center rounded
-                    font-semibold
+                    font-semibold cursor-pointer
                     ${!day && "bg-transparent"}
                     ${status === "present" && "bg-green-500 text-white"}
                     ${status === "absent" && "bg-red-500 text-white"}
