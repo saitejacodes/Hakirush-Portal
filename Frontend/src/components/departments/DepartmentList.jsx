@@ -149,7 +149,7 @@ const DepartmentList = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200"}`}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"}`}
                   >
                     ◀ Previous
                   </button>
@@ -157,7 +157,7 @@ const DepartmentList = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700"}`}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"}`}
                   >
                     Next ▶
                   </button>

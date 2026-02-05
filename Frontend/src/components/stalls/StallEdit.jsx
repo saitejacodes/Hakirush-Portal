@@ -12,6 +12,52 @@ const getImageUrl = (url) => {
   return "/default-avatar.png";
 };
 
+/* ================= PREMIUM SUCCESS ALERT ================= */
+const SuccessAlert = ({ onClose }) => {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
+
+          <div className="p-6 flex gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+              ✓
+            </div>
+
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-700">
+                Stall Updated
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Stall details have been updated successfully.
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-red-600 transition"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="px-6 pb-5">
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-medium hover:opacity-90 transition"
+            >
+              Okay, got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 const StallEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,6 +75,7 @@ const StallEdit = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
 
   /* ================= FETCH STALL ================= */
   useEffect(() => {
@@ -138,8 +185,11 @@ const StallEdit = () => {
       );
 
       if (res.data.success) {
-        alert("Stall updated successfully 🎉");
-        navigate("/admin-dashboard/stalls");
+        setShowAlert(true);
+
+        setTimeout(() => {
+          navigate("/admin-dashboard/stalls");
+        }, 1800);
       } else {
         setError(res.data.message || "Failed to update stall");
       }
@@ -160,133 +210,139 @@ const StallEdit = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-red-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+    <>
+      {showAlert && (
+        <SuccessAlert onClose={() => setShowAlert(false)} />
+      )}
 
-        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
-          Edit Stall
-        </h2>
+      <div className="min-h-screen bg-red-50 p-6">
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+          <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
+            Edit Stall
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* IMAGE */}
-          <div className="flex flex-col items-center gap-3">
-            <img
-              src={getImageUrl(preview)}
-              alt="logo"
-              onError={(e) => (e.target.src = "/default-avatar.png")}
-              className="w-28 h-28 rounded-full object-cover border"
-            />
-
-            <label className="cursor-pointer text-red-600 font-semibold">
-              Change Logo
-              <input
-                ref={fileInputRef}
-                type="file"
-                name="logo"
-                accept="image/*"
-                className="hidden"
-                onChange={handleChange}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* IMAGE */}
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={getImageUrl(preview)}
+                alt="logo"
+                onError={(e) => (e.target.src = "/default-avatar.png")}
+                className="w-28 h-28 rounded-full object-cover border"
               />
-            </label>
-          </div>
 
-          {/* FORM */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              className="input"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Stall Name"
-              required
-            />
-
-            <input
-              className="input"
-              name="number"
-              value={form.number}
-              onChange={handleChange}
-              placeholder="Stall Number"
-              required
-            />
-
-            <input
-              className="input"
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              placeholder="Type"
-              required
-            />
-
-            <input
-              type="number"
-              className="input"
-              name="eventCount"
-              value={form.eventCount}
-              onChange={handleChange}
-              placeholder="Events Placed"
-            />
-          </div>
-
-          {/* PLANS */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Plans
-            </label>
-
-            {form.plans.map((plan, idx) => (
-              <div key={idx} className="flex gap-2 mb-2">
+              <label className="cursor-pointer text-red-600 font-semibold">
+                Change Logo
                 <input
-                  value={plan}
-                  onChange={(e) => handlePlanChange(idx, e.target.value)}
-                  className="input flex-1"
-                  placeholder={`Plan ${idx + 1}`}
+                  ref={fileInputRef}
+                  type="file"
+                  name="logo"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleChange}
                 />
+              </label>
+            </div>
 
-                {form.plans.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removePlan(idx)}
-                    className="text-red-600 font-semibold"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
+            {/* FORM */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input
+                className="input"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Stall Name"
+                required
+              />
 
+              <input
+                className="input"
+                name="number"
+                value={form.number}
+                onChange={handleChange}
+                placeholder="Stall Number"
+                required
+              />
+
+              <input
+                className="input"
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                placeholder="Type"
+                required
+              />
+
+              <input
+                type="number"
+                className="input"
+                name="eventCount"
+                value={form.eventCount}
+                onChange={handleChange}
+                placeholder="Events Placed"
+              />
+            </div>
+
+            {/* PLANS */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Plans
+              </label>
+
+              {form.plans.map((plan, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input
+                    value={plan}
+                    onChange={(e) =>
+                      handlePlanChange(idx, e.target.value)
+                    }
+                    className="input flex-1"
+                    placeholder={`Plan ${idx + 1}`}
+                  />
+
+                  {form.plans.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePlan(idx)}
+                      className="text-red-600 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addPlan}
+                className="text-red-600 font-semibold mt-2"
+              >
+                + Add Plan
+              </button>
+            </div>
+
+            {/* BUTTON */}
             <button
-              type="button"
-              onClick={addPlan}
-              className="text-red-600 font-semibold mt-2"
+              disabled={loading}
+              className={`w-full py-3 rounded-lg text-white font-semibold cursor-pointer
+                ${
+                  loading
+                    ? "bg-red-300"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
             >
-              + Add Plan
+              {loading ? "Updating..." : "Update Stall"}
             </button>
-          </div>
 
-          {/* BUTTON */}
-          <button
-            disabled={loading}
-            className={`w-full py-3 rounded-lg text-white font-semibold
-              ${
-                loading
-                  ? "bg-red-300"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
-          >
-            {loading ? "Updating..." : "Update Stall"}
-          </button>
-
-          {error && (
-            <p className="text-center text-red-600 font-semibold">
-              {error}
-            </p>
-          )}
-        </form>
+            {error && (
+              <p className="text-center text-red-600 font-semibold">
+                {error}
+              </p>
+            )}
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

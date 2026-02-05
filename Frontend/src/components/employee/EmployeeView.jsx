@@ -38,6 +38,16 @@ const View = () => {
     return "/default-avatar.png";
   };
 
+  const formatDate = (date) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
@@ -73,12 +83,14 @@ const View = () => {
             <Info label="Employee ID" value={employee?.employeeId} />
             <Info label="Email" value={employee?.userId?.email} />
             <Info label="Gender" value={employee?.gender} />
+            <Info label="DOB" value={formatDate(employee?.dob)} />
             <Info label="Blood Group" value={employee?.bloodGroup || "N/A"} />
             <Info label="Department" value={employee?.department?.dep_name || "N/A"} />
             <Info label="Designation" value={employee?.designation || "N/A"} />
             <Info label="Marital Status" value={employee?.maritalStatus} />
             <Info label="Experience(Years)" value={employee.experience} />
-            <Info label="Salary" value={`\u20b9 ${employee?.salary || 0}`} />
+            <Info label="Salary" value={`₹ ${employee?.salary || 0}`} />
+            <Info label="Date Of Joining" value={formatDate(employee?.dateOfJoining)} />
           </div>
         </div>
       </div>

@@ -8,12 +8,10 @@ const getAttendance = async (req, res) => {
     const today = new Date();
     const date = today.toISOString().split("T")[0];
 
-    // ❌ Sunday
     if (today.getDay() === 0) {
       return res.json({ success: true, attendance: [] });
     }
 
-    // ❌ Holiday
     const holiday = await Holiday.findOne({
       date: {
         $gte: new Date(date + "T00:00:00"),
@@ -110,12 +108,10 @@ const attendanceReport = async (req, res) => {
       new Date(h.date).toISOString().split("T")[0]
     );
 
-    // 1️⃣ All employees
     const employees = await Employee.find()
       .populate("userId")
       .populate("department");
 
-    // 2️⃣ Attendance records
     const filter = {};
     if (date) filter.date = date;
 
@@ -146,7 +142,7 @@ const attendanceReport = async (req, res) => {
         employeeName: r.employeeId?.userId?.name || "Unknown",
         departmentName: r.employeeId?.department?.dep_name || "N/A",
         designation: r.employeeId?.designation || "N/A",
-        status: r.status || "Absent",
+        status: r.status || "N/A",
       });
     });
 

@@ -133,7 +133,7 @@ const Login = () => {
               disabled={loading}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-600 py-3 font-semibold text-white shadow-lg disabled:opacity-60 text-sm sm:text-base"
+              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-600 py-3 font-semibold text-white shadow-lg disabled:opacity-60 text-sm sm:text-base cursor-pointer"
             >
               {loading ? "Logging in..." : "Login"}
             </motion.button>

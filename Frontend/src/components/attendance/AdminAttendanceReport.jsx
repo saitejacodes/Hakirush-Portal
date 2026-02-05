@@ -261,32 +261,34 @@ const AdminAttendanceReport = () => {
 
               {/* DESKTOP */}
               <div className="hidden md:block bg-white rounded-b-2xl shadow overflow-auto">
-                <table className="w-full">
+                <table className="w-full border-collapse">
                   <thead className="bg-red-100 text-red-800">
                     <tr>
-                      <th className="px-4 py-3">S No</th>
-                      <th className="px-4 py-3">Employee ID</th>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3">Department</th>
-                      <th className="px-4 py-3">Designation</th>
-                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-center">S No</th>
+                      <th className="px-4 py-3 text-left">Employee ID</th>
+                      <th className="px-4 py-3 text-left">Name</th>
+                      <th className="px-4 py-3 text-left">Department</th>
+                      <th className="px-4 py-3 text-left">Designation</th>
+                      <th className="px-4 py-3 text-center">Status</th>
                     </tr>
                   </thead>
 
                   <tbody>
                     {records.map((r, i) => (
                       <tr key={i} className="border-t hover:bg-red-50">
-                        <td className="px-4 py-3">{i + 1}</td>
-                        <td className="px-4 py-3">{r.employeeId}</td>
-                        <td className="px-4 py-3 font-medium">
+                        <td className="px-4 py-3 text-center">{i + 1}</td>
+                        <td className="px-4 py-3 text-left">{r.employeeId}</td>
+                        <td className="px-4 py-3 text-left font-medium">
                           {r.employeeName}
                         </td>
-                        <td className="px-4 py-3">{r.departmentName}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-left">
+                          {r.departmentName}
+                        </td>
+                        <td className="px-4 py-3 text-left">
                           {r.designation || "N/A"}
                         </td>
                         <td
-                          className={`px-4 py-3 font-bold ${
+                          className={`px-4 py-3 text-center font-bold ${
                             r.status === "Present"
                               ? "text-green-600"
                               : r.status === "Leave"

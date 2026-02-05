@@ -243,7 +243,7 @@ const StallList = () => {
                       ${
                         currentPage === 1
                           ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-red-100 text-red-600 hover:bg-red-200"
+                          : "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"
                       }`}
                   >
                     ◀ Previous
@@ -262,7 +262,7 @@ const StallList = () => {
                       ${
                         currentPage === totalPages
                           ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-red-600 text-white hover:bg-red-700"
+                          : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
                       }`}
                   >
                     Next ▶

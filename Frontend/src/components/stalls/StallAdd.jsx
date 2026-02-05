@@ -4,6 +4,55 @@ import { useNavigate } from "react-router-dom";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+/* ================= PREMIUM SUCCESS ALERT ================= */
+const SuccessAlert = ({ onClose }) => {
+  return (
+    <>
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+
+      {/* Alert */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
+          {/* Gradient bar */}
+          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
+
+          <div className="p-6 flex gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+              ✓
+            </div>
+
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-700">
+                Stall Added
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                The stall has been created successfully.
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-red-600 transition"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="px-6 pb-5">
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-medium hover:opacity-90 transition"
+            >
+              Okay, got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 const StallAdd = () => {
   const [form, setForm] = useState({
     name: "",
@@ -17,6 +66,7 @@ const StallAdd = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
   const navigate = useNavigate();
 
   /* ================= HANDLE CHANGE ================= */
@@ -87,8 +137,11 @@ const StallAdd = () => {
       );
 
       if (res.data.success) {
-        alert("Stall Added Successfully 🎉");
-        navigate("/admin-dashboard/stalls");
+        setShowAlert(true);
+
+        setTimeout(() => {
+          navigate("/admin-dashboard/stalls");
+        }, 1800);
       } else {
         setError(res.data.message || "Failed to add stall");
       }
@@ -101,130 +154,136 @@ const StallAdd = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
-      <div className="w-full max-w-3xl bg-white/95 p-10 rounded-3xl shadow-2xl border border-red-100">
+    <>
+      {showAlert && (
+        <SuccessAlert onClose={() => setShowAlert(false)} />
+      )}
 
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-red-700 mb-8 drop-shadow-sm">
-          Add New Stall
-        </h2>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-6 flex items-center justify-center">
+        <div className="w-full max-w-3xl bg-white/95 p-10 rounded-3xl shadow-2xl border border-red-100">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-red-700 mb-8 drop-shadow-sm">
+            Add New Stall
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-
-          {/* IMAGE */}
-          <div className="flex flex-col items-center gap-4">
-            <img
-              src={preview || "/default-avatar.png"}
-              alt="logo"
-              className="w-28 h-28 rounded-full object-cover border-4 border-red-200 shadow"
-              onError={(e) => (e.target.src = "/default-avatar.png")}
-            />
-
-            <label className="text-red-600 font-semibold cursor-pointer hover:underline">
-              Upload Stall Logo
-              <input
-                type="file"
-                name="logo"
-                accept="image/*"
-                className="hidden"
-                onChange={handleChange}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* IMAGE */}
+            <div className="flex flex-col items-center gap-4">
+              <img
+                src={preview || "/default-avatar.png"}
+                alt="logo"
+                className="w-28 h-28 rounded-full object-cover border-4 border-red-200 shadow"
+                onError={(e) => (e.target.src = "/default-avatar.png")}
               />
-            </label>
-          </div>
 
-          {/* FORM */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <input
-              name="name"
-              placeholder="Stall Name"
-              required
-              onChange={handleChange}
-              className="input bg-white/80"
-            />
-
-            <input
-              name="number"
-              placeholder="Stall Number"
-              required
-              onChange={handleChange}
-              className="input bg-white/80"
-            />
-
-            <input
-              name="type"
-              placeholder="Type"
-              required
-              onChange={handleChange}
-              className="input bg-white/80"
-            />
-
-            <input
-              type="number"
-              name="eventCount"
-              placeholder="Events Placed"
-              min="0"
-              onChange={handleChange}
-              className="input bg-white/80"
-            />
-          </div>
-
-          {/* PLANS */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Plans
-            </label>
-
-            {form.plans.map((plan, idx) => (
-              <div key={idx} className="flex gap-2 mb-2">
+              <label className="text-red-600 font-semibold cursor-pointer hover:underline">
+                Upload Stall Logo
                 <input
-                  value={plan}
-                  onChange={(e) => handlePlanChange(idx, e.target.value)}
-                  className="input bg-white/80 flex-1"
-                  placeholder={`Plan ${idx + 1}`}
+                  type="file"
+                  name="logo"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleChange}
                 />
+              </label>
+            </div>
 
-                {form.plans.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removePlan(idx)}
-                    className="text-red-600 font-semibold"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
+            {/* FORM */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <input
+                name="name"
+                placeholder="Stall Name"
+                required
+                onChange={handleChange}
+                className="input bg-white/80"
+              />
 
+              <input
+                name="number"
+                placeholder="Stall Number"
+                required
+                onChange={handleChange}
+                className="input bg-white/80"
+              />
+
+              <input
+                name="type"
+                placeholder="Type"
+                required
+                onChange={handleChange}
+                className="input bg-white/80"
+              />
+
+              <input
+                type="number"
+                name="eventCount"
+                placeholder="Events Placed"
+                min="0"
+                onChange={handleChange}
+                className="input bg-white/80"
+              />
+            </div>
+
+            {/* PLANS */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Plans
+              </label>
+
+              {form.plans.map((plan, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input
+                    value={plan}
+                    onChange={(e) =>
+                      handlePlanChange(idx, e.target.value)
+                    }
+                    className="input bg-white/80 flex-1"
+                    placeholder={`Plan ${idx + 1}`}
+                  />
+
+                  {form.plans.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePlan(idx)}
+                      className="text-red-600 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addPlan}
+                className="text-red-600 font-semibold mt-2"
+              >
+                + Add Plan
+              </button>
+            </div>
+
+            {/* BUTTON */}
             <button
-              type="button"
-              onClick={addPlan}
-              className="text-red-600 font-semibold mt-2"
+              disabled={loading}
+              className={`w-full py-3 rounded-xl text-white font-semibold text-lg shadow
+                transition-all duration-200 cursor-pointer
+                ${
+                  loading
+                    ? "bg-red-300"
+                    : "bg-gradient-to-br from-red-600 to-red-500 hover:scale-105 hover:bg-red-700"
+                }`}
             >
-              + Add Plan
+              {loading ? "Creating..." : "Create Stall"}
             </button>
-          </div>
 
-          {/* BUTTON */}
-          <button
-            disabled={loading}
-            className={`w-full py-3 rounded-xl text-white font-semibold text-lg shadow
-              transition-all duration-200
-              ${
-                loading
-                  ? "bg-red-300"
-                  : "bg-gradient-to-br from-red-600 to-red-500 hover:scale-105 hover:bg-red-700"
-              }`}
-          >
-            {loading ? "Creating..." : "Create Stall"}
-          </button>
-
-          {error && (
-            <p className="text-center text-red-600 font-semibold">
-              {error}
-            </p>
-          )}
-        </form>
+            {error && (
+              <p className="text-center text-red-600 font-semibold">
+                {error}
+              </p>
+            )}
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

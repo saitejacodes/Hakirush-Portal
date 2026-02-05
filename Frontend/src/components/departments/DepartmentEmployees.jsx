@@ -128,6 +128,9 @@ const DepartmentEmployees = () => {
                     <th className="p-4 text-left text-sm font-semibold text-gray-700 w-20">
                       S.No
                     </th>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700 w-32">
+                      Employee ID
+                    </th>
                     <th className="p-4 text-left text-sm font-semibold text-gray-700">
                       Name
                     </th>
@@ -149,6 +152,11 @@ const DepartmentEmployees = () => {
                       <td className="p-4 font-medium text-gray-700">
                         {index + 1}
                       </td>
+
+                      <td className="p-4 font-bold text-gray-700">
+                        {emp.userId?.employeeId || emp.employeeId || "—"}
+                      </td>
+
                       <td className="p-4 font-semibold text-gray-800">
                         {emp.userId?.name || "—"}
                       </td>

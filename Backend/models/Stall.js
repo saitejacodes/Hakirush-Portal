@@ -9,5 +9,4 @@ const StallSchema = new mongoose.Schema({
 	logo: { type: String },
 }, { timestamps: true });
 
-const Stall = mongoose.model("Stall", StallSchema);
-export default Stall;
+export default mongoose.model("Stall", StallSchema);

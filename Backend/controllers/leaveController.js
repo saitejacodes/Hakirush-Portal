@@ -98,6 +98,7 @@ const getLeaves = async (req, res) => {
     const leaves = await Leave.find().populate({
       path: "employeeId",
       populate: [
+        { path: "department", select: "dep_name" },
         { path: "designation", select: "designation" },
         { path: "userId", select: "name" }
       ]
@@ -118,6 +119,7 @@ const getLeaveDetail = async (req, res) => {
     const leave = await Leave.findById(id).populate({
       path: "employeeId",
       populate: [
+        { path: "department", select: "dep_name" },
         { path: "designation", select: "designation" },
         { path: "userId", select: "name email profileImage" }
       ]

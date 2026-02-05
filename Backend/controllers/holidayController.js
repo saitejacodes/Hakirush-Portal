@@ -65,8 +65,8 @@ export const getAllHolidays = async (req, res) => {
       ...h._doc,
       status:
         h.date.toISOString().split("T")[0] < today
-          ? "past"
-          : "upcoming"
+          ? "Past"
+          : "Upcoming"
     }));
 
     return res.status(200).json({

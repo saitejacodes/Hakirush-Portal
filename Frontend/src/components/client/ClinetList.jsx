@@ -99,7 +99,7 @@ const ClientList = () => {
     setCurrentPage(1);
   }, [search, clients]);
 
-  /* ===== PAGINATION ===== */
+  /* ===== PAGINATION LOGIC ===== */
   const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedClients = filteredClients.slice(
@@ -149,53 +149,107 @@ const ClientList = () => {
             </Link>
           </div>
 
-          {/* CONTENT */}
-          <div className="md:hidden grid gap-4 px-4 pb-6">
-            {paginatedClients.map((c) => (
-              <MobileClientCard
-                key={c._id}
-                client={c}
-                getImageUrl={getImageUrl}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="p-12 text-center text-red-600 font-semibold text-lg">
+              Loading clients...
+            </div>
+          ) : (
+            <>
+              {/* MOBILE */}
+              <div className="md:hidden grid gap-4 px-4 pb-6">
+                {paginatedClients.length ? (
+                  paginatedClients.map((c) => (
+                    <MobileClientCard
+                      key={c._id}
+                      client={c}
+                      getImageUrl={getImageUrl}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center text-red-400 py-20 text-lg">
+                    No clients found
+                  </div>
+                )}
+              </div>
 
-          <div className="hidden md:block">
-            <table className="w-full">
-              <thead className="bg-red-50">
-                <tr>
-                  <th className="px-4 py-3 text-center">S No</th>
-                  <th className="px-4 py-3 text-left">Logo</th>
-                  <th className="px-4 py-3 text-left">Client Name</th>
-                  <th className="px-4 py-3 text-left">Budget</th>
-                  <th className="px-4 py-3 text-left">DOJ</th>
-                  <th className="px-4 py-3 text-left">Plan</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
+              {/* DESKTOP */}
+              <div className="hidden md:block">
+                <table className="w-full">
+                  <thead className="bg-red-50">
+                    <tr>
+                      <th className="px-4 py-3 text-center">S No</th>
+                      <th className="px-4 py-3 text-left">Logo</th>
+                      <th className="px-4 py-3 text-left">Client Name</th>
+                      <th className="px-4 py-3 text-left">Budget</th>
+                      <th className="px-4 py-3 text-left">DOJ</th>
+                      <th className="px-4 py-3 text-left">Plan</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
 
-              <tbody>
-                {paginatedClients.map((c) => (
-                  <tr key={c._id}>
-                    <td className="px-4 py-3 text-center">{c.sno}</td>
-                    <td className="px-4 py-3 text-center">
-                      <img
-                        src={getImageUrl(c.logo)}
-                        className="w-12 h-12 rounded-full"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-left">{c.name}</td>
-                    <td className="px-4 py-3 text-left">₹ {c.budget}</td>
-                    <td className="px-4 py-3 text-left">{c.doj}</td>
-                    <td className="px-4 py-3 text-left">{c.planType}</td>
-                    <td className="px-4 py-3 text-right">
-                      <ClientButtons id={c._id} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <tbody>
+                    {paginatedClients.map((c) => (
+                      <tr key={c._id} className="hover:bg-red-50 transition">
+                        <td className="px-4 py-3 text-center">{c.sno}</td>
+                        <td className="px-4 py-3 text-center">
+                          <img
+                            src={getImageUrl(c.logo)}
+                            className="w-12 h-12 rounded-full"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-left">{c.name}</td>
+                        <td className="px-4 py-3 text-left">₹ {c.budget}</td>
+                        <td className="px-4 py-3 text-left">{c.doj}</td>
+                        <td className="px-4 py-3 text-left">{c.planType}</td>
+                        <td className="px-4 py-3 text-right">
+                          <ClientButtons id={c._id} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* PAGINATION */}
+              {filteredClients.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between px-4 py-5 border-t bg-white/80 rounded-b-3xl">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.max(p - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                      currentPage === 1
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"
+                    }`}
+                  >
+                    ◀ Previous
+                  </button>
+
+                  <span className="text-base font-semibold text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        Math.min(p + 1, totalPages)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                      currentPage === totalPages
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                    }`}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

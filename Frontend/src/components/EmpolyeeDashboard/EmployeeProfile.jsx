@@ -39,6 +39,15 @@ const EmployeeProfile = () => {
     return "/default-avatar.png";
   };
 
+  const formatDate = (date) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">
@@ -69,7 +78,7 @@ const EmployeeProfile = () => {
               onClick={() =>
                 navigate(`/employee-dashboard/profile/${employee._id}/edit`)
               }
-              className="px-5 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+              className="px-5 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition cursor-pointer"
             >
               Edit Profile
             </button>
@@ -100,12 +109,14 @@ const EmployeeProfile = () => {
             <Info label="Employee ID" value={employee.employeeId} />
             <Info label="Email" value={employee.userId?.email} />
             <Info label="Gender" value={employee.gender} />
+            <Info label="DOB" value={formatDate(employee?.dob)} />
             <Info label="Blood Group" value={employee.bloodGroup || "N/A"} />
             <Info label="Department" value={employee.department?.dep_name || "N/A"} />
             <Info label="Designation" value={employee.designation || "N/A"} />
             <Info label="Marital Status" value={employee.maritalStatus} />
             <Info label="Experience (Years)" value={employee.experience} />
             <Info label="Salary" value={`₹ ${employee.salary || 0}`} />
+            <Info label="Date Of Joining" value={formatDate(employee?.dateOfJoining)} />
           </div>
         </div>
       </div>

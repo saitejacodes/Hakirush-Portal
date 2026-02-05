@@ -268,7 +268,7 @@ const Empty = ({ children }) => (
 const NavBtn = ({ children, onClick }) => (
   <button
     onClick={onClick}
-    className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-xs">
+    className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-xs cursor-pointer">
     {children}
   </button>
 );

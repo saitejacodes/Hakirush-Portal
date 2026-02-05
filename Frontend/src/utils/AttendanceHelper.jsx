@@ -4,7 +4,7 @@ import { useState } from "react";
 const statusTheme = {
   Present: { bg: "#16a34a", light: "#dcfce7", text: "#166534" },
   Absent: { bg: "#dc2626", light: "#fee2e2", text: "#991b1b" },
-  Leave: { bg: "#2563eb", light: "#dbeafe", text: "#1e40af" },
+  Leave: { bg: "#eab308", light: "#fef9c3", text: "#ca8a04" },
 };
 
 const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeekend }) => {
@@ -53,7 +53,7 @@ const AttendanceHelper = ({ status, employeeId, statusChange, isHoliday, isWeeke
           <button
             key={s}
             onClick={() => markEmployee(s)}
-            className="px-3 py-1 text-xs rounded-lg font-semibold transition"
+            className="px-3 py-1 text-xs rounded-lg font-semibold transition cursor-pointer"
             style={{
               backgroundColor: t.bg,
               color: "white",

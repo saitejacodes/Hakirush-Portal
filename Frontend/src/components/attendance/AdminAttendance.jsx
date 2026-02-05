@@ -179,26 +179,35 @@ const AdminAttendance = () => {
 
             {/* DESKTOP */}
             <div className="hidden md:block mt-6 bg-white rounded-2xl shadow border border-red-100 overflow-auto">
-              <table className="w-full">
-                <thead className="bg-red-50">
+              <table className="w-full border-collapse">
+                <thead className="bg-red-50 text-red-800">
                   <tr>
-                    <th className="px-4 py-3">S No</th>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Employee ID</th>
-                    <th className="px-4 py-3">Department</th>
-                    <th className="px-4 py-3">Designation</th>
-                    <th className="px-4 py-3 text-right">Action</th>
+                    <th className="px-4 py-3 text-center">S No</th>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Employee ID</th>
+                    <th className="px-4 py-3 text-left">Department</th>
+                    <th className="px-4 py-3 text-left">Designation</th>
+                    <th className="px-4 py-3 text-center">Action</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {filtered.map(att => (
                     <tr key={att._id} className="border-t hover:bg-red-50">
-                      <td className="px-4 py-3">{att.sno}</td>
-                      <td className="px-4 py-3 font-medium">{att.name}</td>
-                      <td className="px-4 py-3">{att.employeeCode}</td>
-                      <td className="px-4 py-3">{att.department}</td>
-                      <td className="px-4 py-3">{att.designation}</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-center">{att.sno}</td>
+                      <td className="px-4 py-3 text-left font-medium">
+                        {att.name}
+                      </td>
+                      <td className="px-4 py-3 text-left">
+                        {att.employeeCode}
+                      </td>
+                      <td className="px-4 py-3 text-left">
+                        {att.department}
+                      </td>
+                      <td className="px-4 py-3 text-left">
+                        {att.designation}
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <AttendanceHelper
                           employeeId={att.employeeMongoId}
                           status={att.status}

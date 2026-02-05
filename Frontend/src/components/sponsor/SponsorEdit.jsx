@@ -12,6 +12,56 @@ const getImageUrl = (url) => {
   return "/default-avatar.png";
 };
 
+/* ================= PREMIUM SUCCESS ALERT ================= */
+const SuccessAlert = ({ onClose }) => {
+  return (
+    <>
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+
+      {/* Alert */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
+          
+          {/* Gradient bar */}
+          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
+
+          <div className="p-6 flex gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+              ✓
+            </div>
+
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-700">
+                Sponsor Updated
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Sponsor details have been updated successfully.
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-red-600 transition"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="px-6 pb-5">
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-medium hover:opacity-90 transition"
+            >
+              Okay, got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 const SponsorEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,6 +78,7 @@ const SponsorEdit = () => {
   const [logo, setLogo] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   /* ================= FETCH SPONSOR ================= */
   useEffect(() => {
@@ -97,6 +148,7 @@ const SponsorEdit = () => {
     Object.keys(sponsor).forEach((key) => {
       fd.append(key, sponsor[key]);
     });
+
     if (logo) {
       fd.append("logo", logo);
     }
@@ -113,8 +165,11 @@ const SponsorEdit = () => {
       );
 
       if (res.data.success) {
-        alert("Sponsor updated successfully 🎉");
-        navigate("/admin-dashboard/sponsors");
+        setShowAlert(true);
+
+        setTimeout(() => {
+          navigate("/admin-dashboard/sponsors");
+        }, 1800);
       }
     } catch (error) {
       alert(error.response?.data?.error || "Update failed");
@@ -133,98 +188,101 @@ const SponsorEdit = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-red-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+    <>
+      {showAlert && (
+        <SuccessAlert onClose={() => setShowAlert(false)} />
+      )}
 
-        <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
-          Edit Sponsor
-        </h2>
+      <div className="min-h-screen bg-red-50 p-6">
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+          <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
+            Edit Sponsor
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* IMAGE */}
-          <div className="flex flex-col items-center gap-3">
-            <img
-              src={getImageUrl(preview)}
-              alt="logo"
-              onError={(e) => (e.target.src = "/default-avatar.png")}
-              className="w-28 h-28 rounded-full object-cover border"
-            />
-
-            <label className="cursor-pointer text-red-600 font-semibold">
-              Change Logo
-              <input
-                ref={fileInputRef}
-                type="file"
-                name="logo"
-                accept="image/*"
-                className="hidden"
-                onChange={handleChange}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* IMAGE */}
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={getImageUrl(preview)}
+                alt="logo"
+                onError={(e) => (e.target.src = "/default-avatar.png")}
+                className="w-28 h-28 rounded-full object-cover border"
               />
-            </label>
-          </div>
 
-          {/* FORM */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              className="input"
-              name="name"
-              value={sponsor.name}
-              onChange={handleChange}
-              placeholder="Sponsor Name"
-              required
-            />
+              <label className="cursor-pointer text-red-600 font-semibold">
+                Change Logo
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  name="logo"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleChange}
+                />
+              </label>
+            </div>
 
-            <select
-              className="input"
-              name="collaboration"
-              value={sponsor.collaboration}
-              onChange={handleChange}
+            {/* FORM */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input
+                className="input"
+                name="name"
+                value={sponsor.name}
+                onChange={handleChange}
+                placeholder="Sponsor Name"
+                required
+              />
+
+              <select
+                className="input"
+                name="collaboration"
+                value={sponsor.collaboration}
+                onChange={handleChange}
+              >
+                <option value="">Collaboration Type</option>
+                <option value="Title Sponsor">Title Sponsor</option>
+                <option value="Associate Sponsor">Associate Sponsor</option>
+                <option value="Event Sponsor">Event Sponsor</option>
+                <option value="Media Partner">Media Partner</option>
+              </select>
+
+              <input
+                type="number"
+                className="input"
+                name="eventsSponsored"
+                value={sponsor.eventsSponsored}
+                onChange={handleChange}
+                placeholder="Events Sponsored"
+              />
+
+              <input
+                className="input"
+                name="reach"
+                value={sponsor.reach}
+                onChange={handleChange}
+                placeholder="Reach (eg: 2M impressions)"
+              />
+
+              <input
+                className="input"
+                name="upcomingEvents"
+                value={sponsor.upcomingEvents}
+                onChange={handleChange}
+                placeholder="Upcoming Events"
+              />
+            </div>
+
+            <button
+              disabled={loading}
+              className={`w-full py-3 rounded-lg text-white font-semibold cursor-pointer
+                ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
             >
-              <option value="">Collaboration Type</option>
-              <option value="Title Sponsor">Title Sponsor</option>
-              <option value="Associate Sponsor">Associate Sponsor</option>
-              <option value="Event Sponsor">Event Sponsor</option>
-              <option value="Media Partner">Media Partner</option>
-            </select>
-
-            <input
-              type="number"
-              className="input"
-              name="eventsSponsored"
-              value={sponsor.eventsSponsored}
-              onChange={handleChange}
-              placeholder="Events Sponsored"
-            />
-
-            <input
-              className="input"
-              name="reach"
-              value={sponsor.reach}
-              onChange={handleChange}
-              placeholder="Reach (eg: 2M impressions)"
-            />
-
-            <input
-              className="input"
-              name="upcomingEvents"
-              value={sponsor.upcomingEvents}
-              onChange={handleChange}
-              placeholder="Upcoming Events"
-            />
-          </div>
-
-          <button
-            disabled={loading}
-            className={`w-full py-3 rounded-lg text-white font-semibold
-              ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
-          >
-            {loading ? "Updating..." : "Update Sponsor"}
-          </button>
-
-        </form>
+              {loading ? "Updating..." : "Update Sponsor"}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

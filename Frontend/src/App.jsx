@@ -1,133 +1,157 @@
-import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
-import Login from './pages/Login';
-import PrivateRoutes from './utils/PrivateRoutes';
-import RoleBaseRoutes from './utils/RoleBaseRoutes';
-import EmployeeSetting from './pages/Setting';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import PrivateRoutes from "./utils/PrivateRoutes";
+import RoleBaseRoutes from "./utils/RoleBaseRoutes";
+import RootRedirect from "./utils/RootRedirect";
+import EmployeeSetting from "./pages/Setting";
 import Unauthorized from "./pages/Unauthorized";
 
-// Admin Imports
-import AdminDashboard from './pages/AdminDashboard';
-import AdminSummary from './components/dashboard/AdminSummary';
-import DepartmentList from './components/departments/DepartmentList';
-import AddDepartments from './components/departments/AddDepartments';
-import EditDepartment from './components/departments/EditDepartment';
-import DepartmentEmployees from './components/departments/DepartmentEmployees';
-import EmplyeeList from './components/employee/EmployeeList';
-import EmplyeeAdd from './components/employee/EmployeeAdd';
-import EmplyeeView from './components/employee/EmployeeView';
-import EmplyeeEdit from './components/employee/EmployeeEdit';
-import ClientList from './components/client/ClinetList';
-import ClientAdd from './components/client/ClientAdd';
-import ClientEdit from './components/client/ClientEdit';
-import ViewClient from './components/client/ClientView';
-import SponsorList from './components/sponsor/SponsorList';
-import SponsorAdd from './components/sponsor/SponsorAdd';
-import SponsorEdit from './components/sponsor/SponsorEdit';
-import SponsorView from './components/sponsor/SponsorView';
-import StallList from './components/stalls/StallList';
-import StallAdd from './components/stalls/StallAdd';
-import StallEdit from './components/stalls/StallEdit';
-import StallView from './components/stalls/StallView';
-import AdminAttendence from './components/attendance/AdminAttendance';
-import AdminAttendenceReport from './components/attendance/AdminAttendanceReport';
-import EmployeeLeaveList from './components/leave/EmployeeLeaveList';
-import AdminLeaveTable from './components/leave/AdminLeaveTable';
-import LeaveDetails from './components/leave/LeaveDetails';
+/* ================= ADMIN IMPORTS ================= */
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminSummary from "./components/dashboard/AdminSummary";
+import DepartmentList from "./components/departments/DepartmentList";
+import AddDepartments from "./components/departments/AddDepartments";
+import EditDepartment from "./components/departments/EditDepartment";
+import DepartmentEmployees from "./components/departments/DepartmentEmployees";
+import EmplyeeList from "./components/employee/EmployeeList";
+import EmplyeeAdd from "./components/employee/EmployeeAdd";
+import EmplyeeView from "./components/employee/EmployeeView";
+import EmplyeeEdit from "./components/employee/EmployeeEdit";
+import ClientList from "./components/client/ClinetList";
+import ClientAdd from "./components/client/ClientAdd";
+import ClientEdit from "./components/client/ClientEdit";
+import ViewClient from "./components/client/ClientView";
+import SponsorList from "./components/sponsor/SponsorList";
+import SponsorAdd from "./components/sponsor/SponsorAdd";
+import SponsorEdit from "./components/sponsor/SponsorEdit";
+import SponsorView from "./components/sponsor/SponsorView";
+import StallList from "./components/stalls/StallList";
+import StallAdd from "./components/stalls/StallAdd";
+import StallEdit from "./components/stalls/StallEdit";
+import StallView from "./components/stalls/StallView";
+import AdminAttendence from "./components/attendance/AdminAttendance";
+import AdminAttendenceReport from "./components/attendance/AdminAttendanceReport";
+import EmployeeLeaveList from "./components/leave/EmployeeLeaveList";
+import AdminLeaveTable from "./components/leave/AdminLeaveTable";
+import LeaveDetails from "./components/leave/LeaveDetails";
 import HolidaysList from "./components/holidays/HolidayList";
-import AddHoliday from './components/holidays/AddHolidays';
-import AdminAnnouncement from './components/announcement/AdminAnnouncement';
-import EditAnnouncement from './components/announcement/EditAnnouncement';
+import AddHoliday from "./components/holidays/AddHolidays";
+import AdminAnnouncement from "./components/announcement/AdminAnnouncement";
+import EditAnnouncement from "./components/announcement/EditAnnouncement";
 
-// Employee Imports
-import EmployeeDashboard from './pages/EmployeeDashboard';
-import EmpolyeeSummary from './components/EmpolyeeDashboard/EmployeeSummary';
-import EmployeeLeaveAdd from './components/leave/EmployeeLeaveAdd';
-import EmployeeProfile from './components/EmpolyeeDashboard/EmployeeProfile';
-import EditEmployeeProfile from './components/EmpolyeeDashboard/EditEmployeeProfile';
+/* ================= EMPLOYEE IMPORTS ================= */
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+import EmpolyeeSummary from "./components/EmpolyeeDashboard/EmployeeSummary";
+import EmployeeLeaveAdd from "./components/leave/EmployeeLeaveAdd";
+import EmployeeProfile from "./components/EmpolyeeDashboard/EmployeeProfile";
+import EditEmployeeProfile from "./components/EmpolyeeDashboard/EditEmployeeProfile";
 
-// Client Imports
-import ClientDashboard from './pages/ClientDashboard';
-import ClientSummary from './components/ClientDashboard/ClientSummary';
-import ClientRelationship from './components/ClientDashboard/ClientRelationship';
-
+/* ================= CLIENT IMPORTS ================= */
+import ClientDashboard from "./pages/ClientDashboard";
+import ClientSummary from "./components/ClientDashboard/ClientSummary";
+import ClientRelationship from "./components/ClientDashboard/ClientRelationship";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Navigate to="/admin-dashboard" />}/>
-        <Route path='/login' element={<Login />}/>
-       <Route path="/admin-dashboard" element={
-           <PrivateRoutes>
-             <RoleBaseRoutes requiredRole={["admin"]}>
-               <AdminDashboard />
-             </RoleBaseRoutes>
-           </PrivateRoutes>
-         }
-       >
-         <Route index element={<AdminSummary />} />
-         <Route path="/admin-dashboard/departments" element={<DepartmentList />} />
-         <Route path="/admin-dashboard/add-department" element={<AddDepartments />} />
-         <Route path="/admin-dashboard/department/:id" element={<EditDepartment />} />
-         <Route path="/admin-dashboard/department/:id/employees" element={<DepartmentEmployees />} />
-         <Route path='/admin-dashboard/employees' element={<EmplyeeList />}/>
-         <Route path='/admin-dashboard/add-employee' element={<EmplyeeAdd />} />
-         <Route path='/admin-dashboard/employees/:id' element={<EmplyeeView />}/>
-         <Route path='/admin-dashboard/employees/edit/:id' element={<EmplyeeEdit />}/>
-         <Route path='/admin-dashboard/clients' element={<ClientList />}/>
-         <Route path='/admin-dashboard/add-client' element={<ClientAdd />} />
-         <Route path='/admin-dashboard/clients/:id' element={<ViewClient />}/>
-         <Route path='/admin-dashboard/clients/edit/:id' element={<ClientEdit />}/>
-         <Route path='/admin-dashboard/leaves' element={<AdminLeaveTable />}/>
-         <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
-         <Route path='/admin-dashboard/attendance-report' element={<AdminAttendenceReport />} />
-         <Route path='/admin-dashboard/leaves/:id' element={<LeaveDetails />}/>
-         <Route path='/admin-dashboard/employees/leaves/:id' element={<EmployeeLeaveList />}/>
-         <Route path='/admin-dashboard/attendance' element={<AdminAttendence />} />
-         <Route path='/admin-dashboard/holidays' element={<HolidaysList />} />
-         <Route path='/admin-dashboard/add-holiday' element={<AddHoliday />} />
-         <Route path='/admin-dashboard/sponsors' element={<SponsorList />} />
-         <Route path='/admin-dashboard/add-sponsor' element={<SponsorAdd />} />
-         <Route path='/admin-dashboard/sponsors/edit/:id' element={<SponsorEdit />}/>
-         <Route path='/admin-dashboard/stalls' element={<StallList />} />
-         <Route path='/admin-dashboard/stalls/:id' element={<StallView />} />
-         <Route path='/admin-dashboard/add-stall' element={<StallAdd />} />
-         <Route path="/admin-dashboard/sponsors/:id" element={<SponsorView />} />
-         <Route path='/admin-dashboard/stalls/edit/:id' element={<StallEdit />}/>
-         <Route path='/admin-dashboard/announcement' element={<AdminAnnouncement />}/>
-         <Route path='/admin-dashboard/announcement/edit/:id' element={<EditAnnouncement />}/>
-       </Route>
-       <Route path='/employee-dashboard' 
-          element={
-          <PrivateRoutes>
-            <RoleBaseRoutes requiredRole={["admin","employee"]}>
-              <EmployeeDashboard />
-            </RoleBaseRoutes>
-          </PrivateRoutes>
-        } >
-          <Route index element={<EmpolyeeSummary />} />
-          <Route path='/employee-dashboard/profile/:id' element={<EmployeeProfile />} />
-          <Route path='/employee-dashboard/profile/:id/edit' element={<EditEmployeeProfile />} />
-          <Route path='/employee-dashboard/leaves/:id' element={<EmployeeLeaveList />} />
-          <Route path='/employee-dashboard/add-leave' element={<EmployeeLeaveAdd />} />
-          <Route path='/employee-dashboard/setting' element={<EmployeeSetting />} />
-        </Route>
-        <Route path='/client-dashboard'
+
+        {/* ROOT & AUTH */}
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* ================= ADMIN ROUTES ================= */}
+        <Route
+          path="/admin-dashboard"
           element={
             <PrivateRoutes>
-            <RoleBaseRoutes requiredRole={["client"]}>
-              <ClientDashboard />
-            </RoleBaseRoutes>
-          </PrivateRoutes>
-          }>
-            <Route index element={<ClientSummary />} />
-            <Route path='/client-dashboard/ourrelationship/:id' element={<ClientRelationship />}/>
-            <Route path='/client-dashboard/setting' element={<EmployeeSetting />} />
+              <RoleBaseRoutes requiredRole={["admin"]}>
+                <AdminDashboard />
+              </RoleBaseRoutes>
+            </PrivateRoutes>
+          }
+        >
+          <Route index element={<AdminSummary />} />
+          <Route path="departments" element={<DepartmentList />} />
+          <Route path="add-department" element={<AddDepartments />} />
+          <Route path="department/:id" element={<EditDepartment />} />
+          <Route path="department/:id/employees" element={<DepartmentEmployees />} />
+
+          <Route path="employees" element={<EmplyeeList />} />
+          <Route path="add-employee" element={<EmplyeeAdd />} />
+          <Route path="employees/:id" element={<EmplyeeView />} />
+          <Route path="employees/edit/:id" element={<EmplyeeEdit />} />
+
+          <Route path="clients" element={<ClientList />} />
+          <Route path="add-client" element={<ClientAdd />} />
+          <Route path="clients/:id" element={<ViewClient />} />
+          <Route path="clients/edit/:id" element={<ClientEdit />} />
+
+          <Route path="leaves" element={<AdminLeaveTable />} />
+          <Route path="leaves/:id" element={<LeaveDetails />} />
+          <Route path="employees/leaves/:id" element={<EmployeeLeaveList />} />
+
+          <Route path="attendance" element={<AdminAttendence />} />
+          <Route path="attendance-report" element={<AdminAttendenceReport />} />
+
+          <Route path="holidays" element={<HolidaysList />} />
+          <Route path="add-holiday" element={<AddHoliday />} />
+
+          <Route path="sponsors" element={<SponsorList />} />
+          <Route path="add-sponsor" element={<SponsorAdd />} />
+          <Route path="sponsors/:id" element={<SponsorView />} />
+          <Route path="sponsors/edit/:id" element={<SponsorEdit />} />
+
+          <Route path="stalls" element={<StallList />} />
+          <Route path="add-stall" element={<StallAdd />} />
+          <Route path="stalls/:id" element={<StallView />} />
+          <Route path="stalls/edit/:id" element={<StallEdit />} />
+
+          <Route path="announcement" element={<AdminAnnouncement />} />
+          <Route path="announcement/edit/:id" element={<EditAnnouncement />} />
         </Route>
+
+        {/* ================= EMPLOYEE ROUTES ================= */}
+        <Route
+          path="/employee-dashboard"
+          element={
+            <PrivateRoutes>
+              <RoleBaseRoutes requiredRole={["admin", "employee"]}>
+                <EmployeeDashboard />
+              </RoleBaseRoutes>
+            </PrivateRoutes>
+          }
+        >
+          <Route index element={<EmpolyeeSummary />} />
+          <Route path="profile/:id" element={<EmployeeProfile />} />
+          <Route path="profile/:id/edit" element={<EditEmployeeProfile />} />
+          <Route path="leaves/:id" element={<EmployeeLeaveList />} />
+          <Route path="add-leave" element={<EmployeeLeaveAdd />} />
+          <Route path="setting" element={<EmployeeSetting />} />
+        </Route>
+
+        {/* ================= CLIENT ROUTES ================= */}
+        <Route
+          path="/client-dashboard"
+          element={
+            <PrivateRoutes>
+              <RoleBaseRoutes requiredRole={["client"]}>
+                <ClientDashboard />
+              </RoleBaseRoutes>
+            </PrivateRoutes>
+          }
+        >
+          <Route index element={<ClientSummary />} />
+          <Route path="ourrelationship/:id" element={<ClientRelationship />} />
+          <Route path="setting" element={<EmployeeSetting />} />
+        </Route>
+
+        {/* ================= UNAUTHORIZED ================= */}
         <Route path="/unauthorized" element={<Unauthorized />} />
+
       </Routes>
     </BrowserRouter>
-  )
-}
+  );
+};
 
-export default App
+export default App;

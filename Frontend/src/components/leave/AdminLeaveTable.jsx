@@ -171,7 +171,7 @@ const AdminLeaveTable = () => {
                 <button
                   key={item}
                   onClick={() => setStatusFilter(item)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer ${
                     statusFilter === item
                       ? "bg-red-600 text-white"
                       : "bg-white border border-red-200 text-gray-700"
@@ -247,7 +247,7 @@ const AdminLeaveTable = () => {
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleView(leave._id)}
-                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
+                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100 cursor-pointer"
                           >
                             <Eye size={16} />
                           </button>

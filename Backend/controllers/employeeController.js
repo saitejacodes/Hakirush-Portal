@@ -143,19 +143,27 @@ const updateEmployee = async (req, res) => {
 const editEmployeeProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, experience } = req.body;
+    const { name, experience, dob, bloodGroup, maritalStatus } = req.body;
 
     let employee = await Employee.findById(id);
     if (!employee) employee = await Employee.findOne({ userId: id });
 
     if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
     }
 
+    /* ================= UPDATE USER NAME ================= */
     if (name !== undefined) {
-      await User.updateOne({ _id: employee.userId }, { $set: { name } });
+      await User.updateOne(
+        { _id: employee.userId },
+        { $set: { name } }
+      );
     }
 
+    /* ================= UPDATE PROFILE IMAGE ================= */
     if (req.file?.buffer) {
       const imageUrl = await uploadToImageKit(req.file, "employees");
       await User.updateOne(
@@ -164,16 +172,31 @@ const editEmployeeProfile = async (req, res) => {
       );
     }
 
-    if (experience !== undefined) {
+    /* ================= UPDATE EMPLOYEE FIELDS ================= */
+    const updateFields = {};
+
+    if (experience !== undefined) updateFields.experience = experience;
+    if (dob !== undefined) updateFields.dob = dob; // Date
+    if (bloodGroup !== undefined) updateFields.bloodGroup = bloodGroup;
+    if (maritalStatus !== undefined) updateFields.maritalStatus = maritalStatus;
+
+    if (Object.keys(updateFields).length > 0) {
       await Employee.updateOne(
         { _id: employee._id },
-        { $set: { experience } }
+        { $set: updateFields }
       );
     }
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      message: "Employee profile updated successfully",
+    });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
   }
 };
 
@@ -193,7 +216,7 @@ const deleteEmployee = async (req, res) => {
 };
 
 /* ================= GET EMPLOYEES BY DEPARTMENT ================= */
-const getEmployeesByDepartment = async (req, res) => {
+const getEmployeesByDepartment = async (req, res) => { 
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
 
