@@ -38,6 +38,7 @@ import HolidaysList from "./components/holidays/HolidayList";
 import AddHoliday from "./components/holidays/AddHolidays";
 import AdminAnnouncement from "./components/announcement/AdminAnnouncement";
 import EditAnnouncement from "./components/announcement/EditAnnouncement";
+import AddPayslip from "./components/payslips/AddPayslip";
 
 /* ================= EMPLOYEE IMPORTS ================= */
 import EmployeeDashboard from "./pages/EmployeeDashboard";
@@ -45,11 +46,14 @@ import EmpolyeeSummary from "./components/EmpolyeeDashboard/EmployeeSummary";
 import EmployeeLeaveAdd from "./components/leave/EmployeeLeaveAdd";
 import EmployeeProfile from "./components/EmpolyeeDashboard/EmployeeProfile";
 import EditEmployeeProfile from "./components/EmpolyeeDashboard/EditEmployeeProfile";
+import ViewPayslip from "./components/payslips/ViewPayslip";
+
 
 /* ================= CLIENT IMPORTS ================= */
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientSummary from "./components/ClientDashboard/ClientSummary";
 import ClientRelationship from "./components/ClientDashboard/ClientRelationship";
+
 
 const App = () => {
   return (
@@ -81,6 +85,7 @@ const App = () => {
           <Route path="add-employee" element={<EmplyeeAdd />} />
           <Route path="employees/:id" element={<EmplyeeView />} />
           <Route path="employees/edit/:id" element={<EmplyeeEdit />} />
+          <Route path="employees/payslip/:id" element={<AddPayslip />} />
 
           <Route path="clients" element={<ClientList />} />
           <Route path="add-client" element={<ClientAdd />} />
@@ -127,6 +132,7 @@ const App = () => {
           <Route path="profile/:id/edit" element={<EditEmployeeProfile />} />
           <Route path="leaves/:id" element={<EmployeeLeaveList />} />
           <Route path="add-leave" element={<EmployeeLeaveAdd />} />
+          <Route path="payslips/:id" element={<ViewPayslip />} />
           <Route path="setting" element={<EmployeeSetting />} />
         </Route>
 

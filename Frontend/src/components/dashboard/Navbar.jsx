@@ -113,11 +113,11 @@ const Navbar = () => {
             {/* Logout */}
             <button
               onClick={logout}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-sm cursor-pointer"
               aria-label="Logout"
             >
               <LogOut size={18} />
-              <span className="hidden sm:inline font-semibold cursor-pointer">
+              <span className="hidden sm:inline font-semibold">
                 Logout
               </span>
             </button>

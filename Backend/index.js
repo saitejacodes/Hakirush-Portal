@@ -14,8 +14,9 @@ import attendanceRouter from "./routes/attendanceRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js";
 import holidayRouter from "./routes/holidayRoute.js";
 import sponsorRouter from "./routes/sponsorRoutes.js";
-import announcementRoutes from "./routes/announcementRoutes.js"
-import stallRoutes from "./routes/stallRoutes.js"
+import announcementRoutes from "./routes/announcementRoutes.js";
+import stallRoutes from "./routes/stallRoutes.js";
+import payslipRoutes from "./routes/payslipRoutes.js";
 
 connectToDatabase();
 
@@ -28,10 +29,10 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cors());
 
-// serve public folder
+
 app.use(express.static(path.join(__dirname, "public")));  
 
-// serve uploads folder
+
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 app.use("/api/auth", authRouter);
@@ -44,10 +45,11 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/holiday", holidayRouter);
 app.use("/api/sponsors", sponsorRouter);
-
 app.use("/api/stalls", stallRoutes);
+app.use("/api/payslip", payslipRoutes);
 
-// Simple test endpoint
+
+
 app.get("/api/test", (req, res) => {
   res.json({ success: true, message: "Backend is working!" });
 });

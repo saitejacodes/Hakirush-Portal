@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { ImagePlus } from "lucide-react"; // ✅ ADDED (nothing removed)
 
 /* ================= PREMIUM SUCCESS ALERT ================= */
 const SuccessAlert = ({ onClose }) => (
@@ -87,6 +88,9 @@ const EditAnnouncement = () => {
             : "",
           venue: a.venue || "",
           status: a.status || "Upcoming",
+
+          // ✅ ADDED (nothing removed)
+          image: null,
         });
       } catch {
         setError("Failed to load announcement data");
@@ -98,7 +102,8 @@ const EditAnnouncement = () => {
     fetchAnnouncement();
   }, [id, token]);
 
-  /* ================= UPDATE ================= */
+  /* ================= UPDATE (ORIGINAL – KEPT 100%) ================= */
+  /*
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -109,6 +114,43 @@ const EditAnnouncement = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`,
         form,
         { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setShowAlert(true);
+
+      setTimeout(() => {
+        navigate("/admin-dashboard/announcement");
+      }, 1800);
+    } catch {
+      setError("Failed to update announcement");
+    } finally {
+      setLoading(false);
+    }
+  };
+  */
+
+  /* ================= UPDATE (NEW – IMAGE SUPPORT) ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+
+      Object.entries(form).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       setShowAlert(true);
@@ -142,9 +184,7 @@ const EditAnnouncement = () => {
 
   return (
     <>
-      {showAlert && (
-        <SuccessAlert onClose={() => setShowAlert(false)} />
-      )}
+      {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
       <div className="min-h-screen bg-red-100 p-6">
         <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-6">
@@ -212,6 +252,35 @@ const EditAnnouncement = () => {
               <option>Ongoing</option>
               <option>Completed</option>
             </select>
+
+            {/* ================= IMAGE UPLOAD (ADDED ONLY) ================= */}
+            <div className="col-span-full">
+              <label className="block text-sm font-semibold text-red-700 mb-2">
+                Replace Announcement Image (optional)
+              </label>
+
+              <label className="flex flex-col items-center justify-center w-full h-36 rounded-2xl border-2 border-dashed border-red-300 bg-red-50/40 hover:bg-red-50 cursor-pointer transition-all">
+                <ImagePlus size={36} className="text-red-500 mb-2" />
+                <p className="text-sm font-medium text-red-700">
+                  Click to upload new image
+                </p>
+
+                {form.image && (
+                  <p className="mt-2 text-xs font-semibold text-green-600">
+                    Selected: {form.image.name}
+                  </p>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    setForm({ ...form, image: e.target.files[0] })
+                  }
+                />
+              </label>
+            </div>
 
             <button
               disabled={loading}

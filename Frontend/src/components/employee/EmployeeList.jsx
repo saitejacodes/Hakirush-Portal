@@ -230,7 +230,7 @@ const List = () => {
                       setCurrentPage((p) => Math.max(p - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="px-5 py-2 rounded-lg font-semibold bg-red-100 text-red-600"
+                    className="px-5 py-2 rounded-lg bg-red-100 text-red-600 font-semibold cursor-pointer disabled:bg-red-50 disabled:text-red-300 disabled:cursor-not-allowed"
                   >
                     ◀ Previous
                   </button>
@@ -244,7 +244,7 @@ const List = () => {
                       setCurrentPage((p) => Math.min(p + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="px-5 py-2 rounded-lg font-semibold bg-red-600 text-white"
+                    className="px-5 py-2 rounded-lg bg-red-600 text-white font-semibold cursor-pointer disabled:bg-red-300 disabled:cursor-not-allowed"
                   >
                     Next ▶
                   </button>

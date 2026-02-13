@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2, Plane } from "lucide-react";
+import { Eye, Edit2, Trash2, Plane, Receipt } from "lucide-react";
 import { useState } from "react";
 
 /* ================= PREMIUM CONFIRM DELETE ================= */
@@ -162,6 +162,16 @@ export const EmployeeButtons = ({ id, refresh }) => {
                      active:scale-95 backdrop-blur cursor-pointer"
         >
           <Plane size={16} />
+        </button>
+
+        <button
+          title="Employee Payslip"
+          onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
+          className="p-2 rounded-xl border border-red-200 text-red-600
+                     hover:bg-red-100/70 hover:shadow transition-all
+                     active:scale-95 backdrop-blur cursor-pointer"
+        >
+          <Receipt size={16} />
         </button>
 
         {/* DELETE */}

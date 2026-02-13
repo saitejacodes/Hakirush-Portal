@@ -221,7 +221,7 @@ const Add = () => {
                 <option value="admin">Admin</option>
                 <option value="employee">Employee</option>
                 <option value="client">Client</option>
-              </select>
+              </select> 
             </div>
 
             <button

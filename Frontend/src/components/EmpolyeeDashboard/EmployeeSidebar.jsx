@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   Settings,
   X,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../../context/authContext";
 import { useSidebar } from "../../context/sidebarContext";
@@ -17,16 +18,9 @@ const EmployeeSidebar = () => {
 
   const sidebar = [
     { link: "/employee-dashboard", icon: LayoutDashboard, title: "Dashboard" },
-    {
-      link: `/employee-dashboard/profile/${user?._id}`,
-      icon: Building,
-      title: "My Profile",
-    },
-    {
-      link: `/employee-dashboard/leaves/${user?._id}`,
-      icon: CalendarCheck,
-      title: "Leaves",
-    },
+    { link: `/employee-dashboard/profile/${user?._id}`, icon: Building, title: "My Profile" },
+    { link: `/employee-dashboard/leaves/${user?._id}`, icon: CalendarCheck, title: "Leaves" },
+    { link: `/employee-dashboard/payslips/${user?._id}`, icon: FileText, title: "Payslips" },
     { link: "/employee-dashboard/setting", icon: Settings, title: "Settings" },
   ];
 

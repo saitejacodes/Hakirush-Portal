@@ -75,7 +75,7 @@ const login = async (req, res) => {
 
 const verify = async (req, res) => {
   try {
-    // req.user comes from authMiddleware
+    
     let finalUser = req.user.toObject
       ? req.user.toObject()
       : { ...req.user };

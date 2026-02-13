@@ -100,6 +100,12 @@ const AdminSummary = () => {
     "#f59e0b",
     "#8b5cf6",
     "#14b8a6",
+    "#ec4899", 
+    "#0ea5e9", 
+    "#84cc16", 
+    "#f97316", 
+    "#6366f1", 
+    "#06b6d4",
   ];
 
   const planData = [
