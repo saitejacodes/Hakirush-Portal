@@ -2,6 +2,23 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import Holiday from "../models/Holiday.js";
 
+/* ================= LOCAL DATE HELPER ================= */
+const getLocalDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+/* ================= LOCAL DAY RANGE HELPER ================= */
+const getLocalDayRange = (dateString) => {
+  const [year, month, day] = dateString.split("-");
+  const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+  const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+  return { start, end };
+};
+
 /* ================= HELPER ================= */
 const getStatusFromHours = (hours) => {
   if (hours >= 8) return "Present";
@@ -14,9 +31,8 @@ const getStatusFromHours = (hours) => {
 const getAttendance = async (req, res) => {
   try {
     const today = new Date();
-    const date = today.toISOString().split("T")[0];
+    const date = getLocalDate();
 
-    /* ===== ADD ONLY ===== */
     if (today.getDay() === 0) {
       return res.json({
         success: true,
@@ -25,14 +41,12 @@ const getAttendance = async (req, res) => {
       });
     }
 
+    const { start, end } = getLocalDayRange(date);
+
     const holiday = await Holiday.findOne({
-      date: {
-        $gte: new Date(date + "T00:00:00"),
-        $lte: new Date(date + "T23:59:59"),
-      },
+      date: { $gte: start, $lte: end },
     });
 
-    /* ===== ADD ONLY ===== */
     if (holiday) {
       return res.json({
         success: true,
@@ -42,7 +56,6 @@ const getAttendance = async (req, res) => {
       });
     }
 
-    /* ===== EXISTING CODE (UNCHANGED) ===== */
     const employees = await Employee.find()
       .populate("userId")
       .populate("department");
@@ -80,7 +93,7 @@ const updateAttendance = async (req, res) => {
     const { employeeId } = req.params;
     const { status } = req.body;
 
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     const attendance = await Attendance.findOneAndUpdate(
       { employeeId, date },
@@ -102,11 +115,9 @@ const checkIn = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
     if (!employee)
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
 
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     let attendance = await Attendance.findOne({
       employeeId: employee._id,
@@ -142,11 +153,9 @@ const checkOut = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
     if (!employee)
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
 
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     const attendance = await Attendance.findOne({
       employeeId: employee._id,
@@ -154,9 +163,7 @@ const checkOut = async (req, res) => {
     });
 
     if (!attendance || !attendance.checkIn) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Check-in required" });
+      return res.status(400).json({ success: false, message: "Check-in required" });
     }
 
     if (attendance.isPaused) {
@@ -190,7 +197,7 @@ const checkOut = async (req, res) => {
 const pauseAttendance = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     const attendance = await Attendance.findOne({
       employeeId: employee._id,
@@ -215,7 +222,7 @@ const pauseAttendance = async (req, res) => {
 const resumeAttendance = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     const attendance = await Attendance.findOne({
       employeeId: employee._id,
@@ -242,7 +249,7 @@ const resumeAttendance = async (req, res) => {
 const getMyTodayAttendance = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
-    const date = new Date().toISOString().split("T")[0];
+    const date = getLocalDate();
 
     const attendance = await Attendance.findOne({
       employeeId: employee._id,
@@ -263,19 +270,17 @@ const getUserMonthlyAttendance = async (req, res) => {
 
     const employee = await Employee.findOne({ userId });
     if (!employee)
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
 
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0);
+    const start = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDate = new Date(year, month, 0);
+    const end = `${year}-${String(month).padStart(2, "0")}-${String(
+      endDate.getDate()
+    ).padStart(2, "0")}`;
 
     const records = await Attendance.find({
       employeeId: employee._id,
-      date: {
-        $gte: start.toISOString().split("T")[0],
-        $lte: end.toISOString().split("T")[0],
-      },
+      date: { $gte: start, $lte: end },
     });
 
     return res.json({
@@ -292,116 +297,69 @@ const getUserMonthlyAttendance = async (req, res) => {
 };
 
 /* ================= ATTENDANCE REPORT ================= */
+/* ================= ATTENDANCE REPORT ================= */
 const attendanceReport = async (req, res) => {
   try {
     const { date, search } = req.query;
 
-    const holidays = await Holiday.find();
-
-    /* ================= EXISTING: holiday map ================= */
-    const holidayMap = {};
-    const holidayDates = holidays.map((h) => {
-      const d = new Date(h.date).toISOString().split("T")[0];
-      holidayMap[d] = h.title;
-      return d;
-    });
-
-    const employees = await Employee.find()
-      .populate("userId")
-      .populate("department");
-
-    /* ================= FILTER LOGIC (UPDATED – ADD ONLY) ================= */
     const filter = {};
-
-    // ✅ Date filter should ALWAYS apply if selected
-    if (date) {
-      filter.date = date;
-    }
+    if (date) filter.date = date;
 
     const records = await Attendance.find(filter).populate({
       path: "employeeId",
       populate: ["userId", "department"],
     });
 
-    const groupData = {};
-    const nonWorkingDates = new Set();
+    /* ================= SEARCH FILTER ================= */
+    let filtered = records;
 
-    /* ================= ENSURE DATE EXISTS ================= */
-    if (date) {
-      const day = new Date(`${date}T00:00:00`).getDay();
-      if (day === 0 || holidayDates.includes(date)) {
-        groupData[date] = [];
-        nonWorkingDates.add(date);
-      }
-    }
-
-    /* ================= FIRST LOOP ================= */
-    records.forEach((r) => {
-      const d = r.date;
-      const day = new Date(`${d}T00:00:00`).getDay();
-
-      if (day === 0 || holidayDates.includes(d)) {
-        nonWorkingDates.add(d);
-        if (!groupData[d]) groupData[d] = [];
-        return;
-      }
-
-      if (!groupData[d]) groupData[d] = [];
-    });
-
-    /* ================= SECOND LOOP ================= */
-    records.forEach((r) => {
-      const d = r.date;
-      if (!groupData[d]) return;
-
-      groupData[d].push({
-        employeeId: r.employeeId?.employeeId || "N/A",
-        employeeName: r.employeeId?.userId?.name || "Unknown",
-        departmentName: r.employeeId?.department?.dep_name || "N/A",
-        designation: r.employeeId?.designation || "N/A",
-        status: r.status || "N/A",
-        workedHours: r.workedHours || 0,
-      });
-    });
-
-    /* ================= MARK ABSENT ================= */
-    Object.keys(groupData).forEach((d) => {
-      if (nonWorkingDates.has(d)) return;
-
-      employees.forEach((emp) => {
-        const exists = groupData[d].some(
-          (r) => r.employeeId === emp.employeeId
-        );
-
-        if (!exists) {
-          groupData[d].push({
-            employeeId: emp.employeeId || "N/A",
-            employeeName: emp.userId?.name || "Unknown",
-            departmentName: emp.department?.dep_name || "N/A",
-            designation: emp.designation || "N/A",
-            status: "Absent",
-            workedHours: 0,
-          });
-        }
-      });
-    });
-
-    /* ================= SEARCH FILTER (UNCHANGED) ================= */
     if (search) {
-      Object.keys(groupData).forEach((d) => {
-        groupData[d] = groupData[d].filter(
-          (r) =>
-            r.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-            r.employeeId.toLowerCase().includes(search.toLowerCase())
-        );
+      const keyword = search.toLowerCase();
+      filtered = records.filter((r) => {
+        const name = r.employeeId?.userId?.name?.toLowerCase() || "";
+        const empCode = r.employeeId?.employeeId?.toLowerCase() || "";
+        return name.includes(keyword) || empCode.includes(keyword);
       });
     }
+
+    /* ================= GROUP BY DATE ================= */
+    const groupData = {};
+    const holidayMap = {};
+
+    for (const record of filtered) {
+      const recordDate = record.date;
+
+      if (!groupData[recordDate]) groupData[recordDate] = [];
+
+      groupData[recordDate].push({
+        _id: record._id,
+        employeeId: record.employeeId?.employeeId || "N/A",
+        employeeName: record.employeeId?.userId?.name || "Unknown",
+        departmentName: record.employeeId?.department?.dep_name || "N/A",
+        status: record.status || null,
+        workedHours: record.workedHours || 0,
+        checkIn: record.checkIn || null,
+        checkOut: record.checkOut || null,
+        isPaused: record.isPaused || false,
+        pauseStartedAt: record.pauseStartedAt || null,
+        totalPausedMs: record.totalPausedMs || 0,
+      });
+    }
+
+    /* ================= HOLIDAY MAP ================= */
+    const holidays = await Holiday.find();
+
+    holidays.forEach((h) => {
+      const holidayDate = new Date(h.date).toISOString().split("T")[0];
+      holidayMap[holidayDate] = h.title;
+    });
 
     return res.json({
       success: true,
       groupData,
       holidayMap,
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -409,8 +367,6 @@ const attendanceReport = async (req, res) => {
     });
   }
 };
-
-
 
 
 /* ================= EXPORTS ================= */

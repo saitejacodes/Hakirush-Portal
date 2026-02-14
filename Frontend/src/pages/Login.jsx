@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../context/authContext";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Lock, Mail, Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -30,114 +30,147 @@ const Login = () => {
 
       if (response.data.success) {
         login(response.data.user);
-
+        // Directing to appropriate dashboard based on role
         if (response.data.user.role === "admin") {
           navigate("/admin-dashboard");
+        } else if (response.data.user.role === "client") {
+            navigate("/client-dashboard")
         } else {
           navigate("/employee-dashboard");
         }
       }
     } catch (error) {
-      setErr(error.response?.data?.message || "Invalid email or password");
+      setErr(error.response?.data?.message || "Access Denied: Invalid Credentials");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-white to-red-200 px-3 sm:px-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-900/20 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-600/10 blur-[120px] rounded-full" />
+
       <motion.div
-        initial={{ rotateY: -15, opacity: 0 }}
-        animate={{ rotateY: 0, opacity: 1 }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className="w-full max-w-4xl rounded-3xl bg-white/70 backdrop-blur-xl shadow-2xl border border-white/40 flex flex-col md:flex-row overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-4xl rounded-[2.5rem] bg-white/[0.03] backdrop-blur-2xl shadow-2xl border border-white/10 flex flex-col md:flex-row overflow-hidden"
       >
-        {/* LEFT LOGO PANEL */}
-        <motion.div
-          initial={{ y: -30 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 1 }}
-          className="md:w-1/2 w-full bg-black text-red-500 flex flex-col justify-center items-center p-6 sm:p-10 relative"
-        >
-          <motion.img
-            src="/favicon.png"
-            className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          />
+        {/* LEFT PANEL: BRANDING */}
+        <div className="md:w-1/2 w-full bg-gradient-to-br from-red-950 via-black to-black p-12 flex flex-col justify-center items-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+          
+          <motion.div
+            animate={{ y: [0, -15, 0] }}
+            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+            className="relative z-10 mb-8"
+          >
+            <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md shadow-2xl">
+              <img src="/favicon.png" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" alt="Logo" />
+            </div>
+          </motion.div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-wide uppercase">
-            Hakirush
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-red-400 text-center">
-            Secure • Fast • Reliable Portal
-          </p>
+          <div className="relative z-10 text-center">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic text-white leading-none">
+              Haki<span className="text-red-600">rush</span>
+            </h1>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="h-[1px] w-8 bg-red-800" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">
+                Command Center
+              </p>
+              <div className="h-[1px] w-8 bg-red-800" />
+            </div>
+          </div>
+        </div>
 
-          <div className="absolute inset-0 bg-red-500/10 blur-3xl"></div>
-        </motion.div>
-
-        {/* RIGHT FORM */}
-        <div className="md:w-1/2 w-full p-6 sm:p-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-red-700 mb-6 text-center md:text-left">
-            Portal Login
-          </h2>
-
-          {err && (
-            <p className="mb-4 text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-xl text-sm">
-              {err}
+        {/* RIGHT PANEL: FORM */}
+        <div className="md:w-1/2 w-full p-8 sm:p-14 bg-white flex flex-col justify-center">
+          <div className="mb-10">
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
+              Portal Login
+            </h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+              Identity Verification Required
             </p>
-          )}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-            <div>
-              <label className="text-sm font-medium text-gray-600">Email</label>
-              <input
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                placeholder="Enter Email"
-                className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 shadow focus:ring-2 focus:ring-red-200 outline-none text-sm sm:text-base"
-                required
-              />
+          <AnimatePresence>
+            {err && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 flex items-center gap-3 bg-red-50 border border-red-100 p-4 rounded-2xl text-red-600"
+              >
+                <ShieldCheck size={18} />
+                <p className="text-xs font-bold uppercase tracking-wide">{err}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email Dossier</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-600 transition-colors" size={18} />
+                <input
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="admin@hakirush.com"
+                  className="w-full bg-slate-50 rounded-2xl border border-slate-100 px-12 py-4 text-sm font-bold focus:ring-4 focus:ring-red-500/5 focus:border-red-500 outline-none transition-all"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Password
-              </label>
-
-              <div className="relative">
-               <input
-                 onChange={(e) => setPassword(e.target.value)}
-                 type={showPass ? "text" : "password"}
-                 placeholder="••••••••"
-                 className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 shadow focus:ring-2 focus:ring-red-200 outline-none text-sm sm:text-base"
-                 required
-               />
-
-               <button
-                 type="button"
-                 onClick={() => setShowPass(!showPass)}
-                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600 transition"
-               >
-                 {showPass ? (
-                   <EyeOff size={20} />
-                 ) : (
-                   <Eye size={20} />
-                 )}
-               </button>
-             </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Security Key</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-600 transition-colors" size={18} />
+                <input
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-50 rounded-2xl border border-slate-100 px-12 py-4 text-sm font-bold focus:ring-4 focus:ring-red-500/5 focus:border-red-500 outline-none transition-all"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-600 transition-colors"
+                >
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             
             <motion.button
               type="submit"
               disabled={loading}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-600 py-3 font-semibold text-white shadow-lg disabled:opacity-60 text-sm sm:text-base cursor-pointer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full rounded-2xl bg-slate-900 py-4 font-black uppercase tracking-[0.3em] text-white shadow-xl shadow-slate-900/20 disabled:opacity-70 flex items-center justify-center gap-3 transition-all hover:bg-red-700 cursor-pointer"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  Authenticating...
+                </>
+              ) : (
+                "Login"
+              )}
             </motion.button>
           </form>
+
+          <div className="mt-10 pt-6 border-t border-slate-100 flex justify-center">
+             <div className="flex items-center gap-2 text-slate-300 italic">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-bold uppercase tracking-widest">Global Encryption Active</span>
+             </div>
+          </div>
         </div>
       </motion.div>
     </div>

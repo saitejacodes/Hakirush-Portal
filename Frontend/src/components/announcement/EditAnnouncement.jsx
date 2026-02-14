@@ -1,47 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { ImagePlus } from "lucide-react"; // ✅ ADDED (nothing removed)
+import { ImagePlus, Loader2, CheckCircle2, ChevronLeft, AlertCircle } from "lucide-react";
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
+/* ================= PROTOCOL: SUCCESS ALERT ================= */
 const SuccessAlert = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-red-100 overflow-hidden">
-        <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-        <div className="p-6 flex gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-            ✓
-          </div>
-
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-red-700">
-              Announcement Updated
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              The announcement has been updated successfully.
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-red-600 transition"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="px-6 pb-5">
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition"
-          >
-            Okay, got it
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-red-950/20 backdrop-blur-sm z-[60]" />
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden text-center p-8 animate-in zoom-in-95">
+        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
+        <h3 className="text-xl font-black uppercase italic tracking-tighter text-red-950">Record Modified</h3>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 mb-6">Database has been synchronized successfully.</p>
+        <button onClick={onClose} className="w-full py-4 rounded-2xl bg-red-950 text-white text-[9px] font-black uppercase tracking-widest">Return to Hub</button>
       </div>
     </div>
   </>
@@ -59,239 +30,134 @@ const EditAnnouncement = () => {
 
   const token = localStorage.getItem("token");
 
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600">
-        Access denied. Please login again.
-      </div>
-    );
-  }
-
-  /* ================= FETCH EXISTING DATA ================= */
   useEffect(() => {
     const fetchAnnouncement = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const a = res.data?.announcement || res.data;
-
-        if (!a || !a._id) throw new Error("Announcement data missing");
+        if (!a || !a._id) throw new Error("Missing ID");
 
         setForm({
           title: a.title || "",
           type: a.type || "Annual",
-          date: a.date
-            ? new Date(a.date).toISOString().split("T")[0]
-            : "",
+          date: a.date ? new Date(a.date).toISOString().split("T")[0] : "",
           venue: a.venue || "",
           status: a.status || "Upcoming",
-
-          // ✅ ADDED (nothing removed)
           image: null,
         });
-      } catch {
-        setError("Failed to load announcement data");
-      } finally {
-        setFetching(false);
-      }
+      } catch { setError("Access Failed: Record Unreachable"); } finally { setFetching(false); }
     };
-
-    fetchAnnouncement();
+    if (token) fetchAnnouncement();
   }, [id, token]);
 
-  /* ================= UPDATE (ORIGINAL – KEPT 100%) ================= */
-  /*
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    try {
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`,
-        form,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setShowAlert(true);
-
-      setTimeout(() => {
-        navigate("/admin-dashboard/announcement");
-      }, 1800);
-    } catch {
-      setError("Failed to update announcement");
-    } finally {
-      setLoading(false);
-    }
-  };
-  */
-
-  /* ================= UPDATE (NEW – IMAGE SUPPORT) ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
     try {
       const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => { if (value) formData.append(key, value); });
 
-      Object.entries(form).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
+      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
-
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
       setShowAlert(true);
-
-      setTimeout(() => {
-        navigate("/admin-dashboard/announcement");
-      }, 1800);
-    } catch {
-      setError("Failed to update announcement");
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => navigate("/admin-dashboard/announcement"), 1800);
+    } catch { setError("System Rejection: Update Interrupted"); } finally { setLoading(false); }
   };
 
-  /* ================= LOADING ================= */
-  if (fetching) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading announcement data...
-      </div>
-    );
-  }
+  if (!token) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-red-600">Unauthorized Access</div>;
 
-  if (!form) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600">
-        Announcement not found
-      </div>
-    );
-  }
+  if (fetching) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-red-50">
+      <Loader2 size={32} className="animate-spin text-red-600 mb-4" />
+      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-900/40">Decrypting Brief...</p>
+    </div>
+  );
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-6 md:p-12">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
-      <div className="min-h-screen bg-red-100 p-6">
-        <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-6">
-          <h2 className="text-2xl font-extrabold text-red-800 mb-6">
-            Edit Announcement
-          </h2>
+      <div className="max-w-2xl mx-auto">
+        {/* BACK BUTTON */}
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-red-950/40 hover:text-red-600 transition-colors mb-8 group cursor-pointer">
+          <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Back to Ledger</span>
+        </button>
+
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden p-8 md:p-12">
+          {/* HEADER */}
+          <div className="mb-10">
+            <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-red-950">
+              Modify <span className="text-red-600">Directive</span>
+            </h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Editing Brief ID: <span className="text-red-600">{id.slice(-8).toUpperCase()}</span></p>
+          </div>
 
           {error && (
-            <div className="mb-4 bg-red-100 text-red-700 p-3 rounded-xl">
-              {error}
+            <div className="mb-8 flex items-center gap-3 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={18} />
+              <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            <input
-              required
-              className="border p-3 rounded-xl"
-              value={form.title}
-              onChange={(e) =>
-                setForm({ ...form, title: e.target.value })
-              }
-            />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Headline</label>
+                <input required className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-wider outline-none transition-all shadow-inner" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value.toUpperCase() })} />
+            </div>
 
-            <select
-              className="border p-3 rounded-xl"
-              value={form.type}
-              onChange={(e) =>
-                setForm({ ...form, type: e.target.value })
-              }
-            >
-              <option>Annual</option>
-              <option>Quarterly</option>
-            </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Category</label>
+                <select className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl px-5 py-4 text-xs font-bold uppercase tracking-wider outline-none shadow-inner" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                  <option>Annual</option>
+                  <option>Quarterly</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Timeline</label>
+                <input type="date" required className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl px-5 py-4 text-xs font-bold outline-none shadow-inner" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              </div>
+            </div>
 
-            <input
-              type="date"
-              required
-              className="border p-3 rounded-xl"
-              value={form.date}
-              onChange={(e) =>
-                setForm({ ...form, date: e.target.value })
-              }
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Location/Venue</label>
+                <input required className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl px-5 py-4 text-xs font-bold uppercase tracking-wider outline-none shadow-inner" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Protocol Status</label>
+                <select className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl px-5 py-4 text-xs font-bold uppercase tracking-wider outline-none shadow-inner" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                  <option>Upcoming</option>
+                  <option>Ongoing</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+            </div>
 
-            <input
-              required
-              className="border p-3 rounded-xl"
-              value={form.venue}
-              onChange={(e) =>
-                setForm({ ...form, venue: e.target.value })
-              }
-            />
-
-            <select
-              className="border p-3 rounded-xl"
-              value={form.status}
-              onChange={(e) =>
-                setForm({ ...form, status: e.target.value })
-              }
-            >
-              <option>Upcoming</option>
-              <option>Ongoing</option>
-              <option>Completed</option>
-            </select>
-
-            {/* ================= IMAGE UPLOAD (ADDED ONLY) ================= */}
-            <div className="col-span-full">
-              <label className="block text-sm font-semibold text-red-700 mb-2">
-                Replace Announcement Image (optional)
-              </label>
-
-              <label className="flex flex-col items-center justify-center w-full h-36 rounded-2xl border-2 border-dashed border-red-300 bg-red-50/40 hover:bg-red-50 cursor-pointer transition-all">
-                <ImagePlus size={36} className="text-red-500 mb-2" />
-                <p className="text-sm font-medium text-red-700">
-                  Click to upload new image
+            {/* IMAGE UPLOAD SECTION */}
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase tracking-widest text-red-950 ml-2">Visual Media Replacement (Optional)</label>
+              <label className="flex flex-col items-center justify-center w-full h-40 rounded-[2rem] border-2 border-dashed border-red-200 bg-red-50/20 hover:bg-red-50 cursor-pointer transition-all group">
+                <ImagePlus size={32} className="text-red-400 group-hover:scale-110 transition-transform mb-3" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-900/60">
+                  {form.image ? form.image.name : "Select New Asset"}
                 </p>
-
-                {form.image && (
-                  <p className="mt-2 text-xs font-semibold text-green-600">
-                    Selected: {form.image.name}
-                  </p>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) =>
-                    setForm({ ...form, image: e.target.files[0] })
-                  }
-                />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setForm({ ...form, image: e.target.files[0] })} />
               </label>
             </div>
 
-            <button
-              disabled={loading}
-              className="col-span-full bg-red-600 text-white py-3 rounded-xl font-semibold cursor-pointer"
-            >
-              {loading ? "Updating..." : "Update Announcement"}
+            <button disabled={loading} className="w-full py-6 rounded-[2rem] bg-red-950 text-white font-black uppercase tracking-[0.4em] text-[10px] shadow-2xl hover:bg-red-600 transition-all active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : "Commit Changes to System"}
             </button>
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

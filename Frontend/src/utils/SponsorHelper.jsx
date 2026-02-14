@@ -1,46 +1,45 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Eye, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 /* ================= PREMIUM CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-          <div className="p-6 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 font-bold">
-              !
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] animate-in fade-in duration-300" />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95 duration-200">
+        <div className="w-full max-w-md rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden">
+          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />
+          
+          <div className="p-8">
+            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-600 mb-6 mx-auto shadow-inner">
+              <AlertCircle size={32} strokeWidth={2.5} />
             </div>
 
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-700">
-                Delete Sponsor
+            <div className="text-center space-y-2 mb-8">
+              <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">
+                Terminate Sponsor<span className="text-red-600">?</span>
               </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                This action cannot be undone. Are you sure you want to continue?
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                This sponsor record will be permanently purged from the system core.
               </p>
             </div>
-          </div>
 
-          <div className="flex gap-3 px-6 pb-6">
-            <button
-              onClick={onCancel}
-              className="w-1/2 py-2.5 rounded-xl border hover:bg-slate-50 transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition cursor-pointer"
-            >
-              Delete
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onCancel}
+                className="w-1/2 py-4 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+              >
+                Abort
+              </button>
+              <button
+                onClick={onConfirm}
+                className="w-1/2 py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 shadow-lg shadow-slate-200 hover:shadow-red-200 transition-all active:scale-95 cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -52,42 +51,31 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
 const DeleteSuccessAlert = ({ onClose }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-          <div className="p-6 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-              ✓
-            </div>
-
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-700">
-                Sponsor Deleted
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                The sponsor has been removed successfully.
-              </p>
-            </div>
+      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] animate-in fade-in" />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95">
+        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden p-8 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mb-6 mx-auto">
+            <CheckCircle2 size={32} strokeWidth={2.5} />
           </div>
-
-          <div className="px-6 pb-5">
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition"
-            >
-              Okay, got it
-            </button>
-          </div>
+          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic mb-2">
+            Record Purged<span className="text-green-500">.</span>
+          </h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
+            The sponsor database has been updated.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-4 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200 transition-all active:scale-95"
+          >
+            Acknowledge
+          </button>
         </div>
       </div>
     </>
   );
 };
 
-/* ================= MAIN BUTTONS ================= */
+/* ================= MAIN SPONSOR BUTTONS ================= */
 export const SponsorButtons = ({ id, refresh }) => {
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -95,7 +83,7 @@ export const SponsorButtons = ({ id, refresh }) => {
 
   const deleteSponsor = async () => {
     try {
-      await axios.delete(
+      const response = await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
         {
           headers: {
@@ -104,16 +92,18 @@ export const SponsorButtons = ({ id, refresh }) => {
         }
       );
 
-      setShowConfirm(false);
-      setShowSuccess(true);
-
-      setTimeout(() => {
-        setShowSuccess(false);
-        if (refresh) refresh();
-      }, 1500);
+      if (response.data.success) {
+        setShowConfirm(false);
+        setShowSuccess(true);
+        
+        setTimeout(() => {
+          setShowSuccess(false);
+          if (refresh) refresh(); 
+        }, 1200);
+      }
     } catch (err) {
-      console.error("DELETE SPONSOR ERROR:", err.response || err);
-      alert("Failed to delete sponsor");
+      console.error(err);
+      alert("System Error: Unable to delete sponsor record.");
     }
   };
 
@@ -130,40 +120,52 @@ export const SponsorButtons = ({ id, refresh }) => {
         <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="flex gap-2 justify-end">
-        {/* VIEW */}
+      <div className="flex gap-2 justify-end items-center">
+        {/* View Action */}
         <button
-          title="View Sponsor"
           onClick={() => navigate(`/admin-dashboard/sponsors/${id}`)}
-          className="p-2 rounded-xl border border-red-200 text-red-600
-                     hover:bg-red-100/70 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          className="group p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
+          title="View Details"
         >
-          <Eye size={16} />
+          <Eye size={16} strokeWidth={2.5} />
         </button>
 
-        {/* EDIT */}
+        {/* Edit Action */}
         <button
-          title="Edit Sponsor"
           onClick={() => navigate(`/admin-dashboard/sponsors/edit/${id}`)}
-          className="p-2 rounded-xl border border-red-200 text-red-600
-                     hover:bg-red-100/70 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          className="group p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
+          title="Modify Sponsor"
         >
-          <Edit2 size={16} />
+          <Edit2 size={16} strokeWidth={2.5} />
         </button>
 
-        {/* DELETE */}
+        {/* Delete Action */}
         <button
-          title="Delete Sponsor"
           onClick={() => setShowConfirm(true)}
-          className="p-2 rounded-xl bg-red-600/90 text-white
-                     hover:bg-red-700 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          className="group p-2.5 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
+          title="Delete Permanent"
         >
-          <Trash2 size={16} />
+          <Trash2 size={16} strokeWidth={2.5} />
         </button>
       </div>
     </>
   );
+};
+
+/* ✅ API Helper */
+export const fetchSponsors = async () => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/sponsors`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return res.data.success ? res.data.sponsors : [];
+  } catch (error) {
+    console.error("Core Sync Error:", error.response?.data || error);
+    return [];
+  }
 };

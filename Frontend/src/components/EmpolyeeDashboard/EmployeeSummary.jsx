@@ -12,7 +12,6 @@ import EmployeePunch from "../attendance/EmployeePunch";
 const EmployeeSummary = () => {
   const { user, loading } = useAuth();
   
-  // States
   const [deptEmployees, setDeptEmployees] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [leaves, setLeaves] = useState([]); 
@@ -24,15 +23,17 @@ const EmployeeSummary = () => {
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
   const [showBellMenu, setShowBellMenu] = useState(false);
 
-  // --- HELPERS ---
-
-  // Standardize dates to YYYY-MM-DD for comparison
+  /* ================= FIXED LOCAL DATE ================= */
   const toYMD = (d) => {
     if (!d) return "";
     const date = new Date(d);
-    return isNaN(date.getTime()) 
-      ? "" 
-      : date.toISOString().split('T')[0];
+    if (isNaN(date.getTime())) return "";
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   };
 
   const getStatusBadge = (status) => {
@@ -51,31 +52,44 @@ const EmployeeSummary = () => {
   const markAsSeenOnServer = async (announcementId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/${announcementId}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setAnnouncements(prev => prev.map(a => 
-        a._id === announcementId ? { ...a, seenBy: [...(a.seenBy || []), user._id.toString()] } : a
-      ));
-    } catch (error) { console.error(error); }
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/announcements/${announcementId}/read`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAnnouncements(prev => 
+        prev.map(a => 
+          a._id === announcementId 
+            ? { ...a, seenBy: [...(a.seenBy || []), user._id.toString()] } 
+            : a
+        )
+      );
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   const getDayInfo = (day) => {
     if (!day) return { status: "none", title: "" };
     
-    // Create date for the specific calendar cell
-    const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+    const date = new Date(
+      calendarMonth.getFullYear(), 
+      calendarMonth.getMonth(), 
+      day
+    );
     date.setHours(0, 0, 0, 0);
+
     const dateStr = toYMD(date);
 
-    // 1. Check Holidays
+    // 1. Holidays
     const holidayRec = holidays.find(h => toYMD(h.date) === dateStr);
     if (holidayRec) return { status: "holiday", title: holidayRec.title };
 
-    // 2. Check Weekends
-    if (date.getDay() === 0) return { status: "weekend", title: "Sunday" };
+    // 2. Sunday
+    if (date.getDay() === 0) 
+      return { status: "weekend", title: "Sunday" };
 
-    // 3. Check Approved Leaves
+    // 3. Approved Leave
     const activeLeave = leaves.find(l => {
       if (l.status !== "Approved") return false;
       const start = new Date(l.startDate);
@@ -84,48 +98,71 @@ const EmployeeSummary = () => {
       end.setHours(0,0,0,0);
       return date >= start && date <= end;
     });
-    if (activeLeave) return { status: "leave", title: activeLeave.leaveType };
 
-    // 4. Check Attendance Logs
-    const attRec = attendance.find(a => a.date === dateStr);
+    if (activeLeave) 
+      return { status: "leave", title: activeLeave.leaveType };
+
+    // 4. Attendance
+    const attRec = attendance.find(a => String(a.date) === dateStr);
+
     if (attRec && attRec.status) {
       const s = attRec.status.toLowerCase().replace(/\s+/g, "");
-      if (["present", "halfday", "absent"].includes(s)) return { status: s, title: attRec.status };
+      if (["present", "halfday", "absent"].includes(s))
+        return { status: s, title: attRec.status };
     }
 
-    return { status: "none", title: "" };
+    return { status: "none", title: "Working Day" };
   };
 
   const generateCalendar = () => {
-    const y = calendarMonth.getFullYear(); const m = calendarMonth.getMonth();
+    const y = calendarMonth.getFullYear(); 
+    const m = calendarMonth.getMonth();
     const firstDay = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
-    return [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+    return [
+      ...Array(firstDay).fill(null), 
+      ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
+    ];
   };
 
   const fetchData = useCallback(() => {
     if (!user?._id) return;
     const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+
     Promise.all([
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/balance/me`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers })
-    ]).then(([d1, d2, d3, d4, d5, d6]) => {
+      axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, 
+        { headers }
+      )
+    ])
+    .then(([d1, d2, d3, d4, d5, d6]) => {
       setDeptEmployees(d1?.data?.employees || []);
       setHolidays(d2?.data?.holidays || []);
-      setLeaveBalance({ casual: d3?.data?.casual?.balance ?? 0, sick: d3?.data?.sick?.balance ?? 0 });
+      setLeaveBalance({ 
+        casual: d3?.data?.casual?.balance ?? 0, 
+        sick: d3?.data?.sick?.balance ?? 0 
+      });
       setAnnouncements(d4?.data?.announcements || []);
       setLeaves(d5?.data?.leaves || []);
       setAttendance(d6?.data?.attendance || []);
-    }).catch(console.error);
+    })
+    .catch(console.error);
+
   }, [user, calendarMonth]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  if (loading || !user) return <div className="h-screen flex items-center justify-center font-black italic text-slate-400 uppercase tracking-tighter text-4xl">LOADING...</div>;
+  if (loading || !user)
+    return (
+      <div className="h-screen flex items-center justify-center font-black italic text-slate-400 uppercase tracking-tighter text-4xl">
+        LOADING...
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 pb-12">
@@ -134,16 +171,8 @@ const EmployeeSummary = () => {
         {/* Header Section */}
         <header className="flex justify-between items-center pt-2">
           <div className="flex items-center gap-4">
-             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl transition-transform hover:scale-105 bg-slate-100">
-                {user?.profileImage ? (
-                    <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full bg-red-600 flex items-center justify-center text-white text-xl font-black italic">{user?.name[0]}</div>
-                )}
-             </div>
              <div>
                 <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none">Dashboard</h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">{user?.name}</p>
              </div>
           </div>
 
@@ -206,7 +235,6 @@ const EmployeeSummary = () => {
 
         {/* Dashboard Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Team Members List */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-lg h-[240px] flex flex-col border border-slate-50">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest"><Activity size={16} className="text-red-500" /> Team Pulse</div>
             <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-1 custom-scrollbar">
@@ -221,7 +249,6 @@ const EmployeeSummary = () => {
             </div>
           </div>
 
-          {/* Upcoming Holidays */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-lg h-[240px] flex flex-col border border-slate-50">
              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest"><CalendarDays size={16} className="text-indigo-500" /> Holidays</div>
              <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar">
@@ -236,7 +263,6 @@ const EmployeeSummary = () => {
              </div>
           </div>
 
-          {/* Leave Credits Summary */}
           <div onClick={() => setShowLeaveBreakdown(true)} className="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-[240px] transition-transform active:scale-95 group relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Umbrella size={120} className="text-red-500 -rotate-12" />
@@ -278,7 +304,7 @@ const EmployeeSummary = () => {
                 leave: "bg-amber-400 text-white border-amber-200",
                 holiday: "bg-indigo-600 text-white border-indigo-200", 
                 weekend: "bg-slate-50 text-slate-300 border-slate-100", 
-                none: "bg-white text-slate-100 border-slate-50"
+                none: "bg-white text-slate-900 border-slate-50 shadow-sm"
               };
               return (
                 <div key={i} className={`min-h-[120px] rounded-[2.5rem] border-2 flex flex-col items-center justify-center p-4 transition-all hover:scale-105 ${day ? styles[status] : "opacity-0"}`}>
@@ -306,7 +332,7 @@ const EmployeeSummary = () => {
                     <div key={day} className="flex items-center justify-between p-5 rounded-3xl border bg-slate-50 border-slate-100">
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-lg font-black italic shadow-sm">{day}</div>
-                            <span className="text-[12px] font-black uppercase text-slate-800 tracking-tighter">{title || "Work Day"}</span>
+                            <span className="text-[12px] font-black uppercase text-slate-800 tracking-tighter">{title}</span>
                         </div>
                         <div className={`w-3 h-3 rounded-full ${dotColor[status]} shadow-lg`}></div>
                     </div>

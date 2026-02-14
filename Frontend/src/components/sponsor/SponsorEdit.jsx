@@ -1,61 +1,51 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { 
+  Upload, 
+  ChevronLeft, 
+  ShieldCheck, 
+  Zap, 
+  Globe, 
+  Users, 
+  Loader2, 
+  CheckCircle2, 
+  RefreshCcw 
+} from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /* ================= IMAGE HELPER ================= */
 const getImageUrl = (url) => {
   if (!url) return "/default-avatar.png";
-  if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return `${url}?t=${Date.now()}`;
-  return "/default-avatar.png";
+  if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+  if (url.startsWith("http")) return url;
+  return `${import.meta.env.VITE_BACKEND_URL}/${url}`;
 };
 
 /* ================= PREMIUM SUCCESS ALERT ================= */
 const SuccessAlert = ({ onClose }) => {
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-      {/* Alert */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
-          
-          {/* Gradient bar */}
-          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-          <div className="p-6 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-              ✓
-            </div>
-
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-700">
-                Sponsor Updated
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                Sponsor details have been updated successfully.
-              </p>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-red-600 transition"
-            >
-              ✕
-            </button>
+      <div className="fixed inset-0 bg-red-950/20 backdrop-blur-md z-[100] animate-in fade-in duration-300" />
+      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4 animate-in zoom-in-95 duration-200">
+        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden p-8 text-center">
+          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 absolute top-0 left-0 right-0" />
+          <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mb-6 mx-auto">
+            <CheckCircle2 size={32} strokeWidth={2.5} />
           </div>
-
-          <div className="px-6 pb-5">
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-medium hover:opacity-90 transition"
-            >
-              Okay, got it
-            </button>
-          </div>
+          <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic mb-2">
+            Update <span className="text-red-600">Synced</span>
+          </h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
+            The sponsor intelligence has been <br /> successfully reconfigured.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-4 rounded-2xl bg-red-600 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-700 transition-all active:scale-95 shadow-xl shadow-red-100 cursor-pointer"
+          >
+            Acknowledge
+          </button>
         </div>
       </div>
     </>
@@ -80,10 +70,8 @@ const SponsorEdit = () => {
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
-  /* ================= FETCH SPONSOR ================= */
   useEffect(() => {
     fetchSponsor();
-    // eslint-disable-next-line
   }, [id]);
 
   const fetchSponsor = async () => {
@@ -92,9 +80,7 @@ const SponsorEdit = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
 
@@ -110,36 +96,28 @@ const SponsorEdit = () => {
         setPreview(s.logo || null);
       }
     } catch {
-      alert("Failed to load sponsor");
+      alert("Failed to load sponsor intelligence");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-
     if (name === "logo") {
       const file = files?.[0];
       if (!file) return;
-
       if (file.size > MAX_FILE_SIZE) {
         alert("Image size must be less than 10MB");
-        e.target.value = "";
         return;
       }
-
       setLogo(file);
       setPreview(URL.createObjectURL(file));
-      e.target.value = "";
       return;
     }
-
     setSponsor((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -148,141 +126,181 @@ const SponsorEdit = () => {
     Object.keys(sponsor).forEach((key) => {
       fd.append(key, sponsor[key]);
     });
-
-    if (logo) {
-      fd.append("logo", logo);
-    }
+    if (logo) fd.append("logo", logo);
 
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/sponsors/${id}`,
         fd,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
 
       if (res.data.success) {
         setShowAlert(true);
-
-        setTimeout(() => {
-          navigate("/admin-dashboard/sponsors");
-        }, 1800);
+        setTimeout(() => navigate("/admin-dashboard/sponsors"), 1800);
       }
     } catch (error) {
-      alert(error.response?.data?.error || "Update failed");
+      alert(error.response?.data?.error || "Update protocol failed");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading && !preview) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600">
-        Loading…
-      </div>
-    );
-  }
-
-  /* ================= UI ================= */
   return (
-    <>
-      {showAlert && (
-        <SuccessAlert onClose={() => setShowAlert(false)} />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10">
+      {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
+      
+      <div className="max-w-4xl mx-auto">
+        <button 
+          onClick={() => navigate(-1)}
+          className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-8 hover:text-red-700 transition-colors cursor-pointer"
+        >
+          <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+          Return to Registry
+        </button>
 
-      <div className="min-h-screen bg-red-50 p-6">
-        <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
-          <h2 className="text-3xl font-bold text-center text-red-700 mb-6">
-            Edit Sponsor
-          </h2>
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(220,38,38,0.1)] border border-white overflow-hidden">
+          {/* HEADER */}
+          <div className="p-8 md:p-12 border-b border-red-50 bg-gradient-to-b from-red-50/50 to-transparent">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-1 bg-red-600 rounded-full" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Modifier Mode</p>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-slate-900 leading-[0.8]">
+              Edit <span className="text-red-600">Protocol</span>
+            </h1>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* IMAGE */}
-            <div className="flex flex-col items-center gap-3">
-              <img
-                src={getImageUrl(preview)}
-                alt="logo"
-                onError={(e) => (e.target.src = "/default-avatar.png")}
-                className="w-28 h-28 rounded-full object-cover border"
-              />
+          <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-12">
+            {/* LOGO SECTION */}
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="relative group">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-red-50 border-4 border-white shadow-xl overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                  <img
+                    src={getImageUrl(preview)}
+                    className="w-full h-full object-cover"
+                    alt="preview"
+                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                  />
+                </div>
+                <label className="absolute -bottom-2 -right-2 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg cursor-pointer hover:bg-red-600 hover:rotate-12 transition-all">
+                  <RefreshCcw size={20} />
+                  <input ref={fileInputRef} type="file" name="logo" accept="image/*" className="hidden" onChange={handleChange} />
+                </label>
+              </div>
+              
+              <div className="flex-1 space-y-2 text-center md:text-left">
+                <h3 className="text-xl font-black uppercase tracking-tighter italic text-slate-800">Visual Identifier</h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 max-w-xs">
+                  Modifying the logo will update all public instances of this partner across the dashboard.
+                </p>
+              </div>
+            </div>
 
-              <label className="cursor-pointer text-red-600 font-semibold">
-                Change Logo
+            {/* FIELDS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 ml-1">
+                  <ShieldCheck size={14} /> Corporate Name
+                </label>
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  name="logo"
-                  accept="image/*"
-                  className="hidden"
+                  name="name"
+                  value={sponsor.name}
+                  placeholder="SPONSOR NAME"
+                  required
                   onChange={handleChange}
+                  className="w-full bg-red-50/30 border-b-2 border-red-100 py-4 px-2 text-[12px] font-black uppercase tracking-widest focus:outline-none focus:border-red-600 focus:bg-red-50 transition-all"
                 />
-              </label>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 ml-1">
+                  <Zap size={14} /> Partnership Tier
+                </label>
+                <select
+                  name="collaboration"
+                  value={sponsor.collaboration}
+                  required
+                  onChange={handleChange}
+                  className="w-full bg-red-50/30 border-b-2 border-red-100 py-4 px-2 text-[12px] font-black uppercase tracking-widest focus:outline-none focus:border-red-600 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">SELECT TIER</option>
+                  <option value="Title Sponsor">Title Sponsor</option>
+                  <option value="Associate Sponsor">Associate Sponsor</option>
+                  <option value="Event Sponsor">Event Sponsor</option>
+                  <option value="Media Partner">Media Partner</option>
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 ml-1">
+                  Counter
+                </label>
+                <input
+                  type="number"
+                  name="eventsSponsored"
+                  value={sponsor.eventsSponsored}
+                  placeholder="TOTAL EVENTS"
+                  onChange={handleChange}
+                  className="w-full bg-red-50/30 border-b-2 border-red-100 py-4 px-2 text-[12px] font-black uppercase tracking-widest focus:outline-none focus:border-red-600 transition-all"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 ml-1">
+                  <Users size={14} /> Exposure Metrics
+                </label>
+                <input
+                  name="reach"
+                  value={sponsor.reach}
+                  placeholder="E.G. 5M REACH"
+                  onChange={handleChange}
+                  className="w-full bg-red-50/30 border-b-2 border-red-100 py-4 px-2 text-[12px] font-black uppercase tracking-widest focus:outline-none focus:border-red-600 transition-all"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 ml-1">
+                  <Globe size={14} /> Pipeline Description
+                </label>
+                <input
+                  name="upcomingEvents"
+                  value={sponsor.upcomingEvents}
+                  placeholder="RECONFIGURE UPCOMING COLLABORATIONS..."
+                  onChange={handleChange}
+                  className="w-full bg-red-50/30 border-b-2 border-red-100 py-4 px-2 text-[12px] font-black uppercase tracking-widest focus:outline-none focus:border-red-600 transition-all"
+                />
+              </div>
             </div>
 
-            {/* FORM */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                className="input"
-                name="name"
-                value={sponsor.name}
-                onChange={handleChange}
-                placeholder="Sponsor Name"
-                required
-              />
-
-              <select
-                className="input"
-                name="collaboration"
-                value={sponsor.collaboration}
-                onChange={handleChange}
+            {/* BUTTON */}
+            <div className="pt-8">
+              <button
+                disabled={loading}
+                className={`group w-full relative overflow-hidden py-6 rounded-[2rem] text-[12px] font-black uppercase tracking-[0.5em] transition-all cursor-pointer shadow-2xl shadow-red-100
+                  ${loading 
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                    : "bg-red-600 text-white hover:bg-red-500 hover:scale-[1.02] active:scale-95"
+                  }`}
               >
-                <option value="">Collaboration Type</option>
-                <option value="Title Sponsor">Title Sponsor</option>
-                <option value="Associate Sponsor">Associate Sponsor</option>
-                <option value="Event Sponsor">Event Sponsor</option>
-                <option value="Media Partner">Media Partner</option>
-              </select>
-
-              <input
-                type="number"
-                className="input"
-                name="eventsSponsored"
-                value={sponsor.eventsSponsored}
-                onChange={handleChange}
-                placeholder="Events Sponsored"
-              />
-
-              <input
-                className="input"
-                name="reach"
-                value={sponsor.reach}
-                onChange={handleChange}
-                placeholder="Reach (eg: 2M impressions)"
-              />
-
-              <input
-                className="input"
-                name="upcomingEvents"
-                value={sponsor.upcomingEvents}
-                onChange={handleChange}
-                placeholder="Upcoming Events"
-              />
+                <div className="relative z-10 flex items-center justify-center gap-3">
+                  {loading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Reconfiguring Intelligence...
+                    </>
+                  ) : (
+                    "Execute Update Protocol"
+                  )}
+                </div>
+              </button>
             </div>
-
-            <button
-              disabled={loading}
-              className={`w-full py-3 rounded-lg text-white font-semibold cursor-pointer
-                ${loading ? "bg-red-300" : "bg-red-600 hover:bg-red-700"}`}
-            >
-              {loading ? "Updating..." : "Update Sponsor"}
-            </button>
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

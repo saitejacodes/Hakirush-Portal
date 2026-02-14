@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Edit2, Eye, Trash2 } from "lucide-react";
+import { Edit2, Eye, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
@@ -7,37 +7,32 @@ import { useState } from "react";
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-          <div className="p-6 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 font-bold">
-              !
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] animate-fade-in" />
+      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-pop">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 mx-auto mb-6 shadow-inner">
+              <AlertCircle size={32} strokeWidth={2.5} />
             </div>
-
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-700">
-                Delete Department
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                This action cannot be undone. Are you sure?
-              </p>
-            </div>
+            
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
+              Wait! Delete?
+            </h3>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 leading-relaxed">
+              This will permanently remove the <br/> department from the system.
+            </p>
           </div>
 
-          <div className="flex gap-3 px-6 pb-6">
+          <div className="flex gap-3 px-8 pb-8">
             <button
               onClick={onCancel}
-              className="w-1/2 py-2.5 rounded-xl border hover:bg-slate-50 transition cursor-pointer"
+              className="w-1/2 py-4 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200 transition-all cursor-pointer active:scale-95"
             >
               Cancel
             </button>
             <button
               onClick={onConfirm}
-              className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition cursor-pointer"
+              className="w-1/2 py-4 rounded-2xl bg-gradient-to-br from-red-600 to-rose-500 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-red-200 transition-all cursor-pointer active:scale-95 hover:opacity-90"
             >
               Delete
             </button>
@@ -52,33 +47,27 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
 const DeleteSuccessAlert = ({ onClose }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-red-100 overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-          <div className="p-6 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-              ✓
+      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[100] animate-fade-in" />
+      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-pop">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mx-auto mb-6 shadow-inner">
+              <CheckCircle2 size={32} strokeWidth={2.5} />
             </div>
-
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-700">
-                Department Deleted
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                The department has been removed successfully.
-              </p>
-            </div>
+            
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
+              Removed!
+            </h3>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2">
+              The record has been updated.
+            </p>
           </div>
-
-          <div className="px-6 pb-5">
+          <div className="px-8 pb-8">
             <button
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition"
+              className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl"
             >
-              Okay, got it
+              Okay, Got it
             </button>
           </div>
         </div>
@@ -107,7 +96,6 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
       if (res.data?.success) {
         setShowConfirm(false);
         setShowSuccess(true);
-
         setTimeout(() => {
           setShowSuccess(false);
           onDepartmentDelete?.();
@@ -132,36 +120,37 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
       )}
 
       <div className="flex gap-2 justify-end">
+        {/* VIEW BUTTON */}
         <button
-          title="View Department Employees"
-          onClick={() =>
-            navigate(`/admin-dashboard/department/${id}/employees`)
-          }
-          className="p-2 rounded-xl border border-red-200 text-red-600 
-                     hover:bg-red-100/70 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          title="View Employees"
+          onClick={() => navigate(`/admin-dashboard/department/${id}/employees`)}
+          className="p-3 rounded-2xl bg-white border border-slate-100 text-slate-400 
+                     hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all
+                     active:scale-90 shadow-sm cursor-pointer"
         >
-          <Eye size={16} />
+          <Eye size={18} strokeWidth={2.5} />
         </button>
 
+        {/* EDIT BUTTON */}
         <button
           title="Edit Department"
           onClick={() => navigate(`/admin-dashboard/department/${id}`)}
-          className="p-2 rounded-xl border border-red-200 text-red-600 
-                     hover:bg-red-100/70 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          className="p-3 rounded-2xl bg-white border border-slate-100 text-slate-400 
+                     hover:text-amber-600 hover:bg-amber-50 hover:border-amber-100 transition-all
+                     active:scale-90 shadow-sm cursor-pointer"
         >
-          <Edit2 size={16} />
+          <Edit2 size={18} strokeWidth={2.5} />
         </button>
 
+        {/* DELETE BUTTON */}
         <button
           title="Delete Department"
           onClick={() => setShowConfirm(true)}
-          className="p-2 rounded-xl bg-red-600/90 text-white
-                     hover:bg-red-700 hover:shadow transition-all
-                     active:scale-95 backdrop-blur cursor-pointer"
+          className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 text-white
+                     hover:shadow-lg hover:shadow-red-200 transition-all
+                     active:scale-90 cursor-pointer"
         >
-          <Trash2 size={16} />
+          <Trash2 size={18} strokeWidth={2.5} />
         </button>
       </div>
     </>

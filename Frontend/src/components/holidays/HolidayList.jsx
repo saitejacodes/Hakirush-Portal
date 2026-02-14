@@ -1,42 +1,32 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Trash2, CalendarDays } from "lucide-react";
+import { Trash2, CalendarDays, Plus, Search, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-/* ================= PREMIUM CONFIRM DELETE ================= */
+/* ================= PROTOCOL: DELETE CONFIRMATION ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => (
   <>
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-red-100 overflow-hidden">
-        <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-        <div className="p-6 flex gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 font-bold">
-            !
+    <div className="fixed inset-0 bg-red-950/40 backdrop-blur-md z-[60] animate-in fade-in duration-300" />
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="h-2 bg-red-600" />
+        <div className="p-8 text-center">
+          <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-600 mx-auto mb-6">
+            <AlertTriangle size={40} strokeWidth={1.5} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-red-700">
-              Delete Holiday
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              This action cannot be undone. Are you sure?
-            </p>
-          </div>
+          <h3 className="text-2xl font-black uppercase italic tracking-tighter text-red-950">
+            Confirm <span className="text-red-600">Erasure</span>
+          </h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">
+            This directive is permanent. <br /> Proceed with record deletion?
+          </p>
         </div>
-
-        <div className="flex gap-3 px-6 pb-6">
-          <button
-            onClick={onCancel}
-            className="w-1/2 py-2.5 rounded-xl border hover:bg-slate-50 transition cursor-pointer"
-          >
-            Cancel
+        <div className="flex gap-3 px-8 pb-8">
+          <button onClick={onCancel} className="w-1/2 py-4 rounded-2xl bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+            Abort
           </button>
-          <button
-            onClick={onConfirm}
-            className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition cursor-pointer"
-          >
-            Delete
+          <button onClick={onConfirm} className="w-1/2 py-4 rounded-2xl bg-red-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-200">
+            Execute
           </button>
         </div>
       </div>
@@ -44,64 +34,19 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => (
   </>
 );
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
+/* ================= PROTOCOL: SUCCESS ================= */
 const DeleteSuccessAlert = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-red-100 overflow-hidden">
-        <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
-
-        <div className="p-6 flex gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-            ✓
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-red-700">
-              Holiday Deleted
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              The holiday has been removed successfully.
-            </p>
-          </div>
-        </div>
-
-        <div className="px-6 pb-5">
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-90 transition"
-          >
-            Okay, got it
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-red-950/20 backdrop-blur-sm z-[60]" />
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-300 text-center p-8">
+        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
+        <h3 className="text-xl font-black uppercase italic tracking-tighter text-red-950">Record Purged</h3>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 mb-6">Archive has been updated.</p>
+        <button onClick={onClose} className="w-full py-4 rounded-2xl bg-red-950 text-white text-[9px] font-black uppercase tracking-widest">Acknowledge</button>
       </div>
     </div>
   </>
-);
-
-/* ================= MOBILE CARD ================= */
-const MobileHolidayCard = ({ h, onDelete }) => (
-  <div className="bg-white rounded-2xl shadow-md border border-red-100 p-3 flex justify-between items-center">
-    <div>
-      <p className="font-semibold text-gray-900">{h.title}</p>
-      <p className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
-        <CalendarDays size={14} />
-        {h.date}
-      </p>
-      <p className="text-[10px] text-gray-500 mt-0.5">
-        {h.status === "Past" ? "Past Holiday" : "Upcoming Holiday"}
-      </p>
-    </div>
-
-    {h.status === "Upcoming" && (
-      <button
-        onClick={() => onDelete(h._id)}
-        className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-100"
-      >
-        <Trash2 size={16} />
-      </button>
-    )}
-  </div>
 );
 
 const HolidayList = () => {
@@ -111,197 +56,146 @@ const HolidayList = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* ================= FETCH HOLIDAYS ================= */
   const fetchHolidays = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       if (res.data.success) {
-        let sno = 1;
         const today = new Date().toISOString().split("T")[0];
-
-        const formatted = res.data.holidays.map((h) => {
-          const holidayDate = new Date(h.date).toISOString().split("T")[0];
-          return {
-            _id: h._id,
-            sno: sno++,
-            title: h.title,
-            date: new Date(h.date).toDateString(),
-            status: holidayDate < today ? "Past" : "Upcoming",
-          };
-        });
-
+        const formatted = res.data.holidays.map((h, i) => ({
+          ...h,
+          sno: i + 1,
+          displayDate: new Date(h.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          status: new Date(h.date).toISOString().split("T")[0] < today ? "Past" : "Upcoming",
+        }));
         setHolidays(formatted);
         setFiltered(formatted);
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchHolidays();
-  }, []);
+  useEffect(() => { fetchHolidays(); }, []);
 
-  /* ================= SEARCH ================= */
   const handleSearch = (e) => {
     const v = e.target.value.toLowerCase();
     setFiltered(holidays.filter((h) => h.title.toLowerCase().includes(v)));
   };
 
-  /* ================= DELETE ================= */
   const confirmDelete = async () => {
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/holiday/${deleteId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/${deleteId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       setDeleteId(null);
       setShowSuccess(true);
-
-      setTimeout(() => {
-        setShowSuccess(false);
-        fetchHolidays();
-      }, 1500);
-    } catch (err) {
-      console.error("DELETE HOLIDAY ERROR:", err);
-    }
+      setTimeout(() => { setShowSuccess(false); fetchHolidays(); }, 1500);
+    } catch (err) { console.error(err); }
   };
 
   return (
-    <>
-      {deleteId && (
-        <ConfirmDeleteAlert
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteId(null)}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10 font-sans">
+      {deleteId && <ConfirmDeleteAlert onConfirm={confirmDelete} onCancel={() => setDeleteId(null)} />}
+      {showSuccess && <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />}
 
-      {showSuccess && (
-        <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
-      )}
-
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* HEADER */}
-          <div className="mb-6 text-center">
-            <h3 className="text-3xl md:text-4xl font-extrabold text-red-700">
-              Upcoming Holidays
-            </h3>
-            <p className="text-red-500 mt-1">
-              View, search and manage holidays
-            </p>
+      <div className="max-w-6xl mx-auto">
+        {/* HEADER SECTION */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest">
+              <CalendarDays size={12} fill="currentColor" /> System Schedule
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-red-950">
+              Holiday <span className="text-red-600">Ledger</span>
+            </h1>
           </div>
 
-          {/* MAIN CARD */}
-          <div className="bg-white/90 rounded-3xl shadow-xl border border-red-100">
-            <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-              <input
-                onChange={handleSearch}
-                placeholder="Search holiday..."
-                className="w-full md:w-1/2 rounded-xl border border-red-300 px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500"
-              />
+          <Link to="/admin-dashboard/add-holiday" className="group flex items-center gap-3 bg-red-950 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all shadow-xl shadow-red-900/20 active:scale-95">
+            <Plus size={16} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
+            Issue New Directive
+          </Link>
+        </div>
 
-              <Link
-                to="/admin-dashboard/add-holiday"
-                className="rounded-xl bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700 transition text-center"
-              >
-                + Add Holiday
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className="p-10 text-center text-red-600 font-semibold">
-                Loading holidays...
-              </div>
-            ) : (
-              <>
-                {/* MOBILE */}
-                <div className="md:hidden grid gap-4 px-4 pb-24">
-                  {filtered.length ? (
-                    filtered.map((h) => (
-                      <MobileHolidayCard
-                        key={h._id}
-                        h={h}
-                        onDelete={setDeleteId}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center text-red-400 py-20">
-                      No holidays found
-                    </div>
-                  )}
-                </div>
-
-                {/* DESKTOP */}
-                <div className="hidden md:block max-h-[60vh] overflow-auto">
-                  <table className="w-full">
-                    <thead className="sticky top-0 bg-red-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left">S No</th>
-                        <th className="px-4 py-3 text-left">Title</th>
-                        <th className="px-4 py-3 text-left">Date</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                        <th className="px-4 py-3 text-right">Action</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {filtered.map((h) => (
-                        <tr key={h._id} className="hover:bg-red-50 transition">
-                          <td className="px-4 py-3">{h.sno}</td>
-                          <td className="px-4 py-3 font-medium">
-                            {h.title}
-                          </td>
-                          <td className="px-4 py-3 flex items-center gap-2">
-                            <CalendarDays size={16} className="text-red-500" />
-                            {h.date}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                h.status === "Past"
-                                  ? "bg-gray-200 text-gray-600"
-                                  : "bg-green-100 text-green-700"
-                              }`}
-                            >
-                              {h.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {h.status === "Upcoming" && (
-                              <button
-                                onClick={() => setDeleteId(h._id)}
-                                className="text-red-600 hover:text-red-800 cursor-pointer"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+        {/* SEARCH BAR */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl p-4 mb-8">
+          <div className="relative">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-red-300" size={20} />
+            <input
+              onChange={handleSearch}
+              placeholder="FILTER BY EVENT TITLE..."
+              className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl pl-14 pr-6 py-4 text-xs font-bold uppercase tracking-wider outline-none transition-all shadow-inner"
+            />
           </div>
         </div>
+
+        {/* DATA CONTAINER */}
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24">
+              <Loader2 size={32} className="animate-spin text-red-600 mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Accessing Database...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-red-950/5 border-b border-red-100">
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-red-900/40 italic">#ID</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-red-950">Observation Event</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-red-950">Timeline</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-red-950">Classification</th>
+                    <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-red-950">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-red-50/50">
+                  {filtered.map((h) => (
+                    <tr key={h._id} className="group hover:bg-red-50/30 transition-all">
+                      <td className="px-8 py-6 text-xs font-black text-red-950/20 italic">{h.sno}</td>
+                      <td className="px-8 py-6">
+                        <span className="text-sm font-black uppercase tracking-tight text-red-950">{h.title}</span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-2 text-red-600 font-mono font-bold text-xs bg-red-50 px-3 py-1.5 rounded-xl border border-red-100 inline-flex">
+                          <CalendarDays size={14} />
+                          {h.displayDate}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic border ${
+                          h.status === "Past" 
+                          ? "bg-slate-100 text-slate-400 border-slate-200" 
+                          : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        }`}>
+                          {h.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        {h.status === "Upcoming" && (
+                          <button
+                            onClick={() => setDeleteId(h._id)}
+                            className="group p-2.5 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer shadow-sm hover:shadow-red-200"
+                          >
+                            <Trash2 size={16} strokeWidth={2.5} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!filtered.length && (
+                    <tr>
+                      <td colSpan="5" className="px-8 py-24 text-center">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">No historical or upcoming directives found.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
