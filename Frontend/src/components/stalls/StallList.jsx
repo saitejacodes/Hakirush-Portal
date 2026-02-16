@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Search, Plus, Store, ChevronLeft, ChevronRight, Loader2, Info } from "lucide-react";
+import { Search, Plus, Store, ChevronLeft, ChevronRight, Loader2, Award, LayoutGrid } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StallButtons } from "../../utils/StallHelper";
 
@@ -14,45 +14,50 @@ const getImageUrl = (imagePath) => {
 /* ================= PREMIUM MOBILE CARD ================= */
 const MobileStallCard = ({ s, refresh }) => {
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] shadow-xl shadow-red-100/50 border border-white p-4 relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-500" />
-      
-      <div className="flex items-center gap-4 relative z-10">
+    <div className="bg-white rounded-[2.5rem] shadow-lg border border-white p-6 transition-all active:scale-[0.98]">
+      <div className="flex items-center gap-4 mb-5">
         <div className="relative">
           <img
             src={getImageUrl(s.logo)}
             onError={(e) => (e.target.src = "/default-avatar.png")}
-            className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-md shrink-0"
+            className="w-16 h-16 rounded-2xl object-cover border-2 border-red-50 shadow-sm shrink-0"
             alt={s.name}
           />
-          <div className="absolute -bottom-1 -right-1 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+          <div className="absolute -bottom-1 -right-1 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-lg border-2 border-white uppercase">
             #{s.number}
           </div>
         </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-red-950 text-sm uppercase tracking-tighter truncate">
-            {s.name}
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
+            {s.type}
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-lg">
-              {s.type}
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              • {s.eventCount} Operations
-            </span>
-          </div>
+          <h4 className="font-black text-slate-800 uppercase italic tracking-tighter truncate leading-none">
+            {s.name}
+          </h4>
         </div>
+      </div>
+      
+      <div className="bg-slate-50 rounded-2xl p-4 mb-5 flex justify-between items-center">
+        <div>
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Operations</p>
+          <p className="font-black text-slate-700">{s.eventCount} Events</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Allocation</p>
+          <p className="font-black text-slate-700 text-[10px] truncate max-w-[100px]">
+            {s.plans.length > 0 ? s.plans[0] : "None"}
+          </p>
+        </div>
+      </div>
 
-        <div className="shrink-0 scale-90 origin-right">
-          <StallButtons id={s._id} refresh={refresh} />
-        </div>
+      <div className="pt-4 border-t border-slate-50 flex justify-end">
+        <StallButtons id={s._id} refresh={refresh} />
       </div>
     </div>
   );
 };
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 8;
 
 const StallList = () => {
   const [stalls, setStalls] = useState([]);
@@ -78,7 +83,7 @@ const StallList = () => {
         setFilteredStalls(data);
       }
     } catch {
-      console.error("Critical: Stall data sync failure.");
+      console.error("Stall data sync failure.");
     } finally {
       setLoading(false);
     }
@@ -96,109 +101,106 @@ const StallList = () => {
   }, [search, stalls]);
 
   const totalPages = Math.ceil(filteredStalls.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedStalls = filteredStalls.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedStalls = filteredStalls.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 pb-12">
+      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
         
         {/* HEADER SECTION */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-1 bg-red-600 rounded-full" />
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Logistics Registry</p>
+        <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
+              <Store size={32} strokeWidth={2.5} />
             </div>
-            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-red-950 leading-none">
-              Manage <span className="text-red-600 underline decoration-red-200 underline-offset-8">Stalls</span>
-            </h1>
+            <div>
+              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
+                Stalls
+              </h1>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
+                Logistics & Asset Registry
+              </p>
+            </div>
           </div>
+        </header>
 
-          <Link
-            to="/admin-dashboard/add-stall"
-            className="group flex items-center gap-3 rounded-2xl bg-red-600 px-8 py-4 font-black text-[11px] uppercase tracking-[0.2em] text-white shadow-2xl shadow-red-200 hover:bg-red-950 transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus size={16} strokeWidth={3} /> Add New Asset
-          </Link>
-        </div>
-
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(220,38,38,0.1)] border border-white overflow-hidden">
+        {/* MAIN CONTAINER */}
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden">
           
           {/* SEARCH BAR */}
-          <div className="p-6 md:p-8 bg-gradient-to-b from-red-50/50 to-transparent flex flex-col md:flex-row gap-4 items-center border-b border-red-50">
-            <div className="relative w-full">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+          <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row gap-4">
+            <div className="group relative flex-1 w-full flex items-center bg-slate-100/50 border-2 border-transparent rounded-[1.5rem] px-5 focus-within:border-red-500/20 focus-within:bg-white transition-all shadow-inner">
+              <Search className="text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
               <input
                 type="text"
                 placeholder="FILTER BY STALL NAME OR IDENTIFIER..."
-                className="w-full rounded-2xl border-2 border-red-50 bg-white/50 pl-14 pr-4 py-4 outline-none focus:border-red-600 focus:bg-white text-[11px] font-black uppercase tracking-widest text-red-950 transition-all shadow-inner"
+                className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+              <Link
+                to="/admin-dashboard/add-stall"
+                className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-red-700 px-8 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-xl shadow-slate-200 transition-all hover:bg-red-600 hover:shadow-red-200 active:scale-95 whitespace-nowrap"
+              >
+                <Plus size={18} strokeWidth={3} />
+                <span>Add New Asset</span>
+              </Link>
           </div>
 
           {loading ? (
-            <div className="p-32 flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="animate-spin text-red-600" size={40} />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400">Retrieving Stall Intelligence...</p>
+            <div className="py-40 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="text-red-600 animate-spin" size={40} />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Retrieving Assets...</p>
             </div>
           ) : (
             <>
-              {/* MOBILE GRID */}
-              <div className="md:hidden grid grid-cols-1 gap-4 p-4 pb-10">
-                {paginatedStalls.length ? (
-                  paginatedStalls.map((s) => <MobileStallCard key={s._id} s={s} refresh={fetchStalls} />)
-                ) : (
-                  <EmptyState />
-                )}
-              </div>
-
               {/* DESKTOP TABLE */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left">
+              <div className="hidden md:block overflow-x-auto px-4 pb-4">
+                <table className="w-full border-separate border-spacing-y-3">
                   <thead>
-                    <tr className="bg-red-800 text-white uppercase text-[10px] font-black tracking-[0.2em]">
-                      <th className="px-8 py-5">ID</th>
-                      <th className="px-6 py-5">Identifier</th>
-                      <th className="px-6 py-5">Asset Type</th>
-                      <th className="px-6 py-5 text-center">Load</th>
-                      <th className="px-6 py-5">Allocation</th>
-                      <th className="px-8 py-5 text-right">Actions</th>
+                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                      <th className="px-6 py-4 text-left">ID</th>
+                      <th className="px-6 py-4 text-left">Asset Details</th>
+                      <th className="px-6 py-4 text-left">Type</th>
+                      <th className="px-6 py-4 text-center">Load</th>
+                      <th className="px-6 py-4 text-left">Allocations</th>
+                      <th className="px-6 py-4 text-right">Operations</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-red-50">
+                  <tbody>
                     {paginatedStalls.map((s) => (
-                      <tr key={s._id} className="hover:bg-red-50/50 transition-colors group">
-                        <td className="px-8 py-6 text-[10px] font-black text-red-300">{s.sno.toString().padStart(2, '0')}</td>
-                        <td className="px-6 py-6">
+                      <tr key={s._id} className="bg-slate-50/50 hover:bg-red-50/50 transition-all group">
+                        <td className="px-6 py-4 first:rounded-l-[1.5rem] text-xs font-black text-slate-300 italic">
+                           #{s.sno.toString().padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-white border border-red-50 p-1 shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
-                              <img src={getImageUrl(s.logo)} className="w-full h-full object-cover rounded-lg" alt="" />
-                            </div>
+                            <img src={getImageUrl(s.logo)} className="w-12 h-12 rounded-xl border-2 border-white shadow-sm object-cover" alt="" />
                             <div>
-                              <p className="text-xs font-black uppercase tracking-tighter text-red-950">{s.name}</p>
-                              <p className="text-[9px] font-bold text-red-500 uppercase">Stall No: {s.number}</p>
+                              <p className="font-black uppercase italic tracking-tighter text-slate-800 leading-none group-hover:text-red-700 transition-colors">{s.name}</p>
+                              <p className="text-[9px] font-bold text-red-500 uppercase mt-1 tracking-widest">Stall No: {s.number}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-6">
-                           <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-red-100 text-red-600 rounded-lg">
-                             {s.type}
-                           </span>
+                        <td className="px-6 py-4">
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white border border-slate-100 text-slate-600 rounded-lg">
+                            {s.type}
+                          </span>
                         </td>
-                        <td className="px-6 py-6 text-center font-black text-red-950 text-xs">{s.eventCount}</td>
-                        <td className="px-6 py-6">
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        <td className="px-6 py-4 text-center">
+                          <p className="text-xs font-black text-slate-700">{s.eventCount}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1 max-w-[180px]">
                             {s.plans.length ? s.plans.map((p, i) => (
-                              <span key={i} className="text-[8px] font-bold uppercase px-2 py-0.5 bg-slate-100 rounded-md text-slate-500">
+                              <span key={i} className="text-[8px] font-bold uppercase px-2 py-0.5 bg-red-100/50 text-red-700 rounded-md">
                                 {p}
                               </span>
-                            )) : <span className="text-[9px] italic text-slate-300">Unallocated</span>}
+                            )) : <span className="text-[9px] italic text-slate-300">No Data</span>}
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-right">
+                        <td className="px-6 py-4 last:rounded-r-[1.5rem] text-right">
                           <StallButtons id={s._id} refresh={fetchStalls} />
                         </td>
                       </tr>
@@ -207,53 +209,53 @@ const StallList = () => {
                 </table>
               </div>
 
-              {/* PAGINATION */}
-              {filteredStalls.length > ITEMS_PER_PAGE && (
-                <div className="flex items-center justify-between px-8 py-8 border-t border-red-50 bg-red-50/30">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed bg-white border border-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all cursor-pointer shadow-sm"
-                  >
-                    <ChevronLeft size={16} /> Prev
-                  </button>
-
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-950 bg-white px-4 py-2 rounded-xl shadow-sm border border-red-100">
-                      Tier {currentPage} <span className="text-red-300 ml-2">/ {totalPages}</span>
-                    </span>
+              {/* MOBILE VIEW */}
+              <div className="md:hidden p-4 space-y-6">
+                {paginatedStalls.length ? (
+                  paginatedStalls.map((s) => <MobileStallCard key={s._id} s={s} refresh={fetchStalls} />)
+                ) : (
+                  <div className="py-20 text-center text-slate-300 font-black uppercase text-xs tracking-widest">
+                     No Assets Found
                   </div>
+                )}
+              </div>
 
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-950 transition-all cursor-pointer shadow-xl shadow-red-200"
-                  >
-                    Next <ChevronRight size={16} />
-                  </button>
+              {/* PREMIUM PAGINATION */}
+              {filteredStalls.length > ITEMS_PER_PAGE && (
+                <div className="px-8 py-8 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Tier <span className="text-red-600">{currentPage}</span> of {totalPages}
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-3 rounded-xl bg-white border border-slate-100 text-slate-400 transition-all shadow-sm 
+                                 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 
+                                 hover:enabled:text-red-600 hover:enabled:border-red-100"
+                    >
+                      <ChevronLeft size={20} strokeWidth={3} />
+                    </button>
+
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-3 rounded-xl bg-red-600 text-white transition-all shadow-xl shadow-red-100 
+                                 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 
+                                 hover:enabled:bg-red-700 active:enabled:scale-95"
+                    >
+                      <ChevronRight size={20} strokeWidth={3} />
+                    </button>
+                  </div>
                 </div>
               )}
             </>
           )}
         </div>
-        
-        {/* DEEP RED FOOTER */}
-        <div className="mt-8 flex justify-between items-center px-6">
-           <p className="text-[9px] font-bold text-red-300 uppercase tracking-[0.2em]">Asset Terminal V3.0 • Status: Operational</p>
-           <div className="flex gap-1">
-             {[1,2,3].map(i => <div key={i} className="w-1 h-1 rounded-full bg-red-200" />)}
-           </div>
-        </div>
       </div>
     </div>
   );
 };
-
-const EmptyState = () => (
-  <div className="text-center py-20 bg-white/50 rounded-[2rem] border-2 border-dashed border-red-100">
-    <Store className="mx-auto text-red-200 mb-4" size={48} strokeWidth={1} />
-    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-300">No assets found in current sector</p>
-  </div>
-);
 
 export default StallList;

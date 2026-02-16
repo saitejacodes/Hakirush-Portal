@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, UserCheck, Clock, ShieldAlert } from "lucide-react";
+import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, UserCheck, Clock, ShieldAlert, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import AttendanceHelper from "../../utils/AttendanceHelper";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8; // Increased for a fuller dashboard feel
 
 /* ===== TIMER FORMAT ===== */
 const formatTimer = (attendance) => {
@@ -96,105 +96,116 @@ const AdminAttendance = () => {
   }, [paginated]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 pb-12">
+      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
         
         {/* HEADER SECTION */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest">
-              <UserCheck size={12} fill="currentColor" /> Live Operations
+        <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
+              <Activity size={32} strokeWidth={2.5} />
             </div>
-            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-red-950 leading-none">
-              Attendance <span className="text-red-600">Terminal</span>
-            </h1>
+            <div>
+              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
+                Attendance
+              </h1>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
+                Live Attendance Intelligence
+              </p>
+            </div>
           </div>
-          
+
           <Link
             to="/admin-dashboard/attendance-report"
-            className="group flex items-center gap-3 bg-red-950 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all shadow-xl shadow-red-900/20 active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-slate-900 px-8 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-xl shadow-slate-200 transition-all hover:bg-red-700 active:scale-95 whitespace-nowrap"
           >
-            <FileText size={16} className="text-red-400 group-hover:text-white transition-colors" />
-            Archive Reports
+            <FileText size={18} strokeWidth={2.5} />
+            <span>Archive Reports</span>
           </Link>
-        </div>
+        </header>
 
         {/* SEARCH & DATE BAR */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl p-4 md:p-6 mb-8 flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-red-50/50 border border-red-100 text-red-900 min-w-[240px]">
-            <CalendarDays size={20} className="text-red-500" />
-            <span className="text-xs font-black uppercase tracking-widest">{getTodayLabel()}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-1 bg-white p-5 rounded-[1.5rem] shadow-lg border border-white flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+              <CalendarDays size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Shift</p>
+              <p className="text-[11px] font-black uppercase text-slate-800 truncate">{getTodayLabel()}</p>
+            </div>
           </div>
 
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-red-300" size={20} />
+          <div className="lg:col-span-3 bg-white/70 backdrop-blur-2xl rounded-[1.5rem] shadow-lg border border-white flex items-center px-5 focus-within:ring-2 focus-within:ring-red-500/10 transition-all">
+            <Search className="text-slate-300" size={20} />
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="ENCRYPTED SEARCH: ENTER EMPLOYEE NAME..."
-              className="w-full bg-white border-2 border-transparent focus:border-red-500 rounded-2xl pl-14 pr-6 py-4 text-xs font-bold uppercase tracking-wider outline-none transition-all shadow-inner"
+              placeholder="SEARCH PERSONNEL BY NAME..."
+              className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
             />
           </div>
         </div>
 
         {/* CONTENT AREA */}
-        <div className="relative bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden min-h-[400px]">
-          
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden min-h-[500px]">
           {loading ? (
-             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10">
-                <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Syncing Bio-Data...</p>
-             </div>
+            <div className="py-40 flex flex-col items-center justify-center gap-4">
+              <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">Syncing Live Bio-Data...</p>
+            </div>
           ) : isSunday || isHoliday ? (
-            <div className="p-20 flex flex-col items-center text-center space-y-6">
-              <div className="w-24 h-24 rounded-[2rem] bg-red-50 flex items-center justify-center text-red-600 shadow-inner">
-                <ShieldAlert size={48} strokeWidth={1.5} />
+            <div className="py-40 flex flex-col items-center text-center px-6">
+              <div className="w-20 h-20 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
+                <ShieldAlert size={40} />
               </div>
-              <div className="space-y-2">
-                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-red-950">
-                  {isSunday ? "Weekend Protocol" : holidayName}
-                </h2>
-                <p className="text-xs font-bold text-red-400 uppercase tracking-[0.3em]">System Standby • No Active Attendance</p>
-              </div>
+              <h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">
+                {isSunday ? "System Offline" : holidayName}
+              </h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Protocol: Weekend Standby</p>
             </div>
           ) : (
             <>
               {/* DESKTOP TABLE */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
+              <div className="hidden md:block overflow-x-auto px-6 pb-6">
+                <table className="w-full border-separate border-spacing-y-3">
                   <thead>
-                    <tr className="border-b border-red-50">
-                      <th className="px-8 py-6 text-left text-[10px] font-black uppercase tracking-widest text-red-400">Registry</th>
-                      <th className="px-8 py-6 text-left text-[10px] font-black uppercase tracking-widest text-red-400">Personnel Identity</th>
-                      <th className="px-8 py-6 text-left text-[10px] font-black uppercase tracking-widest text-red-400">Department / Unit</th>
-                      <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-red-400">Operational Time</th>
-                      <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-red-400">Action</th>
+                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                      <th className="px-6 py-4 text-left">Registry</th>
+                      <th className="px-6 py-4 text-left">Personnel Identity</th>
+                      <th className="px-6 py-4 text-left">Department</th>
+                      <th className="px-6 py-4 text-center">Operational Timer</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-red-50/50">
+                  <tbody>
                     {paginated.map((a, i) => (
-                      <tr key={a.employeeMongoId} className="hover:bg-red-50/30 transition-colors group">
-                        <td className="px-8 py-5">
-                          <span className="text-xs font-black text-red-950/40 italic">#{(currentPage - 1) * ITEMS_PER_PAGE + i + 1}</span>
+                      <tr key={a.employeeMongoId} className="bg-slate-50/50 hover:bg-red-50/50 transition-all group">
+                        <td className="px-6 py-5 first:rounded-l-[1.5rem] text-xs font-black text-slate-300 italic">
+                          #{(currentPage - 1) * ITEMS_PER_PAGE + i + 1}
                         </td>
-                        <td className="px-8 py-5">
-                          <div>
-                            <p className="text-sm font-black uppercase tracking-tight text-red-950">{a.name}</p>
-                            <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest">ID: {a.employeeCode}</p>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col">
+                            <span className="font-black uppercase italic tracking-tighter text-slate-800 leading-none group-hover:text-red-700 transition-colors">
+                              {a.name}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">
+                              ID: {a.employeeCode}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-8 py-5">
-                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-red-50 shadow-sm">
-                            <span className="text-[10px] font-black uppercase text-red-800">{a.department}</span>
-                          </div>
+                        <td className="px-6 py-5">
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white border border-slate-100 text-slate-600 rounded-lg shadow-sm">
+                            {a.department}
+                          </span>
                         </td>
-                        <td className="px-8 py-5 text-center">
-                          <div className="inline-flex items-center gap-2 font-mono font-black text-lg text-red-600 bg-red-50 px-4 py-1 rounded-xl">
-                            <Clock size={14} />
+                        <td className="px-6 py-5 text-center">
+                          <div className="inline-flex items-center gap-2 font-mono font-black text-lg text-red-600 bg-white px-4 py-1.5 rounded-xl border border-red-50 shadow-sm">
+                            <Clock size={14} className="animate-pulse" />
                             {a.timer}
                           </div>
                         </td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-6 py-5 last:rounded-r-[1.5rem] text-right">
                           <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
                         </td>
                       </tr>
@@ -203,57 +214,55 @@ const AdminAttendance = () => {
                 </table>
               </div>
 
-              {/* MOBILE CARDS */}
-              <div className="md:hidden p-6 space-y-4">
+              {/* MOBILE VIEW */}
+              <div className="md:hidden p-4 space-y-4">
                 {paginated.map((a) => (
-                  <div key={a.employeeMongoId} className="bg-white rounded-3xl p-6 border border-red-50 shadow-sm space-y-4">
+                  <div key={a.employeeMongoId} className="bg-white rounded-[2rem] p-6 border border-white shadow-lg space-y-5">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-black uppercase tracking-tight text-red-950">{a.name}</h4>
-                        <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest">{a.employeeCode} • {a.department}</p>
+                      <div className="min-w-0">
+                        <h4 className="font-black uppercase tracking-tight text-slate-800 italic truncate">{a.name}</h4>
+                        <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest mt-1">{a.employeeCode} • {a.department}</p>
                       </div>
-                      <div className="bg-red-950 text-white font-mono font-black px-3 py-1 rounded-lg text-xs">
+                      <div className="bg-slate-900 text-white font-mono font-black px-3 py-1.5 rounded-xl text-xs shadow-lg">
                         {a.timer}
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-red-50 flex justify-center">
+                    <div className="pt-4 border-t border-slate-50 flex justify-center">
                       <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* PAGINATION */}
+              {totalPages > 1 && (
+                <div className="px-8 py-8 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Live Registry <span className="text-red-600">{currentPage}</span> of {totalPages}
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((p) => p - 1)}
+                      className="p-3 rounded-xl bg-white border border-slate-100 text-slate-400 transition-all shadow-sm 
+                                 disabled:opacity-20 hover:enabled:text-red-600"
+                    >
+                      <ChevronLeft size={20} strokeWidth={3} />
+                    </button>
+
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                      className="p-3 rounded-xl bg-red-600 text-white transition-all shadow-xl shadow-red-100 
+                                 disabled:opacity-20 hover:enabled:bg-red-700"
+                    >
+                      <ChevronRight size={20} strokeWidth={3} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
-          )}
-
-          {/* FOOTER / PAGINATION */}
-          {!isSunday && !isHoliday && totalPages > 1 && (
-            <div className="p-8 bg-red-950 flex flex-col md:flex-row items-center justify-between gap-6">
-              <p className="text-[9px] font-bold text-red-400/50 uppercase tracking-[0.3em]">
-                Authorized Terminal • Showing {paginated.length} Assets
-              </p>
-              
-              <div className="flex items-center gap-4">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                  className="p-3 rounded-xl bg-white/5 text-red-400 hover:bg-white/10 disabled:opacity-20 transition-all"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white italic">
-                  Level <span className="text-red-500">{currentPage}</span> / {totalPages}
-                </span>
-
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                  className="p-3 rounded-xl bg-white/5 text-red-400 hover:bg-white/10 disabled:opacity-20 transition-all"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            </div>
           )}
         </div>
       </div>

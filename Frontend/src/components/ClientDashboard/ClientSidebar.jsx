@@ -49,7 +49,7 @@ const ClientSidebar = () => {
         `}
       >
         {/* HEADER / LOGO SECTION */}
-        <div className="h-20 flex items-center gap-4 px-5 mb-4 relative overflow-hidden">
+        <div className="h-16 flex items-center gap-4 px-5 mb-4 relative overflow-hidden">
           {/* Decorative Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-700 to-red-600" />
           

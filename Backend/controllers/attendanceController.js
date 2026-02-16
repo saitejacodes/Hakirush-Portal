@@ -21,10 +21,15 @@ const getLocalDayRange = (dateString) => {
 
 /* ================= HELPER ================= */
 const getStatusFromHours = (hours) => {
-  if (hours >= 8) return "Present";
-  if (hours >= 4) return "Half Day";
-  if (hours > 0) return "Absent";
-  return "Leave";
+  if (hours >= 8) {
+    return "Present";
+  } else if (hours >= 4 && hours < 8) {
+    return "Half Day";
+  } else if (hours < 4) {
+    return "Absent";
+  } else {
+    return "Absent";
+  }
 };
 
 /* ================= GET TODAY ATTENDANCE (ADMIN) ================= */
@@ -180,7 +185,7 @@ const checkOut = async (req, res) => {
       attendance.checkIn -
       (attendance.totalPausedMs || 0);
 
-    const hours = diffMs / (1000 * 60 * 60);
+    const hours = Math.max(0, diffMs / (1000 * 60 * 60));
 
     attendance.workedHours = Number(hours.toFixed(2));
     attendance.status = getStatusFromHours(attendance.workedHours);
@@ -310,7 +315,6 @@ const attendanceReport = async (req, res) => {
       populate: ["userId", "department"],
     });
 
-    /* ================= SEARCH FILTER ================= */
     let filtered = records;
 
     if (search) {
@@ -322,7 +326,6 @@ const attendanceReport = async (req, res) => {
       });
     }
 
-    /* ================= GROUP BY DATE ================= */
     const groupData = {};
     const holidayMap = {};
 
@@ -346,7 +349,6 @@ const attendanceReport = async (req, res) => {
       });
     }
 
-    /* ================= HOLIDAY MAP ================= */
     const holidays = await Holiday.find();
 
     holidays.forEach((h) => {
@@ -367,7 +369,6 @@ const attendanceReport = async (req, res) => {
     });
   }
 };
-
 
 /* ================= EXPORTS ================= */
 export {

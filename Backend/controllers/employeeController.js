@@ -143,7 +143,16 @@ const updateEmployee = async (req, res) => {
 const editEmployeeProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, experience, dob, bloodGroup, maritalStatus } = req.body;
+    const {
+      name,
+      experience,
+      dob,
+      bloodGroup,
+      maritalStatus,
+      designation,
+      salary,
+      department,
+    } = req.body;
 
     let employee = await Employee.findById(id);
     if (!employee) employee = await Employee.findOne({ userId: id });
@@ -166,6 +175,7 @@ const editEmployeeProfile = async (req, res) => {
     /* ================= UPDATE PROFILE IMAGE ================= */
     if (req.file?.buffer) {
       const imageUrl = await uploadToImageKit(req.file, "employees");
+
       await User.updateOne(
         { _id: employee.userId },
         { $set: { profileImage: imageUrl } }
@@ -176,9 +186,12 @@ const editEmployeeProfile = async (req, res) => {
     const updateFields = {};
 
     if (experience !== undefined) updateFields.experience = experience;
-    if (dob !== undefined) updateFields.dob = dob; // Date
+    if (dob !== undefined) updateFields.dob = dob;
     if (bloodGroup !== undefined) updateFields.bloodGroup = bloodGroup;
     if (maritalStatus !== undefined) updateFields.maritalStatus = maritalStatus;
+    if (designation !== undefined) updateFields.designation = designation;
+    if (salary !== undefined) updateFields.salary = salary;
+    if (department !== undefined) updateFields.department = department;
 
     if (Object.keys(updateFields).length > 0) {
       await Employee.updateOne(
@@ -191,6 +204,7 @@ const editEmployeeProfile = async (req, res) => {
       success: true,
       message: "Employee profile updated successfully",
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -199,6 +213,7 @@ const editEmployeeProfile = async (req, res) => {
     });
   }
 };
+
 
 /* ================= DELETE EMPLOYEE ================= */
 const deleteEmployee = async (req, res) => {

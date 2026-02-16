@@ -8,6 +8,7 @@ const EmployeePunch = ({ onSuccess }) => {
 
   const [attendance, setAttendance] = useState(null);
   const [timer, setTimer] = useState("00:00:00");
+  const [workedHours, setWorkedHours] = useState(0);
 
   const fetchTodayAttendance = async () => {
     try {
@@ -29,7 +30,7 @@ const EmployeePunch = ({ onSuccess }) => {
         { headers }
       );
       setAttendance(res.data.attendance);
-      if (onSuccess) onSuccess(); 
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error(`Error during ${endpoint}`, error);
     }
@@ -38,13 +39,14 @@ const EmployeePunch = ({ onSuccess }) => {
   useEffect(() => {
     if (!attendance?.checkIn) {
       setTimer("00:00:00");
+      setWorkedHours(0);
       return;
     }
 
     const calculateTime = () => {
       const checkInTime = new Date(attendance.checkIn).getTime();
       const totalPausedMs = attendance.totalPausedMs || 0;
-      
+
       let currentTime;
       if (attendance.checkOut) {
         currentTime = new Date(attendance.checkOut).getTime();
@@ -60,6 +62,8 @@ const EmployeePunch = ({ onSuccess }) => {
       const h = Math.floor(sec / 3600);
       const m = Math.floor((sec % 3600) / 60);
       const s = sec % 60;
+
+      setWorkedHours(diffMs / (1000 * 60 * 60));
 
       setTimer(
         `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
@@ -80,8 +84,20 @@ const EmployeePunch = ({ onSuccess }) => {
     fetchTodayAttendance();
   }, []);
 
+  /* ================= STATUS LOGIC ================= */
+
+  const getFinalStatus = () => {
+    if (!attendance?.checkOut) return null;
+
+    if (workedHours >= 8) return "Present";
+    if (workedHours >= 4 && workedHours < 8) return "Half Day";
+    return "Absent";
+  };
+
+  const finalStatus = getFinalStatus();
+
   const statusLabel = attendance?.checkOut
-    ? "Shift Completed"
+    ? finalStatus
     : attendance?.isPaused
     ? "On Break"
     : attendance?.checkIn
@@ -89,7 +105,11 @@ const EmployeePunch = ({ onSuccess }) => {
     : "Ready to Start";
 
   const statusColor = attendance?.checkOut
-    ? "bg-slate-100 text-slate-600 border-slate-200"
+    ? finalStatus === "Present"
+      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+      : finalStatus === "Half Day"
+      ? "bg-amber-100 text-amber-700 border-amber-200"
+      : "bg-rose-100 text-rose-700 border-rose-200"
     : attendance?.isPaused
     ? "bg-amber-100 text-amber-700 border-amber-200"
     : attendance?.checkIn
@@ -99,7 +119,7 @@ const EmployeePunch = ({ onSuccess }) => {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 p-8 text-center transition-all">
-        
+
         <div className="flex flex-col items-center">
           <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColor}`}>
             {statusLabel}
@@ -135,8 +155,8 @@ const EmployeePunch = ({ onSuccess }) => {
             <button
               onClick={() => handleAction(attendance.isPaused ? "resume" : "pause")}
               className={`col-span-2 flex items-center justify-center px-6 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
-                attendance.isPaused 
-                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" 
+                attendance.isPaused
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                 : "bg-amber-50 text-amber-700 hover:bg-amber-100"
               }`}
             >

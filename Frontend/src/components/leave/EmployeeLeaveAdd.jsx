@@ -71,7 +71,6 @@ const EmployeeLeaveAdd = () => {
     const start = new Date(leave.startDate);
     const end = new Date(leave.endDate);
 
-    // Basic date validation
     if (end < start) {
       return alert("End date must be after start date");
     }
@@ -79,12 +78,6 @@ const EmployeeLeaveAdd = () => {
     try {
       setLoading(true);
 
-      /* We send the request to the backend. 
-         The backend's 'addLeave' controller will now:
-         1. Fetch public holidays.
-         2. Skip weekends and holidays using 'calculateWorkDays'.
-         3. Check the calculated days against the actual balance in DB.
-      */
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/leave/add`, leave, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -96,7 +89,6 @@ const EmployeeLeaveAdd = () => {
         }, 1800);
       }
     } catch (error) {
-      // The backend returns specific errors like "Insufficient balance. Remaining 5 days. Requested 7 work days."
       alert(error?.response?.data?.error || "Leave submit failed");
     } finally {
       setLoading(false);
@@ -177,7 +169,7 @@ const EmployeeLeaveAdd = () => {
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full py-4 rounded-[2rem] bg-rose-600 text-white font-black uppercase tracking-widest shadow-xl shadow-rose-200 hover:bg-rose-700 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full py-4 rounded-[2rem] bg-rose-600 text-white font-black uppercase tracking-widest shadow-xl shadow-rose-200 hover:bg-rose-700 active:scale-95 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               {loading ? "Processing..." : "Submit Leave Request"}
             </button>

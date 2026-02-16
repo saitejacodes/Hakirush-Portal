@@ -51,6 +51,7 @@ const EmployeeEdit = () => {
   const fileInputRef = useRef(null);
 
   const [employee, setEmployee] = useState({
+    employeeId: "",
     name: "",
     maritalStatus: "",
     designation: "",
@@ -82,6 +83,7 @@ const EmployeeEdit = () => {
 
         const emp = res.data.employee;
         setEmployee({
+          employeeId: emp?.employeeId || "", 
           name: emp?.userId?.name || "",
           maritalStatus: emp?.maritalStatus || "",
           designation: emp?.designation || "",
@@ -153,7 +155,7 @@ const EmployeeEdit = () => {
             <h2 className="text-3xl sm:text-4xl font-black text-slate-800 uppercase italic tracking-tighter">
               Modify <span className="text-red-600">Personnel.</span>
             </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-3">Edit Record ID: {id.slice(-6)}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-3">Edit Record ID: {employee.employeeId}</p>
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-10">

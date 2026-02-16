@@ -122,7 +122,7 @@ const List = () => {
           </div>
           <div>
             <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
-               Personnel<span className="text-slate-800">.</span>
+               Employees
             </h1>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
               Manage Organization Staff
