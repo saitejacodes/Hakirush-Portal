@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Search,
@@ -10,7 +10,8 @@ import {
   ShieldAlert,
   RotateCcw,
   Activity,
-  User
+  User,
+  Hash
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
@@ -131,56 +132,56 @@ const AdminAttendanceReport = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-rose-50 pb-12">
+    <div className="min-h-screen bg-white pb-12">
       <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
         
         {/* HEADER */}
         <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center text-white shadow-xl">
-              <FileSpreadsheet size={30} strokeWidth={2} />
+          <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-slate-900 flex items-center justify-center text-white shadow-xl">
+              <FileSpreadsheet size={30} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
-                Attendance Report
+              <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter sm:text-5xl leading-none italic">
+                Report <span className="text-red-600">Archive</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Operational Archive Registry</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Operational Registry</p>
             </div>
           </div>
         </header>
 
         {/* FILTER BAR */}
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[1.8rem] shadow-xl border border-white p-2 sm:p-3">
+        <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-3">
           <form
             onSubmit={(e) => { e.preventDefault(); setSearch(searchInput.trim()); }}
-            className="flex flex-col md:flex-row gap-2"
+            className="flex flex-col md:flex-row gap-3"
           >
-            <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-red-50/50 border border-red-100 flex-1 md:max-w-[280px]">
-              <CalendarDays size={20} className="text-red-500" />
+            <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-100 flex-1 md:max-w-[280px]">
+              <CalendarDays size={18} className="text-red-600" />
               <input
                 type="date"
                 value={dataFilter}
                 onChange={(e) => setDataFilter(e.target.value)}
-                className="bg-transparent text-[11px] font-black uppercase tracking-widest outline-none w-full text-red-900"
+                className="bg-transparent text-[11px] font-black uppercase tracking-widest outline-none w-full text-slate-900"
               />
             </div>
 
             <div className="relative flex-1 group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-600 transition-colors" size={18} />
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="AUTHENTICATE PERSONNEL IDENTITY..."
-                className="w-full bg-white border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-[11px] font-bold uppercase tracking-widest outline-none focus:border-red-500 shadow-sm transition-all"
+                placeholder="SEARCH PERSONNEL..."
+                className="w-full bg-white border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-[11px] font-bold uppercase tracking-widest outline-none focus:border-red-500 transition-all"
               />
             </div>
 
             <div className="flex gap-2">
-              <button type="submit" className="px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 transition-all active:scale-95 shadow-lg">
+              <button type="submit" className="flex-1 md:px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all py-4 md:py-0">
                 Query
               </button>
               {search && (
-                <button onClick={clearSearch} type="button" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:text-red-600 transition-all">
+                <button onClick={clearSearch} type="button" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-2xl">
                   <RotateCcw size={20} />
                 </button>
               )}
@@ -188,57 +189,52 @@ const AdminAttendanceReport = () => {
           </form>
         </div>
 
-        {/* REPORT CONTENT */}
-        <div className="space-y-10">
+        {/* CONTENT */}
+        <div className="space-y-6">
           {Object.entries(report).map(([date, records]) => {
             const selectedDate = new Date(date);
             const isSunday = selectedDate.getDay() === 0;
             const holidayName = holidayMap[date];
             const isHoliday = !!holidayName;
-
             const currentPage = currentPageByDate[date] || 1;
             const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
             const paginated = records.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
             return (
-              <section key={date} className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white overflow-hidden">
+              <section key={date} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm">
                 {/* DATE STRIP */}
-                <div className="bg-slate-900 px-8 py-4 flex justify-between items-center">
+                <div className="bg-slate-900 px-6 sm:px-8 py-4 flex flex-wrap justify-between items-center gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
-                      Registry Log: {selectedDate.toLocaleDateString("en-IN", { day: '2-digit', month: 'long', year: 'numeric' })}
+                    <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">
+                      {selectedDate.toLocaleDateString("en-IN", { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
-                  {isHoliday && <span className="bg-red-600 text-[9px] font-black px-3 py-1 rounded-full text-white uppercase tracking-widest">{holidayName}</span>}
+                  {isHoliday && <span className="bg-red-600 text-[9px] font-black px-3 py-1 rounded-lg text-white uppercase tracking-widest">{holidayName}</span>}
                 </div>
 
                 {loading ? (
                   <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-300">
                     <Activity className="animate-spin" size={32} />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Retrieving Encrypted Logs...</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing encrypted logs...</p>
                   </div>
                 ) : isSunday || isHoliday ? (
-                  <div className="py-24 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200 mb-6">
-                      <ShieldAlert size={40} />
-                    </div>
-                    <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-800">
-                      {isSunday ? "Weekend Protocol" : "Holiday Standby"}
-                    </h2>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Registry Inactive • No Data Ingested</p>
+                  <div className="py-16 flex flex-col items-center text-center px-6">
+                    <ShieldAlert size={32} className="text-slate-100 mb-4" />
+                    <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-800">No Registry Data</h2>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Registry Inactive for this date</p>
                   </div>
                 ) : (
                   <>
-                    {/* TABLE VIEW */}
-                    <div className="overflow-x-auto p-6">
-                      <table className="w-full border-separate border-spacing-y-3">
+                    {/* DESKTOP TABLE */}
+                    <div className="hidden md:block overflow-x-auto p-6">
+                      <table className="w-full border-separate border-spacing-y-2">
                         <thead>
-                          <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                          <tr className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
                             <th className="px-6 py-2 text-left">Ref</th>
                             <th className="px-6 py-2 text-left">Personnel</th>
-                            <th className="px-6 py-2 text-left">Department</th>
-                            <th className="px-6 py-2 text-center">Duty Duration</th>
+                            <th className="px-6 py-2 text-left">Dept</th>
+                            <th className="px-6 py-2 text-center">Duration</th>
                             <th className="px-6 py-2 text-right">Status</th>
                           </tr>
                         </thead>
@@ -246,29 +242,25 @@ const AdminAttendanceReport = () => {
                           {paginated.map((r, i) => {
                             const status = normalizeStatus(r.status);
                             return (
-                              <tr key={r.employeeId + i} className="bg-slate-50/50 hover:bg-red-50/50 transition-all group">
-                                <td className="px-6 py-5 first:rounded-l-[1.5rem] text-[10px] font-black text-slate-300 italic">
+                              <tr key={r.employeeId + i} className="bg-slate-50/50 hover:bg-white hover:shadow-lg transition-all group">
+                                <td className="px-6 py-4 first:rounded-l-[1.2rem] text-[9px] font-black text-slate-300 italic">
                                   #{(currentPage - 1) * ITEMS_PER_PAGE + i + 1}
                                 </td>
-                                <td className="px-6 py-5">
+                                <td className="px-6 py-4">
                                   <div className="flex flex-col">
-                                    <span className="font-black uppercase italic tracking-tighter text-slate-800 group-hover:text-red-700 transition-colors">
-                                      {r.employeeName}
-                                    </span>
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID: {r.employeeId}</span>
+                                    <span className="font-black uppercase italic tracking-tighter text-slate-800 group-hover:text-red-600 transition-colors">{r.employeeName}</span>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase">ID: {r.employeeId}</span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-5 font-black uppercase text-[10px] text-slate-500 tracking-tight">
-                                  {r.departmentName}
-                                </td>
-                                <td className="px-6 py-5 text-center">
-                                  <div className="inline-flex items-center gap-2 font-mono font-black text-sm text-red-600 bg-white px-3 py-1 rounded-lg border border-red-50 shadow-sm">
-                                    <Clock size={12} className={r.isLive ? "animate-pulse" : ""} />
+                                <td className="px-6 py-4 font-black uppercase text-[9px] text-slate-500">{r.departmentName}</td>
+                                <td className="px-6 py-4 text-center">
+                                  <div className="inline-flex items-center gap-2 font-mono font-black text-xs text-red-600 bg-white px-3 py-1 rounded-lg border border-slate-100">
+                                    <Clock size={10} className={r.isLive ? "animate-pulse" : ""} />
                                     {r.runningTime || hoursToHHMMSS(r.workedHours)}
                                   </div>
                                 </td>
-                                <td className="px-6 py-5 last:rounded-r-[1.5rem] text-right">
-                                  <span className={`inline-block px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusStyles[status] || statusStyles.Unmarked}`}>
+                                <td className="px-6 py-4 last:rounded-r-[1.2rem] text-right">
+                                  <span className={`inline-block px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${statusStyles[status] || statusStyles.Unmarked}`}>
                                     {status}
                                   </span>
                                 </td>
@@ -279,26 +271,62 @@ const AdminAttendanceReport = () => {
                       </table>
                     </div>
 
-                    {/* PAGINATION STRIP */}
+                    {/* MOBILE CARD VIEW */}
+                    <div className="md:hidden p-4 space-y-4">
+                      {paginated.map((r, i) => {
+                        const status = normalizeStatus(r.status);
+                        return (
+                          <div key={r.employeeId + i} className="bg-slate-50 rounded-[1.5rem] p-5 border border-slate-100 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-300 border border-slate-100">
+                                  <User size={20} />
+                                </div>
+                                <div>
+                                  <h4 className="font-black uppercase italic text-slate-900 tracking-tighter leading-none">{r.employeeName}</h4>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{r.departmentName}</p>
+                                </div>
+                              </div>
+                              <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase border ${statusStyles[status] || statusStyles.Unmarked}`}>
+                                {status}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                              <div className="bg-white p-3 rounded-xl border border-slate-100 flex flex-col gap-1">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Hash size={8}/> Employee ID</span>
+                                <span className="text-[10px] font-black text-slate-900">{r.employeeId}</span>
+                              </div>
+                              <div className="bg-white p-3 rounded-xl border border-slate-100 flex flex-col gap-1">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={8}/> Total Time</span>
+                                <span className="text-[10px] font-black text-red-600">{r.runningTime || hoursToHHMMSS(r.workedHours)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* PAGINATION */}
                     {totalPages > 1 && (
-                      <div className="px-8 py-6 bg-slate-50/50 border-t border-white flex items-center justify-between">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          Viewing Section <span className="text-red-600">{currentPage}</span> of {totalPages}
+                      <div className="px-6 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 hidden sm:block">
+                          Section <span className="text-red-600">{currentPage}</span> of {totalPages}
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <button
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPageByDate(prev => ({ ...prev, [date]: prev[date] - 1 }))}
-                            className="p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-red-600 disabled:opacity-20 transition-all shadow-sm"
+                            className="flex-1 sm:flex-none p-3 rounded-xl bg-white border border-slate-100 text-slate-400 disabled:opacity-20 shadow-sm"
                           >
-                            <ChevronLeft size={18} strokeWidth={3} />
+                            <ChevronLeft size={18} className="mx-auto" />
                           </button>
                           <button
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPageByDate(prev => ({ ...prev, [date]: prev[date] + 1 }))}
-                            className="p-2.5 rounded-xl bg-slate-900 text-white hover:bg-red-600 disabled:opacity-20 transition-all shadow-lg"
+                            className="flex-1 sm:flex-none p-3 rounded-xl bg-slate-900 text-white disabled:opacity-20 shadow-lg"
                           >
-                            <ChevronRight size={18} strokeWidth={3} />
+                            <ChevronRight size={18} className="mx-auto" />
                           </button>
                         </div>
                       </div>

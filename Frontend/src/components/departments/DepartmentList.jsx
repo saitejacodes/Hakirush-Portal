@@ -164,7 +164,6 @@ const DepartmentList = () => {
                         </td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <span className="w-2 h-2 rounded-full bg-red-400 group-hover:scale-150 transition-transform"></span>
                             <span className="font-black text-slate-700 uppercase italic tracking-tighter text-lg group-hover:text-red-700 transition-colors">
                               {dep.dep_name}
                             </span>

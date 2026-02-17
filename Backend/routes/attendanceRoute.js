@@ -9,6 +9,7 @@ import {
   pauseAttendance,
   resumeAttendance,
   getMyTodayAttendance,
+  getAdminTodaySummary,
 } from "../controllers/attendanceController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -17,6 +18,7 @@ import defaultAttendance from "../middleware/defaultAttendance.js";
 const router = express.Router();
 
 router.get("/", authMiddleware, defaultAttendance, getAttendance);
+router.get("/admin/summary", authMiddleware, getAdminTodaySummary);
 router.put("/update/:employeeId", authMiddleware, updateAttendance);
 
 router.post("/check-in", authMiddleware, checkIn);

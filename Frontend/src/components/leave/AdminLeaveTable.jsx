@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Eye, ChevronLeft, ChevronRight, Search, ClipboardList, RotateCcw, Filter } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Search, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 /* ===== STATUS STYLES ===== */
@@ -9,6 +9,34 @@ const statusConfig = {
   approved: "bg-emerald-50 text-emerald-600 border-emerald-100",
   rejected: "bg-rose-50 text-rose-600 border-rose-100",
   default: "bg-slate-50 text-slate-400 border-slate-100",
+};
+
+/* ===== NET DAYS CALCULATOR HELPER ===== */
+const calculateNetDays = (startDate, endDate, holidays) => {
+  if (!startDate || !endDate) return 0;
+  let count = 0;
+  let current = new Date(startDate);
+  const lastDate = new Date(endDate);
+  
+  // Normalize times
+  current.setHours(0, 0, 0, 0);
+  lastDate.setHours(0, 0, 0, 0);
+
+  const holidayStrings = holidays.map(h => 
+    new Date(h.date).toISOString().split('T')[0]
+  );
+
+  while (current <= lastDate) {
+    const dayOfWeek = current.getDay(); // 0 is Sunday
+    const dateStr = current.toISOString().split('T')[0];
+    
+    // Only count if NOT Sunday and NOT in holiday list
+    if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
 };
 
 /* ===== MOBILE CARD ===== */
@@ -40,7 +68,7 @@ const MobileLeaveCard = ({ leave, index, handleView }) => {
           </div>
           <div className="text-right">
             <p className="text-xl font-black text-slate-900 leading-none">{leave.days}</p>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Days</p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Net Days</p>
           </div>
         </div>
 
@@ -68,23 +96,33 @@ const AdminLeaveTable = () => {
 
   const handleView = (id) => navigate(`/admin-dashboard/leaves/${id}`);
 
-  const fetchLeaves = async () => {
+  const fetchLeavesAndHolidays = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      
+      const [leaveRes, holidayRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave`, { headers }),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers })
+      ]);
 
-      if (res.data.success) {
-        const data = res.data.leaves.map((leave, index) => ({
-          _id: leave._id,
-          employeeId: leave.employeeId?.employeeId || "N/A",
-          name: leave.employeeId?.userId?.name || "N/A",
-          leaveType: leave.leaveType,
-          department: leave.employeeId?.department?.dep_name || "N/A",
-          days: leave.days,
-          status: leave.status,
-        }));
+      if (leaveRes.data.success) {
+        const holidays = holidayRes.data.holidays || [];
+        
+        const data = leaveRes.data.leaves.map((leave) => {
+          // Recalculate Net Days for the Admin display
+          const displayDays = calculateNetDays(leave.startDate, leave.endDate, holidays);
+
+          return {
+            _id: leave._id,
+            employeeId: leave.employeeId?.employeeId || "N/A",
+            name: leave.employeeId?.userId?.name || "N/A",
+            leaveType: leave.leaveType,
+            department: leave.employeeId?.department?.dep_name || "N/A",
+            days: displayDays, 
+            status: leave.status,
+          };
+        });
         setLeaves(data);
         setFilteredLeaves(data);
       }
@@ -95,7 +133,7 @@ const AdminLeaveTable = () => {
     }
   };
 
-  useEffect(() => { fetchLeaves(); }, []);
+  useEffect(() => { fetchLeavesAndHolidays(); }, []);
 
   useEffect(() => {
     let result = leaves;
@@ -138,7 +176,7 @@ const AdminLeaveTable = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="SEARCH EMPLOYEE IDENTITY..."
-                className="w-full bg-white border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-[11px] font-bold uppercase tracking-widest outline-none focus:border-red-500 shadow-sm"
+                className="w-full bg-white border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-[11px] font-bold uppercase tracking-widest outline-none focus:border-red-500 shadow-sm transition-all"
               />
             </div>
 
@@ -171,9 +209,13 @@ const AdminLeaveTable = () => {
             <>
               {/* MOBILE */}
               <div className="md:hidden p-4 space-y-4">
-                {currentItems.map((leave, i) => (
-                  <MobileLeaveCard key={leave._id} leave={leave} index={indexOfFirstItem + i} handleView={handleView} />
-                ))}
+                {currentItems.length > 0 ? (
+                    currentItems.map((leave, i) => (
+                        <MobileLeaveCard key={leave._id} leave={leave} index={indexOfFirstItem + i} handleView={handleView} />
+                    ))
+                ) : (
+                    <p className="text-center py-10 text-slate-400 font-bold uppercase text-[10px]">No records match criteria</p>
+                )}
               </div>
 
               {/* DESKTOP */}
@@ -185,7 +227,7 @@ const AdminLeaveTable = () => {
                       <th className="px-6 py-2 text-left">Personnel</th>
                       <th className="px-6 py-2 text-left">Department</th>
                       <th className="px-6 py-2 text-left">Leave Category</th>
-                      <th className="px-6 py-2 text-center">Duration</th>
+                      <th className="px-6 py-2 text-center">Net Duration</th>
                       <th className="px-6 py-2 text-center">Status</th>
                       <th className="px-6 py-2 text-right">Dossier</th>
                     </tr>
@@ -194,7 +236,7 @@ const AdminLeaveTable = () => {
                     {currentItems.map((leave, i) => {
                       const statusKey = leave.status?.toLowerCase() || "default";
                       return (
-                        <tr key={leave._id} className="bg-white/50 hover:bg-red-50/50 transition-all group shadow-sm">
+                        <tr key={leave._id} className="bg-white/50 hover:bg-red-50/50 transition-all group shadow-sm rounded-xl">
                           <td className="px-6 py-5 first:rounded-l-[1.5rem] text-[10px] font-black text-slate-300 italic">
                             #{(currentPage - 1) * itemsPerPage + i + 1}
                           </td>
@@ -213,7 +255,7 @@ const AdminLeaveTable = () => {
                             </span>
                           </td>
                           <td className="px-6 py-5 text-center">
-                            <span className="text-lg font-black text-red-600 tracking-tighter">{leave.days} <span className="text-[10px] uppercase">Days</span></span>
+                            <span className="text-lg font-black text-red-600 tracking-tighter">{leave.days} <span className="text-[10px] uppercase text-slate-400"> Days</span></span>
                           </td>
                           <td className="px-6 py-5 text-center">
                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusConfig[statusKey] || statusConfig.default}`}>
@@ -241,7 +283,6 @@ const AdminLeaveTable = () => {
                   Registry Range: <span className="text-white">{indexOfFirstItem + 1}—{Math.min(indexOfLastItem, filteredLeaves.length)}</span> of {filteredLeaves.length}
                 </p>
                 <div className="flex items-center gap-2">
-                  {/* PREVIOUS BUTTON */}
                   <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(p => p - 1)}
@@ -249,25 +290,19 @@ const AdminLeaveTable = () => {
                   >
                     <ChevronLeft size={20} strokeWidth={3} />
                   </button>
-
-                  {/* PAGE NUMBERS */}
                   <div className="flex gap-1">
                     {[...Array(totalPages)].map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentPage(i + 1)}
                         className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all cursor-pointer ${
-                          currentPage === i + 1 
-                            ? "bg-red-600 text-white" 
-                            : "bg-slate-800 text-slate-500 hover:text-white"
+                          currentPage === i + 1 ? "bg-red-600 text-white" : "bg-slate-800 text-slate-500 hover:text-white"
                         }`}
                       >
                         {i + 1}
                       </button>
                     ))}
                   </div>
-
-                  {/* NEXT BUTTON */}
                   <button
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() => setCurrentPage(p => p + 1)}

@@ -1,36 +1,23 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, UserCheck, Clock, ShieldAlert, Activity } from "lucide-react";
+import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, Clock, ShieldAlert, Activity, User, Hash, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
 import AttendanceHelper from "../../utils/AttendanceHelper";
 
-const ITEMS_PER_PAGE = 8; // Increased for a fuller dashboard feel
+const ITEMS_PER_PAGE = 8;
 
-/* ===== TIMER FORMAT ===== */
 const formatTimer = (attendance) => {
   if (!attendance?.checkIn) return "00:00:00";
-  const endTime = attendance.checkOut
-    ? new Date(attendance.checkOut)
-    : attendance.isPaused
-    ? new Date(attendance.pauseStartedAt)
-    : new Date();
-
+  const endTime = attendance.checkOut ? new Date(attendance.checkOut) : attendance.isPaused ? new Date(attendance.pauseStartedAt) : new Date();
   const diffMs = endTime - new Date(attendance.checkIn) - (attendance.totalPausedMs || 0);
   const sec = Math.max(0, Math.floor(diffMs / 1000));
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
-
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-const getTodayLabel = () =>
-  new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+const getTodayLabel = () => new Date().toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" });
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
@@ -47,22 +34,18 @@ const AdminAttendance = () => {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-
       if (res.data.success) {
         setIsSunday(res.data.isSunday || false);
         setIsHoliday(res.data.isHoliday || false);
         setHolidayName(res.data.holidayName || "");
-        setAttendance(
-          res.data.attendance.map((a) => ({
-            ...a,
-            employeeMongoId: a.employeeId?._id,
-            employeeCode: a.employeeId?.employeeId || "N/A",
-            name: a.employeeId?.userId?.name || "Unknown",
-            department: a.employeeId?.department?.dep_name || "N/A",
-            designation: a.employeeId?.designation || "N/A",
-            timer: formatTimer(a),
-          }))
-        );
+        setAttendance(res.data.attendance.map((a) => ({
+          ...a,
+          employeeMongoId: a.employeeId?._id,
+          employeeCode: a.employeeId?.employeeId || "N/A",
+          name: a.employeeId?.userId?.name || "Unknown",
+          department: a.employeeId?.department?.dep_name || "N/A",
+          timer: formatTimer(a),
+        })));
         setCurrentPage(1);
       }
     } finally {
@@ -84,128 +67,99 @@ const AdminAttendance = () => {
   useEffect(() => {
     const visibleIds = paginated.map((p) => p._id ?? p.employeeMongoId);
     const interval = setInterval(() => {
-      setAttendance((prev) =>
-        prev.map((att) => {
-          const key = att._id ?? att.employeeMongoId;
-          if (!visibleIds.includes(key) || att.isPaused || att.checkOut) return att;
-          return { ...att, timer: formatTimer(att) };
-        })
-      );
+      setAttendance((prev) => prev.map((att) => {
+        const key = att._id ?? att.employeeMongoId;
+        if (!visibleIds.includes(key) || att.isPaused || att.checkOut) return att;
+        return { ...att, timer: formatTimer(att) };
+      }));
     }, 1000);
     return () => clearInterval(interval);
   }, [paginated]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 pb-12">
-      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
+    <div className="min-h-screen bg-slate-50 pb-20">
+      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-6">
         
-        {/* HEADER SECTION */}
-        <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
-              <Activity size={32} strokeWidth={2.5} />
+        {/* HEADER SECTION - Optimized for Mobile Stacking */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-200">
+              <Activity size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
-                Attendance
-              </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
-                Live Attendance Intelligence
-              </p>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 uppercase italic tracking-tighter">Live Ops</h1>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Attendance Intelligence</p>
             </div>
           </div>
 
           <Link
             to="/admin-dashboard/attendance-report"
-            className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-slate-900 px-8 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-xl shadow-slate-200 transition-all hover:bg-red-700 active:scale-95 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 font-black uppercase text-[10px] tracking-widest text-white shadow-xl hover:bg-red-600 transition-colors"
           >
-            <FileText size={18} strokeWidth={2.5} />
-            <span>Archive Reports</span>
+            <FileText size={16} />
+            <span>View Archive</span>
           </Link>
         </header>
 
-        {/* SEARCH & DATE BAR */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-1 bg-white p-5 rounded-[1.5rem] shadow-lg border border-white flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-              <CalendarDays size={20} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Shift</p>
-              <p className="text-[11px] font-black uppercase text-slate-800 truncate">{getTodayLabel()}</p>
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 bg-white/70 backdrop-blur-2xl rounded-[1.5rem] shadow-lg border border-white flex items-center px-5 focus-within:ring-2 focus-within:ring-red-500/10 transition-all">
-            <Search className="text-slate-300" size={20} />
+        {/* SEARCH & DATE - Sticky on Mobile */}
+        <div className="sticky top-4 z-20 flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 bg-white rounded-2xl shadow-md border border-slate-100 flex items-center px-4">
+            <Search className="text-slate-300" size={18} />
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="SEARCH PERSONNEL BY NAME..."
-              className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
+              placeholder="SEARCH PERSONNEL..."
+              className="w-full py-4 pl-3 outline-none text-[11px] font-bold uppercase tracking-widest text-slate-700"
             />
+          </div>
+          <div className="bg-white px-5 py-4 rounded-2xl shadow-md border border-slate-100 flex items-center gap-3 whitespace-nowrap">
+            <CalendarDays size={18} className="text-red-600" />
+            <span className="text-[11px] font-black uppercase text-slate-800 tracking-tighter">{getTodayLabel()}</span>
           </div>
         </div>
 
         {/* CONTENT AREA */}
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden min-h-[500px]">
+        <div className="min-h-[400px]">
           {loading ? (
-            <div className="py-40 flex flex-col items-center justify-center gap-4">
-              <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">Syncing Live Bio-Data...</p>
+            <div className="py-20 flex flex-col items-center justify-center gap-4">
+              <div className="w-10 h-10 border-4 border-red-100 border-t-red-600 rounded-full animate-spin" />
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Syncing Live Bio-Data...</p>
             </div>
           ) : isSunday || isHoliday ? (
-            <div className="py-40 flex flex-col items-center text-center px-6">
-              <div className="w-20 h-20 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
-                <ShieldAlert size={40} />
-              </div>
-              <h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">
-                {isSunday ? "System Offline" : holidayName}
-              </h2>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Protocol: Weekend Standby</p>
+            <div className="py-20 flex flex-col items-center text-center">
+              <ShieldAlert size={48} className="text-slate-200 mb-4" />
+              <h2 className="text-2xl font-black uppercase text-slate-800 italic">{isSunday ? "System Idle" : holidayName}</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">No Active Registry Found</p>
             </div>
           ) : (
-            <>
-              {/* DESKTOP TABLE */}
-              <div className="hidden md:block overflow-x-auto px-6 pb-6">
-                <table className="w-full border-separate border-spacing-y-3">
+            <div className="space-y-4">
+              {/* DESKTOP VIEW - Hidden on Mobile */}
+              <div className="hidden md:block bg-white rounded-[2rem] shadow-xl border border-white overflow-hidden">
+                <table className="w-full border-separate border-spacing-y-2 px-4">
                   <thead>
-                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                      <th className="px-6 py-4 text-left">Registry</th>
-                      <th className="px-6 py-4 text-left">Personnel Identity</th>
-                      <th className="px-6 py-4 text-left">Department</th>
-                      <th className="px-6 py-4 text-center">Operational Timer</th>
+                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 text-left">Ref</th>
+                      <th className="px-6 py-4 text-left">Personnel</th>
+                      <th className="px-6 py-4 text-center">Timer</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginated.map((a, i) => (
-                      <tr key={a.employeeMongoId} className="bg-slate-50/50 hover:bg-red-50/50 transition-all group">
-                        <td className="px-6 py-5 first:rounded-l-[1.5rem] text-xs font-black text-slate-300 italic">
-                          #{(currentPage - 1) * ITEMS_PER_PAGE + i + 1}
-                        </td>
-                        <td className="px-6 py-5">
+                      <tr key={a.employeeMongoId} className="bg-slate-50/50 hover:bg-red-50/30 transition-all group">
+                        <td className="px-6 py-4 first:rounded-l-2xl text-[10px] font-bold text-slate-300">#{(currentPage-1)*8+i+1}</td>
+                        <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            <span className="font-black uppercase italic tracking-tighter text-slate-800 leading-none group-hover:text-red-700 transition-colors">
-                              {a.name}
-                            </span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">
-                              ID: {a.employeeCode}
-                            </span>
+                            <span className="font-black uppercase italic text-slate-800">{a.name}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase">ID: {a.employeeCode} • {a.department}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-5">
-                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white border border-slate-100 text-slate-600 rounded-lg shadow-sm">
-                            {a.department}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          <div className="inline-flex items-center gap-2 font-mono font-black text-lg text-red-600 bg-white px-4 py-1.5 rounded-xl border border-red-50 shadow-sm">
-                            <Clock size={14} className="animate-pulse" />
-                            {a.timer}
+                        <td className="px-6 py-4 text-center">
+                          <div className="inline-flex items-center gap-2 font-mono font-black text-red-600 bg-white px-3 py-1 rounded-lg border border-red-100">
+                            <Clock size={12} className="animate-pulse" /> {a.timer}
                           </div>
                         </td>
-                        <td className="px-6 py-5 last:rounded-r-[1.5rem] text-right">
+                        <td className="px-6 py-4 last:rounded-r-2xl text-right">
                           <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
                         </td>
                       </tr>
@@ -214,55 +168,68 @@ const AdminAttendance = () => {
                 </table>
               </div>
 
-              {/* MOBILE VIEW */}
-              <div className="md:hidden p-4 space-y-4">
-                {paginated.map((a) => (
-                  <div key={a.employeeMongoId} className="bg-white rounded-[2rem] p-6 border border-white shadow-lg space-y-5">
-                    <div className="flex justify-between items-start">
-                      <div className="min-w-0">
-                        <h4 className="font-black uppercase tracking-tight text-slate-800 italic truncate">{a.name}</h4>
-                        <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest mt-1">{a.employeeCode} • {a.department}</p>
+              {/* MOBILE VIEW - Modern Card Layout */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {paginated.map((a, index) => (
+                  <div key={a.employeeMongoId} className="bg-white rounded-[1.8rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden">
+                    {/* Status Accent Line */}
+                    <div className={`absolute top-0 left-0 h-full w-1.5 ${a.status === 'present' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    
+                    <div className="flex justify-between items-start mb-4 pl-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                          <User size={18} />
+                        </div>
+                        <div>
+                          <h3 className="font-black uppercase italic text-slate-900 leading-tight tracking-tight">{a.name}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <Hash size={8}/> {a.employeeCode}
+                            </span>
+                            <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <Briefcase size={8}/> {a.department}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="bg-slate-900 text-white font-mono font-black px-3 py-1.5 rounded-xl text-xs shadow-lg">
-                        {a.timer}
+                      <div className="flex flex-col items-end">
+                        <span className="text-[8px] font-black text-slate-300 uppercase mb-1">Live Timer</span>
+                        <div className="font-mono font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg text-xs border border-red-100">
+                          {a.timer}
+                        </div>
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-slate-50 flex justify-center">
+
+                    <div className="pt-4 border-t border-slate-50">
                       <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* PAGINATION */}
+              {/* PAGINATION - Large Buttons for Fingers */}
               {totalPages > 1 && (
-                <div className="px-8 py-8 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Live Registry <span className="text-red-600">{currentPage}</span> of {totalPages}
-                  </p>
-                  
-                  <div className="flex gap-3">
-                    <button
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((p) => p - 1)}
-                      className="p-3 rounded-xl bg-white border border-slate-100 text-slate-400 transition-all shadow-sm 
-                                 disabled:opacity-20 hover:enabled:text-red-600"
-                    >
-                      <ChevronLeft size={20} strokeWidth={3} />
-                    </button>
-
-                    <button
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage((p) => p + 1)}
-                      className="p-3 rounded-xl bg-red-600 text-white transition-all shadow-xl shadow-red-100 
-                                 disabled:opacity-20 hover:enabled:bg-red-700"
-                    >
-                      <ChevronRight size={20} strokeWidth={3} />
-                    </button>
+                <div className="flex items-center justify-between pt-4">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    className="flex-1 flex items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 text-slate-400 disabled:opacity-30 active:scale-95 transition-all"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <div className="px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                    {currentPage} / {totalPages}
                   </div>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    className="flex-1 flex items-center justify-center p-4 rounded-2xl bg-slate-900 text-white disabled:opacity-30 active:scale-95 transition-all"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

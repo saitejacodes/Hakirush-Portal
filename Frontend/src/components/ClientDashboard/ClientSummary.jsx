@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/authContext";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy,
-  CalendarDays,
-  Star,
-  Flag,
   Users,
   Medal,
   X,
@@ -13,19 +11,20 @@ import {
   Calendar,
   ChevronRight,
   Zap,
+  Target,
+  ShieldCheck,
+  Activity,
+  BarChart3,
+  Bell
 } from "lucide-react";
 
-/* ================= PRESTIGE UTILS ================= */
+/* ================= THEME UTILS ================= */
 const getStatusBadgeClass = (status) => {
   switch ((status || "").toLowerCase()) {
-    case "upcoming":
-      return "bg-amber-500/10 text-amber-600 border-amber-200";
-    case "ongoing":
-      return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
-    case "completed":
-      return "bg-slate-100 text-slate-500 border-slate-200";
-    default:
-      return "bg-gray-100 text-gray-600 border-gray-200";
+    case "upcoming": return "text-amber-600 border-amber-200 bg-amber-50";
+    case "ongoing": return "text-emerald-600 border-emerald-200 bg-emerald-50";
+    case "completed": return "text-slate-400 border-slate-100 bg-slate-50";
+    default: return "text-red-600 border-red-100 bg-red-50";
   }
 };
 
@@ -42,17 +41,15 @@ const ClientSportsPlan = () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        
         const [clientRes, annRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client`, { headers }),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers })
         ]);
-
         const found = clientRes.data.clients.find((c) => c.userId?._id === user._id);
         setClient(found || null);
         setAnnouncements(annRes.data.announcements || []);
       } catch (err) {
-        console.error("System Error: Failed to retrieve dossiers.");
+        console.error("Connection Interrupted");
       } finally {
         setLoading(false);
       }
@@ -62,235 +59,210 @@ const ClientSportsPlan = () => {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-900/40">Synchronizing Global Plan...</p>
+      <div className="w-16 h-16 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin" />
+      <p className="mt-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Loading Environment...</p>
     </div>
   );
 
-  if (!client) return <div className="min-h-screen flex items-center justify-center font-black uppercase text-red-600 tracking-widest">Client Profile Restricted</div>;
+  if (!client) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center p-12 bg-white rounded-[3rem] shadow-xl">
+        <ShieldCheck size={48} className="text-slate-200 mx-auto mb-4" />
+        <h2 className="text-slate-900 font-black uppercase italic text-2xl tracking-tighter">Access Pending</h2>
+        <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest font-bold">Awaiting Dossier Assignment</p>
+      </div>
+    </div>
+  );
 
   const plan = client.planType;
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] text-slate-900 pb-20">
-      {/* HEADER SECTION */}
-      <div className="relative bg-red-950 pt-20 pb-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30" />
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-red-600/20 to-transparent" />
+    <div className="h-screen bg-white text-slate-900 font-sans overflow-hidden selection:bg-red-100">
+      {/* Container swapped to flex-row (Main Left, Sidebar Right) */}
+      <div className="flex flex-col lg:flex-row h-full">
         
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-[1px] w-12 bg-red-500" />
-                <span className="text-red-500 text-[10px] font-black uppercase tracking-[0.3em]">Corporate Excellence</span>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white leading-none">
-                Sports <span className="text-red-500">Dossier</span>
-              </h1>
+        {/* MAIN: OPERATIONS (Now on the Left) */}
+        <main className="flex-1 overflow-y-auto bg-white relative border-r border-slate-100">
+          {/* HEADER HUD */}
+          <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-8">
+                <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Organization</p>
+                    <p className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">{client?.userId?.name}</p>
+                </div>
+                <div className="h-8 w-px bg-slate-100 hidden md:block" />
+                <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tier Level</p>
+                    <p className="text-xl font-black text-red-600 italic uppercase tracking-tighter">{plan}</p>
+                </div>
             </div>
-            
-            <div className="flex gap-4">
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl min-w-[140px]">
-                <p className="text-[8px] font-black uppercase text-red-500 tracking-widest mb-1">Tier Level</p>
-                <p className="text-xl font-bold text-white uppercase italic">{plan}</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl min-w-[140px]">
-                <p className="text-[8px] font-black uppercase text-red-500 tracking-widest mb-1">Organization</p>
-                <p className="text-xl font-bold text-white truncate">{client?.userId?.name}</p>
-              </div>
+            <div className="flex items-center gap-3 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <Target size={16} className="text-red-600" />
+                <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] italic">Status: Online</span>
             </div>
           </div>
-        </div>
+
+          <div className="p-10 lg:p-16 max-w-6xl mx-auto">
+            {plan === "Annual" ? <AnnualLayout /> : <QuarterlyLayout />}
+          </div>
+        </main>
+
+        {/* SIDEBAR: INTEL FEED (Now on the Right) */}
+        <aside className="w-full lg:w-[400px] bg-slate-50/50 flex flex-col z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+          <div className="p-10 border-b border-slate-100 bg-white">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell size={14} className="text-red-600" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">Updates Feed</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {announcements.map((a, idx) => (
+              <motion.button
+                whileHover={{ x: -5 }} 
+                key={a._id}
+                onClick={() => setActiveAnnouncement(a)}
+                className="w-full text-left p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-900/5 transition-all group"
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{a.date}</span>
+                  <Zap size={12} className="text-slate-200 group-hover:text-red-500" />
+                </div>
+                <p className="text-md font-black text-slate-800 uppercase italic tracking-tight group-hover:text-red-600 transition-colors">
+                  {a.title}
+                </p>
+              </motion.button>
+            ))}
+          </div>
+        </aside>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* LEFT: PLAN DETAILS */}
-          <div className="lg:col-span-8 space-y-8">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-red-900/5 border border-slate-100 p-8 md:p-12 transition-all">
-              {plan === "Annual" ? <AnnualPlan /> : <QuarterlyPlan />}
-            </div>
-          </div>
-
-          {/* RIGHT: ANNOUNCEMENTS SIDEBAR */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white sticky top-24 shadow-2xl shadow-slate-900/20">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-lg font-black uppercase italic tracking-tight">Intelligence Brief</h2>
-                <Zap size={18} className="text-red-500" />
-              </div>
-
-              {announcements.length === 0 ? (
-                <div className="py-12 text-center border-2 border-dashed border-slate-800 rounded-3xl">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">No active directives</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {announcements.map((a) => (
-                    <button
-                      key={a._id}
-                      onClick={() => setActiveAnnouncement(a)}
-                      className="group w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl p-4 transition-all"
-                    >
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-white group-hover:text-red-400 transition-colors mb-2 line-clamp-1">{a.title}</p>
-                      <div className="flex items-center gap-3 text-slate-400 text-[9px] font-black uppercase tracking-widest">
-                        <span>{a.date}</span>
-                        <span className="w-1 h-1 bg-red-500 rounded-full" />
-                        <span className="truncate">{a.venue}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ANNOUNCEMENT MODAL */}
-      {activeAnnouncement && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-red-950/60 backdrop-blur-xl" onClick={() => setActiveAnnouncement(null)} />
-          <div className="relative bg-white max-w-2xl w-full rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <button 
+      {/* MODAL SYSTEM (Remains Center) */}
+      <AnimatePresence>
+        {activeAnnouncement && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setActiveAnnouncement(null)}
-              className="absolute top-6 right-6 z-10 p-3 bg-black/10 hover:bg-red-600 hover:text-white rounded-full transition-all"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-white w-full max-w-3xl rounded-[3rem] overflow-hidden shadow-2xl"
             >
-              <X size={20} />
-            </button>
-
-            {activeAnnouncement.image && (
-              <div className="h-64 relative">
-                <img src={activeAnnouncement.image} className="w-full h-full object-cover" alt="Briefing" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent" />
-              </div>
-            )}
-
-            <div className="p-10 -mt-12 relative">
-              <span className={`inline-block px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${getStatusBadgeClass(activeAnnouncement.status)} mb-4`}>
-                {activeAnnouncement.status}
-              </span>
-              <h3 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 mb-2">
-                {activeAnnouncement.title}
-              </h3>
-              <div className="flex flex-wrap gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 pb-6 border-b border-slate-100">
-                <span className="flex items-center gap-1"><Calendar size={12}/> {activeAnnouncement.date}</span>
-                <span className="flex items-center gap-1"><MapPin size={12}/> {activeAnnouncement.venue}</span>
-              </div>
-              <p className="text-slate-600 leading-relaxed font-medium">
-                {activeAnnouncement.description}
-              </p>
-            </div>
+                <div className="relative h-64 bg-slate-100">
+                    {activeAnnouncement.image && (
+                        <img src={activeAnnouncement.image} className="w-full h-full object-cover" alt="" />
+                    )}
+                    <button onClick={() => setActiveAnnouncement(null)} className="absolute top-8 right-8 p-3 bg-white/90 hover:bg-red-600 hover:text-white rounded-full transition-all shadow-xl">
+                      <X size={20}/>
+                    </button>
+                    <div className="absolute bottom-0 left-0 p-10 w-full bg-gradient-to-t from-white to-transparent">
+                        <span className={`inline-block px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${getStatusBadgeClass(activeAnnouncement.status)} mb-4`}>
+                            {activeAnnouncement.status}
+                        </span>
+                        <h3 className="text-4xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">{activeAnnouncement.title}</h3>
+                    </div>
+                </div>
+                <div className="p-10">
+                    <div className="flex flex-wrap gap-8 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-8 border-b border-slate-100 pb-8">
+                        <span className="flex items-center gap-2"><Calendar size={14} className="text-red-600"/> {activeAnnouncement.date}</span>
+                        <span className="flex items-center gap-2"><MapPin size={14} className="text-red-600"/> {activeAnnouncement.venue}</span>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed font-medium text-lg italic bg-slate-50 p-8 rounded-3xl">
+                      "{activeAnnouncement.description}"
+                    </p>
+                </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-/* ================= PRESTIGE SUB-COMPONENTS ================= */
+/* ================= COMPONENTS (Left-Aligned Visuals) ================= */
 
-const AnnualPlan = () => {
+const AnnualLayout = () => {
   const events = [
-    { title: "Corporate Cricket Premier League", date: "JULY 2026" },
-    { title: "Annual Badminton Championship", date: "SEPT 2026" },
-    { title: "Corporate Volleyball Cup", date: "OCT 2026" },
-    { title: "Global Corporate Marathon", date: "DEC 2026" },
-    { title: "Elite Athletics Meet", date: "FEB 2027" },
+    { title: "Cricket Premier League", date: "JULY 2026", sub: "Global Series" },
+    { title: "Badminton Championship", date: "SEPT 2026", sub: "Elite Tournament" },
+    { title: "Volleyball Masters", date: "OCT 2026", sub: "Corporate Cup" },
+    { title: "Corporate Marathon", date: "DEC 2026", sub: "Wellness Initiative" },
   ];
 
   return (
-    <div className="space-y-10">
-      <div>
-        <SectionTitle icon={<Trophy />} text="Tournament Deployment" />
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Full-Scale Annual Operational Calendar</p>
+    <div className="space-y-16">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+        <div className="border-l-8 border-red-600 pl-8">
+          <h2 className="text-5xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">Annual<br/><span className="text-red-600 text-6xl">Plan</span></h2>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] mt-3">Strategic Calendar 2026</p>
+        </div>
+        <div className="flex gap-4">
+            <KPI label="Personnel" value="500+" />
+            <KPI label="Operations" value="05" />
+        </div>
       </div>
 
-      <KPIGrid />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {events.map((e, i) => (
-          <div key={i} className="group relative bg-slate-50 hover:bg-red-950 rounded-2xl p-6 transition-all duration-300">
-            <div className="flex justify-between items-start">
-              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 group-hover:text-white transition-colors max-w-[180px]">{e.title}</h4>
-              <ChevronRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform" />
+          <motion.div whileHover={{ y: -8 }} key={i} className="bg-slate-50/50 border border-slate-100 p-10 rounded-[3rem] group hover:bg-white hover:border-red-200 hover:shadow-xl hover:shadow-red-900/5 transition-all flex flex-col justify-between h-[220px]">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-3 bg-white shadow-sm text-red-600 rounded-2xl group-hover:bg-red-600 group-hover:text-white transition-all">
+                  <Trophy size={20} />
+                </div>
+                <ChevronRight size={20} className="text-slate-200 group-hover:text-red-600 group-hover:translate-x-1 transition-all" />
+              </div>
+              <h4 className="text-xl font-black uppercase italic text-slate-900 tracking-tight leading-tight group-hover:text-red-600 transition-colors">{e.title}</h4>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{e.sub}</p>
             </div>
-            <p className="mt-4 text-[9px] font-bold text-red-600 group-hover:text-red-400 tracking-widest uppercase">{e.date}</p>
-          </div>
+            <span className="text-sm font-black text-red-600 uppercase tracking-[0.2em]">{e.date}</span>
+          </motion.div>
         ))}
       </div>
-
-      <Highlight icon={<Flag />} text="Command Lead: Corporate Cricket Premier League • July 2026 Deployment" />
     </div>
   );
 };
 
-const QuarterlyPlan = () => {
-  const quarters = [
-    { q: "Q1", game: "Table Tennis Tournament", status: "Completed", note: "Final Rankings Issued" },
-    { q: "Q2", game: "Badminton Doubles League", status: "Scheduled", note: "Registry Open" },
-    { q: "Q3", game: "Football 5v5 Elite", status: "Planned", note: "Venue TBA" },
-    { q: "Q4", game: "Indoor Sports Festival", status: "Upcoming", note: "E-Invitations Pending" },
-  ];
+const QuarterlyLayout = () => {
+    const quarters = [
+        { q: "Q1", game: "Table Tennis", status: "Completed", icon: <Activity className="text-red-600"/> },
+        { q: "Q2", game: "Badminton Doubles", status: "Scheduled", icon: <Target className="text-red-600"/> },
+        { q: "Q3", game: "Football 5v5", status: "Planned", icon: <Trophy className="text-red-600"/> },
+        { q: "Q4", game: "Indoor Sports", status: "Upcoming", icon: <BarChart3 className="text-red-600"/> },
+    ];
 
-  return (
-    <div className="space-y-10">
-      <SectionTitle icon={<CalendarDays />} text="Quarterly Engagement Matrix" />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {quarters.map((q) => (
-          <div key={q.q} className="border-2 border-slate-100 rounded-[2rem] p-8 hover:border-red-500/20 transition-all">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-3xl font-black italic text-red-600">{q.q}</span>
-              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${getStatusBadgeClass(q.status)}`}>
-                {q.status}
-              </span>
+    return (
+        <div className="space-y-16">
+            <div className="border-l-8 border-red-600 pl-8">
+                <h2 className="text-5xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">Quarterly<br/><span className="text-red-600 text-6xl">Matrix</span></h2>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em] mt-3">Engagement Cycles</p>
             </div>
-            <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-1">{q.game}</h4>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{q.note}</p>
-          </div>
-        ))}
-      </div>
 
-      <Highlight icon={<Medal />} text="Quarterly protocols ensure sustained wellness and organizational cohesion." />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {quarters.map((q) => (
+                    <div key={q.q} className="bg-white border-2 border-slate-50 p-10 rounded-[3rem] relative overflow-hidden group hover:border-red-100 transition-all shadow-sm hover:shadow-xl">
+                        <div className="flex justify-between items-start mb-8 relative z-10">
+                            <span className="text-7xl font-black italic text-slate-100 leading-none group-hover:text-red-50 transition-colors">{q.q}</span>
+                            <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase border ${getStatusBadgeClass(q.status)}`}>{q.status}</span>
+                        </div>
+                        <div className="flex items-center gap-4 relative z-10">
+                          <div className="p-3 bg-slate-50 rounded-xl">{q.icon}</div>
+                          <h4 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter">{q.game}</h4>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+const KPI = ({ label, value }) => (
+    <div className="bg-white border border-slate-100 px-8 py-6 rounded-[2rem] text-center min-w-[140px] shadow-sm">
+        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">{label}</p>
+        <span className="text-3xl font-black italic text-slate-900 tracking-tighter">{value}</span>
     </div>
-  );
-};
-
-const SectionTitle = ({ icon, text }) => (
-  <h2 className="text-3xl font-black flex items-center gap-4 text-slate-900 uppercase italic tracking-tighter">
-    <span className="p-3 bg-red-600 text-white rounded-2xl shadow-lg shadow-red-600/20">{icon}</span>
-    {text}
-  </h2>
-);
-
-const Highlight = ({ icon, text }) => (
-  <div className="bg-emerald-50 rounded-3xl border border-emerald-100 p-6 flex items-center gap-4">
-    <div className="h-10 w-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
-        {icon}
-    </div>
-    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900 leading-relaxed">{text}</p>
-  </div>
-);
-
-const KPIGrid = () => (
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-    <KPI icon={<Users />} label="Target Personnel" value="500+" />
-    <KPI icon={<Trophy />} label="Major Operations" value="05" />
-    <KPI icon={<Star />} label="Honorarium" value="25+" />
-  </div>
-);
-
-const KPI = ({ icon, label, value }) => (
-  <div className="group bg-slate-50 rounded-3xl p-8 border border-slate-100 hover:scale-[1.02] transition-all">
-    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">{label}</p>
-    <div className="flex justify-between items-center">
-      <span className="text-4xl font-black italic text-slate-900 group-hover:text-red-600 transition-colors">{value}</span>
-      <span className="text-red-500 bg-white p-3 rounded-xl shadow-sm">{icon}</span>
-    </div>
-  </div>
-);
+)
 
 export default ClientSportsPlan;

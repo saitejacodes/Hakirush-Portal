@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/authContext";
-
+import { motion } from "framer-motion";
 import {
   CalendarDays,
   LineChart,
   Rocket,
-  ClipboardList,
   Star,
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
   Target,
   Zap,
+  ChevronRight,
+  Award,
+  Users,
+  Briefcase,
+  Activity
 } from "lucide-react";
 
 const ClientRelationship = () => {
@@ -30,7 +34,7 @@ const ClientRelationship = () => {
         const found = res.data.clients.find((c) => c.userId?._id === user._id);
         setClient(found || null);
       } catch {
-        console.error("Connection Interrupted: Strategy data unavailable.");
+        console.error("Strategy data unavailable.");
       } finally {
         setLoading(false);
       }
@@ -40,185 +44,192 @@ const ClientRelationship = () => {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Analyzing Relationship Matrix...</p>
+      <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin" />
+      <p className="mt-6 text-[9px] font-black uppercase tracking-[0.4em] text-slate-400 text-center px-6">Analyzing Partnership Matrix...</p>
     </div>
   );
 
   if (!client) return (
-    <div className="min-h-screen flex items-center justify-center text-red-600 font-black uppercase tracking-widest">
-      Unauthorized Access: Dossier Restricted
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="text-center p-8 md:p-12 bg-white rounded-[2rem] md:rounded-[3rem] shadow-xl w-full max-w-md">
+        <ShieldCheck size={40} className="text-slate-200 mx-auto mb-4" />
+        <h2 className="text-slate-900 font-black uppercase italic text-xl md:text-2xl tracking-tighter">Identity Not Found</h2>
+        <p className="text-slate-400 text-[10px] mt-2 uppercase tracking-widest font-bold">Partnership Dossier Restricted</p>
+      </div>
     </div>
   );
 
   const plan = client.planType;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-20">
-      {/* STRATEGIC HEADER */}
-      <div className="relative bg-slate-950 pt-20 pb-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#450a0a_0%,_transparent_70%)] opacity-40" />
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="text-red-500" size={18} />
-                <span className="text-red-500 text-[10px] font-black uppercase tracking-[0.4em]">Official Partnership Dossier</span>
+    // Removed h-screen and overflow-hidden for mobile scrolling
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-red-50">
+      <div className="flex flex-col lg:flex-row min-h-screen">
+        
+        {/* MAIN CONTENT (LEFT/TOP) */}
+        <main className="flex-1 bg-white relative border-r border-slate-100 order-2 lg:order-1">
+          
+          {/* HEADER HUD - Responsive padding and stacking */}
+          <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-5 md:px-10 md:py-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4 md:gap-8">
+              <div>
+                <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Strategic_Partner</p>
+                <p className="text-lg md:text-xl font-black text-slate-900 italic uppercase tracking-tighter truncate max-w-[150px] sm:max-w-none">
+                  {client?.userId?.name}
+                </p>
               </div>
-              <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white leading-none">
-                Relationship <span className="text-red-600">Blueprint</span>
-              </h1>
+              <div className="h-8 w-px bg-slate-100" />
+              <div>
+                <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Tier</p>
+                <p className="text-lg md:text-xl font-black text-red-600 italic uppercase tracking-tighter">{plan}</p>
+              </div>
             </div>
-
-            <div className="flex flex-wrap gap-4">
-              <HeaderBadge label="Partnership Level" value={plan} />
-              <HeaderBadge label="Stakeholder" value={client?.userId?.name} />
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+              <ShieldCheck size={14} className="text-red-600" />
+              <span className="text-[8px] md:text-[9px] font-black text-slate-900 uppercase tracking-widest italic whitespace-nowrap">Verified</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-6 -mt-16 relative z-20">
-        <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-900/5 border border-slate-100 p-8 md:p-12 transition-all">
-          {plan === "Annual" ? <AnnualPlan /> : <QuarterlyPlan />}
-        </div>
+          <div className="p-6 md:p-10 lg:p-16 max-w-4xl mx-auto">
+             <div className="mb-12 md:mb-16">
+                <div className="border-l-4 md:border-l-8 border-red-600 pl-4 md:pl-8 mb-8 md:mb-12">
+                   <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-slate-900 leading-[0.9]">
+                     Relationship<br/>
+                     <span className="text-red-600 text-4xl md:text-6xl">Blueprint</span>
+                   </h2>
+                   <p className="text-slate-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] mt-3">Confidential Directive</p>
+                </div>
+                
+                {plan?.toLowerCase() === "annual" ? <AnnualStrategy /> : <QuarterlyStrategy />}
+             </div>
+             
+             <CTA />
+          </div>
+        </main>
+
+        {/* SIDEBAR/METRICS SUMMARY (RIGHT/BOTTOM) */}
+        {/* On mobile, this acts as the top summary or bottom footer */}
+        <aside className="w-full lg:w-[350px] xl:w-[400px] bg-slate-50/50 flex flex-col z-20 order-1 lg:order-2 lg:sticky lg:top-0 lg:h-screen">
+          <div className="p-6 md:p-10 border-b border-slate-100 bg-white">
+            <div className="flex items-center gap-2 mb-2">
+              <Award size={12} className="text-red-600" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-red-600">Performance Index</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">Success</h1>
+          </div>
+
+          {/* Metric Tiles - Side scrolling on very small screens or grid on tablets */}
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 md:gap-4 overflow-y-auto lg:flex-1">
+            <MetricTile icon={<Users />} label="Adoption" value="84%" />
+            <MetricTile icon={<Activity />} label="Score" value="Elite" />
+            <MetricTile icon={<Briefcase />} label="Completed" value="12/12" />
+            
+            <div className="sm:col-span-3 lg:col-span-1 mt-4 md:mt-6 p-6 md:p-8 bg-red-600 rounded-[1.5rem] md:rounded-[2rem] text-white shadow-xl shadow-red-200 relative overflow-hidden group">
+               <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-700">
+                  <Zap size={120} />
+               </div>
+               <Zap className="mb-4 text-white" size={24} />
+               <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Next Milestone</p>
+               <h4 className="text-lg md:text-xl font-black uppercase italic leading-tight">Q3 Executive <br className="hidden md:block"/>Review Session</h4>
+               <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter cursor-pointer hover:gap-4 transition-all">
+                  <span>Schedule Now</span>
+                  <ChevronRight size={14} />
+               </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
 };
 
-/* ================= HEADER BADGE ================= */
-const HeaderBadge = ({ label, value }) => (
-  <div className="bg-white/5 backdrop-blur-xl border border-white/10 px-6 py-4 rounded-3xl min-w-[160px]">
-    <p className="text-[8px] font-black uppercase text-red-500 tracking-widest mb-1">{label}</p>
-    <p className="text-lg font-bold text-white uppercase italic truncate">{value}</p>
-  </div>
-);
+/* ================= SUB-MODULES - Updated for Responsive ================= */
 
-/* ================= ANNUAL PLAN ================= */
-const AnnualPlan = () => (
-  <div className="space-y-12">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <InfoCard icon={<CalendarDays />} title="Engagement Period" text="Full Annual Partnership" />
-      <InfoCard icon={<LineChart />} title="Engagement Level" text="Strategic Partner" />
-      <InfoCard icon={<Star />} title="Success Focus" text="Long-term Growth" />
+const AnnualStrategy = () => (
+  <div className="space-y-8 md:space-y-12">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
+      <InfoCard icon={<CalendarDays />} title="Cycle" value="12 Months" />
+      <InfoCard icon={<LineChart />} title="Role" value="Strategic" />
+      <InfoCard icon={<Star />} title="Priority" value="High Growth" />
     </div>
 
-    <div className="space-y-8">
-      <SectionTitle icon={<Target />} text="Partnership Objectives" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex items-center gap-3 mb-2 md:mb-4">
+         <Target className="text-red-600" size={20} md={24} />
+         <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter">Operational Objectives</h3>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:gap-4">
         {[
-          "Strengthen strategic collaboration via monthly reviews",
-          "Advanced service delivery and 24/7 priority support",
-          "Drive long-term digital & physical innovation",
-          "Comprehensive wellness & sports engagement ecosystem",
-          "KPI-driven employee participation & happiness growth",
+          "Bi-annual Innovation Workshops",
+          "Dedicated 24/7 Concierge",
+          "Employee Wellness Analytics",
+          "Custom Multi-Sport Roadmap",
         ].map((item, i) => (
-          <div key={i} className="flex items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100 group hover:border-red-500/20 transition-all">
-            <CheckCircle2 className="text-red-600 shrink-0" size={20} />
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600 group-hover:text-slate-900 transition-colors">{item}</span>
-          </div>
+          <motion.div 
+            whileHover={{ x: 5 }}
+            key={i} 
+            className="flex items-center gap-4 bg-white border border-slate-100 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm hover:border-red-200 transition-all"
+          >
+            <CheckCircle2 className="text-red-600 flex-shrink-0" size={18} md={22} />
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-600 leading-tight">{item}</span>
+          </motion.div>
         ))}
       </div>
     </div>
-
-    <CTA />
   </div>
 );
 
-/* ================= QUARTERLY PLAN ================= */
-const QuarterlyPlan = () => (
-  <div className="space-y-10">
-    <SectionTitle icon={<Zap />} text="Quarter-wise Relationship Strategy" />
+const QuarterlyStrategy = () => (
+  <div className="grid grid-cols-1 gap-4 md:gap-6">
+    <RoadmapStep q="Q1" title="Onboarding" points={["Asset Audit", "Gov Setup"]} />
+    <RoadmapStep q="Q2" title="Adoption" points={["Event Launch", "Tracking"]} />
+    <RoadmapStep q="Q3" title="Optimization" points={["Scaling", "ROI Review"]} />
+    <RoadmapStep q="Q4" title="Expansion" points={["Renewal", "Next-Gen"]} />
+  </div>
+);
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Roadmap 
-        quarter="Q1" 
-        title="Onboarding & Kickoff"
-        points={["Requirement workshops", "Governance setup", "Process mapping"]} 
-      />
-      <Roadmap 
-        quarter="Q2" 
-        title="Engagement & Adoption"
-        points={["Employee activities", "Quarterly sports", "Performance review"]} 
-      />
-      <Roadmap 
-        quarter="Q3" 
-        title="Optimization"
-        points={["ROI tracking", "Wellness measurement", "Engagement scaling"]} 
-      />
-      <Roadmap 
-        quarter="Q4" 
-        title="Renewal & Growth"
-        points={["Renewal strategy", "Future roadmap", "Leadership review"]} 
-      />
+const InfoCard = ({ icon, title, value }) => (
+  <div className="bg-slate-50/50 border border-slate-100 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] hover:bg-white hover:shadow-xl hover:shadow-red-900/5 transition-all">
+    <div className="text-red-600 mb-3 md:mb-4">{icon}</div>
+    <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{title}</p>
+    <p className="text-lg md:text-xl font-black uppercase italic text-slate-900 tracking-tight">{value}</p>
+  </div>
+);
+
+const RoadmapStep = ({ q, title, points }) => (
+  <div className="bg-white border-2 border-slate-50 p-6 md:p-8 rounded-[1.5rem] md:rounded-[3rem] group hover:border-red-100 transition-all flex flex-row justify-between items-center gap-4">
+    <div className="flex-1">
+      <span className="text-red-600 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-1 md:mb-2 block">{q} Directive</span>
+      <h4 className="text-xl md:text-2xl font-black uppercase italic text-slate-900 leading-tight">{title}</h4>
+      <div className="flex flex-wrap gap-2 mt-3">
+         {points.map((p, i) => (
+           <span key={i} className="text-[7px] md:text-[9px] font-bold uppercase tracking-tighter bg-slate-100 px-2 md:px-3 py-1 rounded-full text-slate-500 whitespace-nowrap">{p}</span>
+         ))}
+      </div>
     </div>
-
-    <CTA />
+    <div className="text-4xl md:text-6xl font-black italic text-slate-100 group-hover:text-red-50 transition-colors leading-none">{q}</div>
   </div>
 );
 
-/* ================= UI SUB-COMPONENTS ================= */
-const SectionTitle = ({ icon, text }) => (
-  <div className="flex items-center gap-4">
-    <div className="p-3 bg-red-600 text-white rounded-2xl shadow-lg shadow-red-600/20">
-      {React.cloneElement(icon, { size: 20 })}
+const MetricTile = ({ icon, label, value }) => (
+  <div className="bg-white border border-slate-100 p-4 md:p-6 rounded-2xl md:rounded-[2rem] flex items-center justify-between group hover:shadow-md transition-all">
+    <div className="flex items-center gap-3 md:gap-4">
+      <div className="p-2 bg-slate-50 text-slate-400 group-hover:text-red-600 transition-colors rounded-lg">{icon}</div>
+      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</span>
     </div>
-    <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter">
-      {text}
-    </h2>
-  </div>
-);
-
-const InfoCard = ({ icon, title, text }) => (
-  <div className="group bg-slate-50 rounded-[2rem] p-8 border border-slate-100 hover:scale-[1.02] transition-all">
-    <div className="flex justify-between items-start mb-4">
-      <div className="p-3 bg-white rounded-xl shadow-sm text-red-600">{icon}</div>
-      <div className="h-1 w-8 bg-slate-200 group-hover:bg-red-500 transition-colors mt-4" />
-    </div>
-    <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1">{title}</h3>
-    <p className="font-bold text-slate-900 uppercase italic">{text}</p>
-  </div>
-);
-
-const Roadmap = ({ quarter, title, points }) => (
-  <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100 relative overflow-hidden group hover:border-red-500/20 transition-all">
-    <span className="absolute -right-4 -top-4 text-8xl font-black italic text-slate-200/50 group-hover:text-red-500/10 transition-colors pointer-events-none">
-      {quarter}
-    </span>
-    <p className="font-black text-red-600 text-[10px] tracking-[0.3em] uppercase mb-1">{quarter} Directive</p>
-    <h4 className="text-lg font-black uppercase italic tracking-tight text-slate-900 mb-6">{title}</h4>
-    <ul className="space-y-3">
-      {points.map((p, i) => (
-        <li key={i} className="flex gap-3 items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
-          <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-          {p}
-        </li>
-      ))}
-    </ul>
+    <span className="text-base md:text-lg font-black italic text-slate-900">{value}</span>
   </div>
 );
 
 const CTA = () => (
-  <div className="relative bg-slate-900 rounded-[3rem] p-10 md:p-16 text-center overflow-hidden shadow-2xl shadow-slate-900/40">
-    <div className="absolute inset-0 bg-gradient-to-br from-red-950/50 to-transparent" />
-    
-    <div className="relative z-10 space-y-6">
-      <div className="inline-flex p-4 bg-white/10 backdrop-blur-xl rounded-3xl mb-4 border border-white/10">
-        <Rocket className="text-red-500 animate-pulse" size={40} />
-      </div>
-      
-      <h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter">
-        Ready to Elevate <br className="hidden md:block" /> Our Partnership?
-      </h2>
-      
-      <p className="max-w-md mx-auto text-slate-400 text-xs font-bold uppercase tracking-[0.2em] leading-relaxed">
-        Synchronize with your dedicated relationship manager to finalize next-gen strategy.
-      </p>
-
-      <button className="group mt-6 px-10 py-5 rounded-full bg-gradient-to-r from-red-800 to-red-600 text-white text-[11px] font-black uppercase tracking-[0.3em] hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all flex items-center gap-4 mx-auto border border-red-500/50">
-        Initiate Strategy Session 
-        <ArrowRight className="group-hover:translate-x-2 transition-transform" size={18} />
+  <div className="relative bg-slate-900 rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 text-center overflow-hidden shadow-2xl mt-8">
+    <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-transparent" />
+    <div className="relative z-10">
+      <Rocket className="text-red-500 mx-auto mb-4 md:mb-6" size={32} md={48} />
+      <h2 className="text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter mb-4 leading-tight">Ready to Amplify<br/>Results?</h2>
+      <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-6 md:mb-8 max-w-[250px] md:max-w-sm mx-auto">Sync with your partner lead to activate next-gen protocols.</p>
+      <button className="bg-red-600 hover:bg-red-700 text-white px-6 md:px-10 py-4 md:py-5 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all flex items-center gap-3 md:gap-4 mx-auto active:scale-95">
+        Activate Session <ArrowRight size={16} />
       </button>
     </div>
   </div>

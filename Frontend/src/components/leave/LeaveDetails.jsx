@@ -64,34 +64,68 @@ const StatusAlert = ({ type, onClose }) => {
 const LeaveDetails = () => {
   const { id } = useParams();
   const [leave, setLeave] = useState(null);
+  const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alertType, setAlertType] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLeave = async () => {
+    const fetchDetails = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/leave/detail/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const headers = {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        };
 
-        if (response.data?.success) {
-          setLeave(response.data.leave);
+        // Fetch Leave and Holidays simultaneously
+        const [leaveRes, holidayRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/detail/${id}`, { headers }),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers })
+        ]);
+
+        if (leaveRes.data?.success) {
+          setLeave(leaveRes.data.leave);
+        }
+        if (holidayRes.data?.success) {
+          setHolidays(holidayRes.data.holidays);
         }
       } catch (error) {
-        alert(error?.response?.data?.error || "Failed to load leave details");
+        console.error("Fetch Error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLeave();
+    fetchDetails();
   }, [id]);
+
+  /* --- UPDATED NET DAYS CALCULATION --- */
+  const calculateNetDays = (start, end, holidayList) => {
+    if (!start || !end) return 0;
+    
+    let count = 0;
+    let current = new Date(start);
+    const lastDate = new Date(end);
+    
+    // Normalize dates to midnight
+    current.setHours(0, 0, 0, 0);
+    lastDate.setHours(0, 0, 0, 0);
+
+    const holidayStrings = holidayList.map(h => 
+      new Date(h.date).toISOString().split('T')[0]
+    );
+
+    while (current <= lastDate) {
+      const dayOfWeek = current.getDay(); 
+      const dateStr = current.toISOString().split('T')[0];
+      
+      
+      if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  };
 
   const changeStatus = async (leaveId, status) => {
     try {
@@ -197,9 +231,9 @@ const LeaveDetails = () => {
               <Info label="Email Address" value={leave?.employeeId?.userId?.email} />
               <Info label="Leave Type" value={leave?.leaveType} highlight />
               <Info 
-                label="Days Requested" 
-                value={`${leave?.days} Work Days`} 
-                subValue="Excludes Weekends/Holidays"
+                label="Days" 
+                value={`${calculateNetDays(leave.startDate, leave.endDate, holidays)} Days`} 
+                subValue="Excluding Sundays & Holidays"
                 isRed
               />
               <Info label="From Date" value={new Date(leave.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'})} />
