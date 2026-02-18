@@ -1,82 +1,56 @@
 import Holiday from "../models/Holiday.js";
 
-export const getUpcomingHolidays = async (req, res) => {
-  try {
-    const holidays = await Holiday.find().sort({ date: 1 });
-
-    return res.status(200).json({
-      success: true,
-      holidays
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+const formatToLocalYMD = (dateInput) => {
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
-export const addHoliday = async (req, res) => {
+const addHoliday = async (req, res) => {
   try {
     const { title, date } = req.body;
-
     const holiday = await Holiday.create({ title, date });
-
     return res.status(201).json({ success: true, holiday });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
+  } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
 
-export const deleteHoliday = async (req, res) => {
+const deleteHoliday = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const holiday = await Holiday.findById(id);
-
-    if (!holiday) {
-      return res.status(404).json({
-        success: false,
-        message: "Holiday not found"
-      });
-    }
-
-    await Holiday.findByIdAndDelete(id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Holiday deleted successfully"
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+    await Holiday.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ success: true, message: "Holiday deleted successfully" });
+  } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
 
-export const getAllHolidays = async (req, res) => {
+const getAllHolidays = async (req, res) => {
   try {
     const holidays = await Holiday.find().sort({ date: 1 });
-    const today = new Date().toISOString().split("T")[0];
+    const todayStr = formatToLocalYMD(new Date());
 
-    const holidaysWithStatus = holidays.map(h => ({
-      ...h._doc,
-      status:
-        h.date.toISOString().split("T")[0] < today
-          ? "Past"
-          : "Upcoming"
-    }));
+    const holidaysWithStatus = holidays.map(h => {
+      const hDateStr = formatToLocalYMD(h.date);
+      return {
+        ...h._doc,
+        status: hDateStr < todayStr ? "Past" : "Upcoming"
+      };
+    });
 
-    return res.status(200).json({
-      success: true,
-      holidays: holidaysWithStatus
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+    return res.status(200).json({ success: true, holidays: holidaysWithStatus });
+  } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
+
+const getUpcomingHolidays = async (req, res) => {
+  try {
+    const todayStr = formatToLocalYMD(new Date());
+    const holidays = await Holiday.find({ date: { $gte: new Date(todayStr) } }).sort({ date: 1 });
+    return res.status(200).json({ success: true, holidays });
+  } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
+};
+
+export {
+  addHoliday,
+  deleteHoliday,
+  getAllHolidays,
+  getUpcomingHolidays,
+}

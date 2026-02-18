@@ -3,7 +3,7 @@ import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
+
 const SuccessAlert = ({ onClose }) => (
   <>
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
@@ -30,7 +30,7 @@ const EmployeeLeaveAdd = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  /* ================= SETTINGS (Match Dashboard) ================= */
+
   const TOTAL_ANNUAL_CASUAL = 12; 
   const TOTAL_ANNUAL_SICK = 12;   
 
@@ -56,7 +56,7 @@ const EmployeeLeaveAdd = () => {
     return `${year}-${month}-${day}`;
   };
 
-  /* FETCH LEAVE HISTORY AND HOLIDAYS TO CALCULATE ACCURATE BALANCE */
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user?._id) return;
@@ -112,7 +112,6 @@ const EmployeeLeaveAdd = () => {
     fetchData();
   }, [user]);
 
-  /* ================= CALCULATE NET WORK DAYS FOR CURRENT REQUEST ================= */
   useEffect(() => {
     if (leave.startDate && leave.endDate) {
       let count = 0;

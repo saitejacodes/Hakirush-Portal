@@ -2,25 +2,35 @@ import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
 import Holiday from "../models/Holiday.js";
 
-/* ================= HELPER: CALCULATE NET WORK DAYS ================= */
+const toRawDateString = (dateInput) => {
+    const d = new Date(dateInput);
+    return d.toISOString().split('T')[0]; 
+};
+
 const calculateNetWorkDays = (startDate, endDate, holidays = []) => {
     let count = 0;
-    const curDate = new Date(startDate);
-    const lastDate = new Date(endDate);
-    curDate.setHours(0, 0, 0, 0);
-    lastDate.setHours(0, 0, 0, 0);
+   
+    const startStr = toRawDateString(startDate);
+    const endStr = toRawDateString(endDate);
+    
+    let current = new Date(startStr);
+    const end = new Date(endStr);
+    
+    const holidayStrings = holidays.map(h => toRawDateString(h.date));
 
-    const holidayStrings = holidays.map(h => new Date(h.date).toISOString().split('T')[0]);
+    while (current <= end) {
+        const dateStr = toRawDateString(current);
+        const dayOfWeek = current.getUTCDay(); 
 
-    while (curDate <= lastDate) {
-        const dayOfWeek = curDate.getDay();
-        const curStr = curDate.toISOString().split('T')[0];
+        const isSunday = dayOfWeek === 0;
+        const isHoliday = holidayStrings.includes(dateStr);
 
-        // Skip Sunday (0) and Public Holidays
-        if (dayOfWeek !== 0 && !holidayStrings.includes(curStr)) {
+        
+        if (!isSunday && !isHoliday) {
             count++;
         }
-        curDate.setDate(curDate.getDate() + 1);
+        
+        current.setUTCDate(current.getUTCDate() + 1);
     }
     return count;
 };
@@ -30,27 +40,10 @@ const addLeave = async (req, res) => {
   try {
     const { leaveType, startDate, endDate, reason } = req.body;
     const employee = await Employee.findOne({ userId: req.user._id });
-    const holidays = await Holiday.find();
-
+    
+    const holidays = await Holiday.find(); 
+    
     const daysRequested = calculateNetWorkDays(startDate, endDate, holidays);
-
-    if (daysRequested <= 0) {
-      return res.status(400).json({ success: false, error: "Selected dates consist only of Sundays or Holidays." });
-    }
-
-    // Balance Check logic
-    const TOTAL_LIMIT = 12;
-    const approved = await Leave.aggregate([
-      { $match: { employeeId: employee._id, status: "Approved", leaveType } },
-      { $group: { _id: null, daysUsed: { $sum: "$days" } } },
-    ]);
-
-    const used = approved.length ? approved[0].daysUsed : 0;
-    const balance = TOTAL_LIMIT - used;
-
-    if (daysRequested > balance) {
-      return res.status(400).json({ success: false, error: `Insufficient balance. Available: ${balance}, Requested: ${daysRequested}` });
-    }
 
     const leave = await Leave.create({
       employeeId: employee._id,
@@ -59,7 +52,7 @@ const addLeave = async (req, res) => {
       endDate,
       reason,
       status: "Pending",
-      days: daysRequested, // Strictly storing the Net working days
+      days: daysRequested, 
     });
 
     return res.status(200).json({ success: true, leave });
@@ -77,7 +70,6 @@ const updateLeave = async (req, res) => {
     const holidays = await Holiday.find();
 
     if (status === "Approved") {
-      // Recalculate to ensure correctness before finalizing
       leave.days = calculateNetWorkDays(leave.startDate, leave.endDate, holidays);
     }
 
@@ -111,16 +103,17 @@ const getLeaveBalance = async (req, res) => {
   }
 };
 
-/* ================= STANDARD GETTERS ================= */
+/* ================= GET LEAVE ================= */
 const getLeave = async (req, res) => {
   try {
     const { id, role } = req.params;
     let query = role === "admin" ? { employeeId: id } : { employeeId: (await Employee.findOne({ userId: id }))._id };
-    const leaves = await Leave.find(query);
+    const leaves = await Leave.find(query).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, leaves });
   } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
 
+/* ================= GET LEAVES ================= */
 const getLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find().populate({ path: "employeeId", populate: [{ path: "department" }, { path: "userId" }] }).sort({ createdAt: -1 });
@@ -128,6 +121,7 @@ const getLeaves = async (req, res) => {
   } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
 
+/* ================= GET LEAVES DETAIL ================= */
 const getLeaveDetail = async (req, res) => {
   try {
     const leave = await Leave.findById(req.params.id).populate({ path: "employeeId", populate: [{ path: "department" }, { path: "userId" }] });
@@ -135,11 +129,13 @@ const getLeaveDetail = async (req, res) => {
   } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
 
-export { 
-  addLeave, 
-  getLeave, 
-  getLeaves, 
-  getLeaveDetail, 
-  updateLeave, 
-  getLeaveBalance 
-};
+
+export {
+   calculateNetWorkDays,
+   addLeave,
+   updateLeave,
+   getLeaveBalance,
+   getLeave,
+   getLeaves,
+   getLeaveDetail
+}
