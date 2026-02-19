@@ -13,7 +13,8 @@ import {
   Handshake,
   TrendingUp,
   LayoutDashboard,
-  Download
+  Download,
+  Cake // Added for Birthday Section
 } from "lucide-react";
 import {
   PieChart,
@@ -51,7 +52,6 @@ const SectionCard = ({ title, children, subtitle }) => (
       </h3>
       {subtitle && <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">{subtitle}</p>}
     </div>
-    {/* Explicit container for the chart */}
     <div className="w-full min-h-[300px] flex items-center justify-center">
       {children}
     </div>
@@ -68,7 +68,6 @@ const AdminSummary = () => {
   const [domReady, setDomReady] = useState(false);
 
   useEffect(() => {
-    // This solves the Recharts -1 error by delaying chart render until mount
     setDomReady(true);
     
     const fetchAllData = async () => {
@@ -141,6 +140,7 @@ const AdminSummary = () => {
     </div>
   );
 
+  // Chart Data Formatting
   const chartData = {
     plans: [
       { name: "Annual", value: summary?.totalAnnual || 0 },
@@ -155,6 +155,9 @@ const AdminSummary = () => {
     sponsors: Object.entries(summary?.sponsorSummary?.collaborationSummary || {}).map(([name, value]) => ({ name, value })),
     stalls: Object.entries(summary?.stallSummary?.typeSummary || {}).map(([name, value]) => ({ name, value })),
   };
+
+  // Birthday Data Handling
+  const birthdaySummary = summary?.birthdaySummary || { today: [], upcoming: [] };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 pb-20 selection:bg-red-100">
@@ -187,7 +190,7 @@ const AdminSummary = () => {
           </div>
         </header>
 
-        {/* STATS */}
+        {/* STATS CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard icon={Activity} label="Active Today" value={attSummary?.activeToday} colorClass="text-emerald-500" />
           <StatCard icon={Clock} label="Late Arrivals" value={attSummary?.lateLogins} colorClass="text-amber-500" />
@@ -195,7 +198,7 @@ const AdminSummary = () => {
           <StatCard icon={AlertCircle} label="Absent Count" value={attSummary?.absentToday} colorClass="text-red-600" />
         </div>
 
-        {/* OPERATIONS GRID */}
+        {/* WORKFORCE OVERVIEW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="bg-white p-8 rounded-[3rem] flex justify-between items-center group relative overflow-hidden shadow-2xl shadow-slate-200">
               <TrendingUp className="absolute -right-4 -bottom-4 text-slate-100" size={120} />
@@ -221,6 +224,81 @@ const AdminSummary = () => {
               </div>
               <BriefcaseBusiness className="text-slate-200 group-hover:text-red-500 transition-colors" size={48} />
            </div>
+        </div>
+
+        {/* ================= BIRTHDAY SECTION ================= */}
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-pink-100 space-y-6">
+          <div className="flex items-center gap-3">
+            <Cake className="text-pink-500" size={22} />
+            <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+              Birthday Spotlight
+            </h3>
+          </div>
+
+          {/* TODAY */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+              Today
+            </p>
+            {birthdaySummary.today.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">No birthdays today 🎈</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {birthdaySummary.today.map((emp) => (
+                  <div key={emp._id} className="flex items-center gap-4 bg-pink-50 p-4 rounded-2xl border border-pink-100 transition-all hover:scale-[1.02]">
+                    <img
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${emp.profileImage}`}
+                      alt={emp.name}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+                    />
+                    <div>
+                      <p className="font-bold text-slate-900">{emp.name}</p>
+                      <p className="text-xs text-slate-500 uppercase">
+                        {emp.department?.dep_name || emp.department}
+                      </p>
+                      <p className="text-xs text-pink-600 font-semibold">
+                        Turning {emp.age} 🎉
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* UPCOMING */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+              Upcoming (Next 7 Days)
+            </p>
+            {birthdaySummary.upcoming.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">No upcoming birthdays</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {birthdaySummary.upcoming.map((emp) => (
+                  <div key={emp._id} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <img
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${emp.profileImage}`}
+                      alt={emp.name}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+                    />
+                    <div>
+                      <p className="font-bold text-slate-900">{emp.name}</p>
+                      <p className="text-xs text-slate-500 uppercase">
+                        {emp.department?.dep_name || emp.department}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(emp.dob).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* CHARTS GRID */}
@@ -296,7 +374,7 @@ const AdminSummary = () => {
             )}
           </SectionCard>
 
-          {/* REPORT CARD */}
+          {/* REPORT EXPORT CARD */}
           <div className="bg-red-600 rounded-[3rem] p-10 text-white flex flex-col justify-between items-start shadow-2xl shadow-red-200 group">
              <div className="space-y-4">
                 <h4 className="text-4xl font-black uppercase italic tracking-tighter leading-none">Global<br/>Reporting</h4>

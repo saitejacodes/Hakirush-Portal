@@ -47,6 +47,7 @@ import EmployeeLeaveAdd from "./components/leave/EmployeeLeaveAdd";
 import EmployeeProfile from "./components/EmpolyeeDashboard/EmployeeProfile";
 import EditEmployeeProfile from "./components/EmpolyeeDashboard/EditEmployeeProfile";
 import ViewPayslip from "./components/payslips/ViewPayslip";
+import EmployeeManagers from "./components/employee/EmployeeManagers";
 
 
 /* ================= CLIENT IMPORTS ================= */
@@ -83,6 +84,7 @@ const App = () => {
 
           <Route path="employees" element={<EmplyeeList />} />
           <Route path="add-employee" element={<EmplyeeAdd />} />
+          <Route path="employees/managers" element={<EmployeeManagers />} />
           <Route path="employees/:id" element={<EmplyeeView />} />
           <Route path="employees/edit/:id" element={<EmplyeeEdit />} />
           <Route path="employees/payslip/:id" element={<AddPayslip />} />

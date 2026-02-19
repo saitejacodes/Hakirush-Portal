@@ -97,6 +97,72 @@ const sponsorSummary = {
       typeSummary,
     };
 
+    /* ========== BIRTHDAY SUMMARY (IMPROVED) ========== */
+
+      const today = new Date();
+      const next7Days = new Date();
+      next7Days.setDate(today.getDate() + 7);
+
+      // Accurate age calculator
+      const calculateAge = (dob) => {
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+
+        return age;
+      };
+
+      const employees = await Employee.find(
+        { dob: { $exists: true, $ne: null } },
+        "name dob department profileImage"
+      );
+
+      const todayBirthdays = [];
+      const upcomingBirthdays = [];
+
+      employees.forEach((emp) => {
+        const birthDate = new Date(emp.dob);
+
+        const currentYearBirthday = new Date(
+          today.getFullYear(),
+          birthDate.getMonth(),
+          birthDate.getDate()
+        );
+
+        // 🎂 Today
+        if (
+          birthDate.getMonth() === today.getMonth() &&
+          birthDate.getDate() === today.getDate()
+        ) {
+          todayBirthdays.push({
+            ...emp._doc,
+            age: calculateAge(emp.dob),
+          });
+        }
+
+        // 🎉 Upcoming (next 7 days)
+        else if (
+          currentYearBirthday > today &&
+          currentYearBirthday <= next7Days
+        ) {
+          upcomingBirthdays.push({
+            ...emp._doc,
+            age: calculateAge(emp.dob),
+          });
+        }
+      });
+
+      const birthdaySummary = {
+        today: todayBirthdays,
+        upcoming: upcomingBirthdays,
+      };
+
+
+
     /* ========== RESPONSE ========== */
     return res.status(200).json({
       success: true,
@@ -113,6 +179,7 @@ const sponsorSummary = {
       departmentSummary,
       sponsorSummary,
       stallSummary,
+      birthdaySummary,
     });
 
   } catch (error) {

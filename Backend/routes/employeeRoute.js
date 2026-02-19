@@ -13,6 +13,7 @@ import {
   getNewEmployees,
   getLeaveBalance,
   getEmployeesByDepartmentId,
+  getAllEmployeeBirthdays,
 } from "../controllers/employeeController.js";
 
 const router = express.Router();
@@ -28,6 +29,7 @@ router.get("/by-department/me", authMiddleware, getEmployeesByDepartment);
 router.get("/department/:id/employees", authMiddleware, getEmployeesByDepartmentId);
 router.get("/new/recent", authMiddleware, getNewEmployees);
 router.get("/leave/balance/me", authMiddleware, getLeaveBalance);
+router.get("/birthdays", authMiddleware, getAllEmployeeBirthdays);
 router.post("/add", authMiddleware, upload.single("profileImage"), addEmployee);
 router.put("/update-profile/:id", authMiddleware, upload.single("profileImage"), editEmployeeProfile);
 router.put("/:id", authMiddleware, upload.single("profileImage"), updateEmployee);

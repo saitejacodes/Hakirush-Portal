@@ -17,8 +17,10 @@ const employeeSchema = new Schema(
     department: { type: Schema.Types.ObjectId, ref: "Department", required: true },
     salary: { type: Number, required: true },
     experience: { type: String, default: "" },
+    aadharcard: { type: String, default: "" },
+    pancard: { type: String, default: "" },
   },
-  { timestamps: true }   
+  { timestamps: true }
 );
 
 export default mongoose.model("Employee", employeeSchema);

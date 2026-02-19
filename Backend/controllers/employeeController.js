@@ -20,6 +20,7 @@ const addEmployee = async (req, res) => {
       password,
       role,
       bloodGroup,
+      manager,
     } = req.body;
 
     if (!name || !email || !employeeId || !department || !designation || !salary || !password || !role) {
@@ -56,6 +57,7 @@ const addEmployee = async (req, res) => {
       designation,
       salary: Number(salary),
       bloodGroup,
+      manager: manager || null,
       dateOfJoining: new Date(),
     });
 
@@ -253,7 +255,56 @@ const getEmployeesByDepartment = async (req, res) => {
   }
 };
 
-/* ================= GET EMPLOYEES BY DEPARTMENT (ADMIN) ================= */
+/* ================= GET BIRTHDAYS (OPTIMIZED) ================= */
+const getAllEmployeeBirthdays = async (req, res) => {
+  try {
+    const today = new Date();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+    
+    // Get date 7 days from now
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    const employees = await Employee.find({ dob: { $ne: null } })
+      .populate("userId", "name profileImage")
+      .populate("department", "dep_name");
+
+    const todayBirthdays = [];
+    const upcomingBirthdays = [];
+
+    employees.forEach(emp => {
+      const d = new Date(emp.dob);
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+
+      const age = today.getFullYear() - d.getFullYear();
+
+      const result = {
+        _id: emp._id,
+        name: emp.userId?.name,
+        profileImage: emp.userId?.profileImage,
+        department: emp.department?.dep_name,
+        age: age
+      };
+
+      if (m === todayMonth && day === todayDay) {
+        todayBirthdays.push(result);
+      } else {
+        // Check if birthday falls within the next 7 days
+        const bdayThisYear = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+        if (bdayThisYear > today && bdayThisYear <= nextWeek) {
+          upcomingBirthdays.push({ ...result, dob: emp.dob });
+        }
+      }
+    });
+
+    res.json({ success: true, today: todayBirthdays, upcoming: upcomingBirthdays });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 const getEmployeesByDepartmentId = async (req, res) => {
   try {
     const { id } = req.params;
@@ -312,6 +363,7 @@ const getLeaveBalance = async (req, res) => {
   }
 };
 
+
 export {
   addEmployee,
   getEmployees,
@@ -323,4 +375,5 @@ export {
   getEmployeesByDepartmentId,
   getNewEmployees,
   getLeaveBalance,
+  getAllEmployeeBirthdays,
 };
