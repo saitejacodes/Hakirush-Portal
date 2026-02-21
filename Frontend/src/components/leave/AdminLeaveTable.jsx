@@ -11,7 +11,7 @@ const statusConfig = {
   default: "bg-slate-50 text-slate-400 border-slate-100",
 };
 
-/* ===== NET DAYS CALCULATOR HELPER ===== */
+/* ===== UPDATED NET DAYS CALCULATOR HELPER (Excludes Sat/Sun/Holidays) ===== */
 const calculateNetDays = (startDate, endDate, holidays) => {
   if (!startDate || !endDate) return 0;
   let count = 0;
@@ -27,11 +27,11 @@ const calculateNetDays = (startDate, endDate, holidays) => {
   );
 
   while (current <= lastDate) {
-    const dayOfWeek = current.getDay(); // 0 is Sunday
+    const dayOfWeek = current.getDay(); 
     const dateStr = current.toISOString().split('T')[0];
     
-    // Only count if NOT Sunday and NOT in holiday list
-    if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+    // Skip Sunday (0), Saturday (6), and Holidays
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
       count++;
     }
     current.setDate(current.getDate() + 1);
@@ -110,7 +110,7 @@ const AdminLeaveTable = () => {
         const holidays = holidayRes.data.holidays || [];
         
         const data = leaveRes.data.leaves.map((leave) => {
-          // Recalculate Net Days for the Admin display
+          // Recalculate Net Days (excluding Saturdays, Sundays, and Holidays)
           const displayDays = calculateNetDays(leave.startDate, leave.endDate, holidays);
 
           return {
@@ -162,7 +162,7 @@ const AdminLeaveTable = () => {
               <h1 className="text-4xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl italic leading-none">
                 Leave<span className="text-slate-800"> Control</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Operational Absence Management</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Deduction excludes Sat, Sun & Holidays</p>
             </div>
           </div>
         </header>

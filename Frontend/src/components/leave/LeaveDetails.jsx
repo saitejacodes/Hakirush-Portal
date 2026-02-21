@@ -76,7 +76,6 @@ const LeaveDetails = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         };
 
-        // Fetch Leave and Holidays simultaneously
         const [leaveRes, holidayRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/detail/${id}`, { headers }),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers })
@@ -98,7 +97,7 @@ const LeaveDetails = () => {
     fetchDetails();
   }, [id]);
 
-  /* --- UPDATED NET DAYS CALCULATION --- */
+  /* --- UPDATED NET DAYS CALCULATION (Excluding Sat & Sun) --- */
   const calculateNetDays = (start, end, holidayList) => {
     if (!start || !end) return 0;
     
@@ -106,7 +105,6 @@ const LeaveDetails = () => {
     let current = new Date(start);
     const lastDate = new Date(end);
     
-    // Normalize dates to midnight
     current.setHours(0, 0, 0, 0);
     lastDate.setHours(0, 0, 0, 0);
 
@@ -118,8 +116,8 @@ const LeaveDetails = () => {
       const dayOfWeek = current.getDay(); 
       const dateStr = current.toISOString().split('T')[0];
       
-      
-      if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+      // 0 is Sunday, 6 is Saturday
+      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
         count++;
       }
       current.setDate(current.getDate() + 1);
@@ -196,7 +194,6 @@ const LeaveDetails = () => {
           </h3>
 
           <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-6 md:p-10 border border-white relative overflow-hidden">
-            {/* Header / Profile Section */}
             <div className="flex flex-col md:flex-row items-center gap-6 pb-8 border-b border-red-50">
               <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl overflow-hidden">
                 <img
@@ -226,14 +223,13 @@ const LeaveDetails = () => {
               </div>
             </div>
 
-            {/* Information Grid */}
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Info label="Email Address" value={leave?.employeeId?.userId?.email} />
               <Info label="Leave Type" value={leave?.leaveType} highlight />
               <Info 
                 label="Days" 
                 value={`${calculateNetDays(leave.startDate, leave.endDate, holidays)} Days`} 
-                subValue="Excluding Sundays & Holidays"
+                subValue="Excluding Sat, Sun & Holidays"
                 isRed
               />
               <Info label="From Date" value={new Date(leave.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'})} />
@@ -250,7 +246,6 @@ const LeaveDetails = () => {
               </div>
             </div>
 
-            {/* Action Section */}
             {isPending && (
               <div className="mt-10 pt-8 border-t border-red-50">
                 <div className="flex flex-col sm:flex-row gap-4">

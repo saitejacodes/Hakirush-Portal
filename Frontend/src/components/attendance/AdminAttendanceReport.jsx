@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Search,
@@ -72,7 +72,7 @@ const AdminAttendanceReport = () => {
   const [loading, setLoading] = useState(false);
   const [currentPageByDate, setCurrentPageByDate] = useState({});
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
       const query = new URLSearchParams();
@@ -103,13 +103,18 @@ const AdminAttendanceReport = () => {
         setCurrentPageByDate(pageState);
         setReport(updated);
       }
+    } catch (error) {
+      console.error("Error fetching report:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dataFilter, search, today]);
 
-  useEffect(() => { fetchReport(); }, [dataFilter, search]);
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
 
+  // Live timer interval
   useEffect(() => {
     const interval = setInterval(() => {
       setReport((prev) => {
@@ -151,7 +156,7 @@ const AdminAttendanceReport = () => {
         </header>
 
         {/* FILTER BAR */}
-        <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-3">
+        <div className="bg-slate-50 rounded-[2rem] border border-slate-100 p-3 shadow-sm">
           <form
             onSubmit={(e) => { e.preventDefault(); setSearch(searchInput.trim()); }}
             className="flex flex-col md:flex-row gap-3"
@@ -181,7 +186,7 @@ const AdminAttendanceReport = () => {
                 Query
               </button>
               {search && (
-                <button onClick={clearSearch} type="button" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-2xl">
+                <button onClick={clearSearch} type="button" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:text-red-600 transition-colors">
                   <RotateCcw size={20} />
                 </button>
               )}
@@ -191,11 +196,26 @@ const AdminAttendanceReport = () => {
 
         {/* CONTENT */}
         <div className="space-y-6">
+          {Object.entries(report).length === 0 && !loading && (
+             <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No records found for the selection</p>
+             </div>
+          )}
+
           {Object.entries(report).map(([date, records]) => {
             const selectedDate = new Date(date);
-            const isSunday = selectedDate.getDay() === 0;
+            const dayOfWeek = selectedDate.getDay();
+            
+            // LOGIC FOR SATURDAY AND SUNDAY
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
             const holidayName = holidayMap[date];
             const isHoliday = !!holidayName;
+
+            // COMBINED OFF-DAY CHECK
+            const isOffDay = isSunday || isSaturday || isHoliday;
+            const offDayLabel = holidayName || (isSunday ? "Sunday" : isSaturday ? "Saturday" : "");
+
             const currentPage = currentPageByDate[date] || 1;
             const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
             const paginated = records.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -210,7 +230,11 @@ const AdminAttendanceReport = () => {
                       {selectedDate.toLocaleDateString("en-IN", { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
-                  {isHoliday && <span className="bg-red-600 text-[9px] font-black px-3 py-1 rounded-lg text-white uppercase tracking-widest">{holidayName}</span>}
+                  {isOffDay && (
+                    <span className="bg-red-600 text-[9px] font-black px-3 py-1 rounded-lg text-white uppercase tracking-widest">
+                      {offDayLabel}
+                    </span>
+                  )}
                 </div>
 
                 {loading ? (
@@ -218,10 +242,12 @@ const AdminAttendanceReport = () => {
                     <Activity className="animate-spin" size={32} />
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing encrypted logs...</p>
                   </div>
-                ) : isSunday || isHoliday ? (
+                ) : isOffDay ? (
                   <div className="py-16 flex flex-col items-center text-center px-6">
                     <ShieldAlert size={32} className="text-slate-100 mb-4" />
-                    <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-800">No Registry Data</h2>
+                    <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-800">
+                      {offDayLabel} Registry Idle
+                    </h2>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Registry Inactive for this date</p>
                   </div>
                 ) : (
@@ -240,7 +266,11 @@ const AdminAttendanceReport = () => {
                         </thead>
                         <tbody>
                           {paginated.map((r, i) => {
-                            const status = normalizeStatus(r.status);
+                            let status = normalizeStatus(r.status);
+                            const isToday = date === today;
+                            if (r.checkIn && !r.checkOut && !isToday) {
+                              status = "Absent";
+                            }
                             return (
                               <tr key={r.employeeId + i} className="bg-slate-50/50 hover:bg-white hover:shadow-lg transition-all group">
                                 <td className="px-6 py-4 first:rounded-l-[1.2rem] text-[9px] font-black text-slate-300 italic">
@@ -274,7 +304,10 @@ const AdminAttendanceReport = () => {
                     {/* MOBILE CARD VIEW */}
                     <div className="md:hidden p-4 space-y-4">
                       {paginated.map((r, i) => {
-                        const status = normalizeStatus(r.status);
+                        let status = normalizeStatus(r.status);
+                        const isToday = date === today;
+                        if (r.checkIn && !r.checkOut && !isToday) status = "Absent";
+
                         return (
                           <div key={r.employeeId + i} className="bg-slate-50 rounded-[1.5rem] p-5 border border-slate-100 space-y-4">
                             <div className="flex justify-between items-start">
@@ -294,11 +327,11 @@ const AdminAttendanceReport = () => {
                             
                             <div className="grid grid-cols-2 gap-3 pt-2">
                               <div className="bg-white p-3 rounded-xl border border-slate-100 flex flex-col gap-1">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Hash size={8}/> Employee ID</span>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Hash size={8}/> ID</span>
                                 <span className="text-[10px] font-black text-slate-900">{r.employeeId}</span>
                               </div>
                               <div className="bg-white p-3 rounded-xl border border-slate-100 flex flex-col gap-1">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={8}/> Total Time</span>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={8}/> TIME</span>
                                 <span className="text-[10px] font-black text-red-600">{r.runningTime || hoursToHHMMSS(r.workedHours)}</span>
                               </div>
                             </div>
@@ -317,14 +350,14 @@ const AdminAttendanceReport = () => {
                           <button
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPageByDate(prev => ({ ...prev, [date]: prev[date] - 1 }))}
-                            className="flex-1 sm:flex-none p-3 rounded-xl bg-white border border-slate-100 text-slate-400 disabled:opacity-20 shadow-sm"
+                            className="flex-1 sm:flex-none p-3 rounded-xl bg-white border border-slate-100 text-slate-400 disabled:opacity-20 shadow-sm transition-all active:scale-95"
                           >
                             <ChevronLeft size={18} className="mx-auto" />
                           </button>
                           <button
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPageByDate(prev => ({ ...prev, [date]: prev[date] + 1 }))}
-                            className="flex-1 sm:flex-none p-3 rounded-xl bg-slate-900 text-white disabled:opacity-20 shadow-lg"
+                            className="flex-1 sm:flex-none p-3 rounded-xl bg-slate-900 text-white disabled:opacity-20 shadow-lg transition-all active:scale-95"
                           >
                             <ChevronRight size={18} className="mx-auto" />
                           </button>

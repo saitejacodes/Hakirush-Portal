@@ -74,7 +74,7 @@ const EmployeeLeaveAdd = () => {
 
         const holidayStrings = holidayData.map(h => toLocalYMD(h.date));
 
-        /* --- CALCULATION LOGIC --- */
+        /* --- CALCULATION LOGIC FOR BALANCE --- */
         const calculateUsedDays = (leaveTypeName) => {
           return allLeaves
             .filter(l => l.status === "Approved" && l.leaveType === leaveTypeName)
@@ -88,7 +88,9 @@ const EmployeeLeaveAdd = () => {
               while (current <= lastDate) {
                 const dayOfWeek = current.getDay();
                 const dateStr = toLocalYMD(current);
-                if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+                
+                // EXCLUDE SUNDAY (0) AND SATURDAY (6)
+                if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
                   count++;
                 }
                 current.setDate(current.getDate() + 1);
@@ -112,6 +114,7 @@ const EmployeeLeaveAdd = () => {
     fetchData();
   }, [user]);
 
+  /* --- REAL-TIME COUNTER FOR CURRENT FORM --- */
   useEffect(() => {
     if (leave.startDate && leave.endDate) {
       let count = 0;
@@ -125,7 +128,9 @@ const EmployeeLeaveAdd = () => {
         while (current <= end) {
           const dayOfWeek = current.getDay();
           const dateStr = toLocalYMD(current);
-          if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+          
+          // EXCLUDE SUNDAY (0) AND SATURDAY (6)
+          if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
             count++;
           }
           current.setDate(current.getDate() + 1);
@@ -144,7 +149,7 @@ const EmployeeLeaveAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (daysCount <= 0) return alert("Selected dates consist only of Sundays or Holidays.");
+    if (daysCount <= 0) return alert("Selected dates consist only of Weekends (Sat/Sun) or Holidays.");
 
     const selectedTypeKey = leave.leaveType === "Sick Leave" ? "sick" : "casual";
     
@@ -219,12 +224,12 @@ const EmployeeLeaveAdd = () => {
                 <p className="text-[10px] font-black uppercase tracking-widest text-rose-500">Actual Deduction</p>
                 <p className="text-2xl font-black text-rose-600">{daysCount} {daysCount === 1 ? 'Working Day' : 'Working Days'}</p>
                 <p className="text-[9px] text-rose-400 font-bold mt-1 uppercase underline italic">
-                    Sundays & Holidays are not counted
+                    Saturdays, Sundays & Holidays are not counted
                 </p>
               </div>
             ) : leave.startDate && leave.endDate && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center">
-                <p className="text-xs font-bold text-amber-700">Invalid Selection: These dates are only Sundays or Holidays.</p>
+                <p className="text-xs font-bold text-amber-700">Invalid Selection: These dates are only Weekends or Holidays.</p>
               </div>
             )}
 

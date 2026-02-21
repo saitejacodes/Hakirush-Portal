@@ -7,6 +7,7 @@ const toRawDateString = (dateInput) => {
     return d.toISOString().split('T')[0]; 
 };
 
+/* ================= UPDATED HELPER: EXCLUDES SAT & SUN ================= */
 const calculateNetWorkDays = (startDate, endDate, holidays = []) => {
     let count = 0;
    
@@ -23,10 +24,11 @@ const calculateNetWorkDays = (startDate, endDate, holidays = []) => {
         const dayOfWeek = current.getUTCDay(); 
 
         const isSunday = dayOfWeek === 0;
+        const isSaturday = dayOfWeek === 6; // Added Saturday check
         const isHoliday = holidayStrings.includes(dateStr);
 
-        
-        if (!isSunday && !isHoliday) {
+        // Logic: Increment count ONLY if it is NOT a weekend and NOT a holiday
+        if (!isSunday && !isSaturday && !isHoliday) {
             count++;
         }
         

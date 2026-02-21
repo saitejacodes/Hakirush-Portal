@@ -23,7 +23,7 @@ const formatDate = (value) => {
   });
 };
 
-/* ===== NET DAYS CALCULATOR (Excludes Sundays and Holidays) ===== */
+/* ===== UPDATED NET DAYS CALCULATOR (Excludes Sat, Sun, and Holidays) ===== */
 const calculateNetDays = (start, end, holidays = []) => {
   if (!start || !end) return 0;
   let count = 0;
@@ -41,8 +41,8 @@ const calculateNetDays = (start, end, holidays = []) => {
     const dayOfWeek = current.getDay();
     const dateStr = current.toISOString().split('T')[0];
     
-    // Skip Sunday (0) and Holidays
-    if (dayOfWeek !== 0 && !holidayStrings.includes(dateStr)) {
+    // Skip Sunday (0), Saturday (6), and Holidays
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
       count++;
     }
     current.setDate(current.getDate() + 1);
@@ -55,7 +55,6 @@ const MobileLeaveCard = ({ leave, index, holidays }) => {
   const statusKey = leave.status?.toLowerCase() || "default";
   const style = statusConfig[statusKey] || statusConfig.default;
   
-  // Use the new Net Days logic
   const displayDays = calculateNetDays(leave.startDate, leave.endDate, holidays);
 
   return (
@@ -86,7 +85,7 @@ const MobileLeaveCard = ({ leave, index, holidays }) => {
           </div>
           <div className="text-right">
             <p className="text-xl font-black text-slate-900 leading-none">{displayDays}</p>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Net Days</p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Working Days</p>
           </div>
         </div>
       </div>
@@ -161,7 +160,7 @@ const EmployeeLeaveList = () => {
               <h1 className="text-4xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl italic leading-none">
                 My Leave<span className="text-slate-800"> Registry</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Personal Absence History & Tracking</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Deduction excludes Sat, Sun & Holidays</p>
             </div>
           </div>
 
@@ -224,7 +223,7 @@ const EmployeeLeaveList = () => {
                   <tbody>
                     {currentItems.map((leave, i) => {
                       const statusKey = leave.status?.toLowerCase() || "default";
-                      // Recalculate Net Days (excluding Sundays/Holidays)
+                      // Recalculate Net Days (excluding Saturdays/Sundays/Holidays)
                       const displayDays = calculateNetDays(leave.startDate, leave.endDate, holidays);
                       
                       return (

@@ -25,6 +25,7 @@ const AdminAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSunday, setIsSunday] = useState(false);
+  const [isSaturday, setIsSaturday] = useState(false); // NEW STATE
   const [isHoliday, setIsHoliday] = useState(false);
   const [holidayName, setHolidayName] = useState("");
 
@@ -35,10 +36,13 @@ const AdminAttendance = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data.success) {
-        setIsSunday(res.data.isSunday || false);
-        setIsHoliday(res.data.isHoliday || false);
-        setHolidayName(res.data.holidayName || "");
-        setAttendance(res.data.attendance.map((a) => ({
+        // Updated to catch the new backend logic
+        setIsSunday(res.data.reason === "Sunday"); 
+        setIsSaturday(res.data.reason === "Saturday"); // NEW LOGIC
+        setIsHoliday(res.data.isOffDay && !["Sunday", "Saturday"].includes(res.data.reason));
+        setHolidayName(res.data.reason || "");
+        
+        setAttendance((res.data.attendance || []).map((a) => ({
           ...a,
           employeeMongoId: a.employeeId?._id,
           employeeCode: a.employeeId?.employeeId || "N/A",
@@ -80,7 +84,7 @@ const AdminAttendance = () => {
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-6">
         
-        {/* HEADER SECTION - Optimized for Mobile Stacking */}
+        {/* HEADER SECTION */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-200">
@@ -101,7 +105,7 @@ const AdminAttendance = () => {
           </Link>
         </header>
 
-        {/* SEARCH & DATE - Sticky on Mobile */}
+        {/* SEARCH & DATE */}
         <div className="sticky top-4 z-20 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 bg-white rounded-2xl shadow-md border border-slate-100 flex items-center px-4">
             <Search className="text-slate-300" size={18} />
@@ -125,15 +129,19 @@ const AdminAttendance = () => {
               <div className="w-10 h-10 border-4 border-red-100 border-t-red-600 rounded-full animate-spin" />
               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Syncing Live Bio-Data...</p>
             </div>
-          ) : isSunday || isHoliday ? (
+          ) : isSunday || isSaturday || isHoliday ? ( // UPDATED CONDITION
             <div className="py-20 flex flex-col items-center text-center">
               <ShieldAlert size={48} className="text-slate-200 mb-4" />
-              <h2 className="text-2xl font-black uppercase text-slate-800 italic">{isSunday ? "System Idle" : holidayName}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">No Active Registry Found</p>
+              <h2 className="text-2xl font-black uppercase text-slate-800 italic">
+                {(isSunday || isSaturday) ? "Week OFF" : holidayName}
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                Registry Inactive for {holidayName || "Weekend Off"}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* DESKTOP VIEW - Hidden on Mobile */}
+              {/* DESKTOP VIEW */}
               <div className="hidden md:block bg-white rounded-[2rem] shadow-xl border border-white overflow-hidden">
                 <table className="w-full border-separate border-spacing-y-2 px-4">
                   <thead>
@@ -147,7 +155,7 @@ const AdminAttendance = () => {
                   <tbody>
                     {paginated.map((a, i) => (
                       <tr key={a.employeeMongoId} className="bg-slate-50/50 hover:bg-red-50/30 transition-all group">
-                        <td className="px-6 py-4 first:rounded-l-2xl text-[10px] font-bold text-slate-300">#{(currentPage-1)*8+i+1}</td>
+                        <td className="px-6 py-4 first:rounded-l-2xl text-[10px] font-bold text-slate-300">#{(currentPage-1)*ITEMS_PER_PAGE+i+1}</td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
                             <span className="font-black uppercase italic text-slate-800">{a.name}</span>
@@ -168,13 +176,11 @@ const AdminAttendance = () => {
                 </table>
               </div>
 
-              {/* MOBILE VIEW - Modern Card Layout */}
+              {/* MOBILE VIEW */}
               <div className="md:hidden grid grid-cols-1 gap-4">
-                {paginated.map((a, index) => (
+                {paginated.map((a) => (
                   <div key={a.employeeMongoId} className="bg-white rounded-[1.8rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden">
-                    {/* Status Accent Line */}
                     <div className={`absolute top-0 left-0 h-full w-1.5 ${a.status === 'present' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                    
                     <div className="flex justify-between items-start mb-4 pl-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
@@ -199,7 +205,6 @@ const AdminAttendance = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="pt-4 border-t border-slate-50">
                       <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
                     </div>
@@ -207,7 +212,7 @@ const AdminAttendance = () => {
                 ))}
               </div>
 
-              {/* PAGINATION - Large Buttons for Fingers */}
+              {/* PAGINATION */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
                   <button

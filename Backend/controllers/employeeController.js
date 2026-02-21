@@ -363,7 +363,6 @@ const getLeaveBalance = async (req, res) => {
   }
 };
 
-
 export {
   addEmployee,
   getEmployees,

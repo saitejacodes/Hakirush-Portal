@@ -29,7 +29,6 @@ const EmployeeSummary = () => {
 
   /* ================= HELPERS ================= */
   
-  // Robust Image URL Helper
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
@@ -81,6 +80,7 @@ const EmployeeSummary = () => {
     }
   };
 
+  /* --- UPDATED: Includes Saturday as Weekend --- */
   const getDayInfo = (day) => {
     if (!day) return { status: "none", title: "" };
     const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
@@ -90,7 +90,10 @@ const EmployeeSummary = () => {
     const holidayRec = holidays.find(h => toYMD(h.date) === dateStr);
     if (holidayRec) return { status: "holiday", title: holidayRec.title };
 
-    if (date.getDay() === 0) return { status: "weekend", title: "Sunday" };
+    // UPDATED: 0 is Sunday, 6 is Saturday
+    if (date.getDay() === 0 || date.getDay() === 6) {
+        return { status: "weekend", title: date.getDay() === 0 ? "Sunday" : "Saturday" };
+    }
 
     const activeLeave = leaves.find(l => {
       if (l.status !== "Approved") return false;
@@ -151,7 +154,7 @@ const EmployeeSummary = () => {
       setBirthdays(birthdayData);
       setAttendance(attendanceData);
 
-      // Balance Calculation
+      /* --- UPDATED: Excludes Sat & Sun from Balance --- */
       const getUsedDays = (lt) => {
         const hols = holidayData.map(h => toYMD(h.date));
         return allLeaves.filter(l => l.status === "Approved" && l.leaveType === lt)
@@ -159,7 +162,11 @@ const EmployeeSummary = () => {
             let count = 0, curr = new Date(l.startDate), last = new Date(l.endDate);
             curr.setHours(0,0,0,0); last.setHours(0,0,0,0);
             while (curr <= last) {
-              if (curr.getDay() !== 0 && !hols.includes(toYMD(curr))) count++;
+              const dayOfWeek = curr.getDay();
+              // Check: Not Sunday (0), Not Saturday (6), and Not a Holiday
+              if (dayOfWeek !== 0 && dayOfWeek !== 6 && !hols.includes(toYMD(curr))) {
+                count++;
+              }
               curr.setDate(curr.getDate() + 1);
             }
             return total + count;
@@ -196,24 +203,24 @@ const EmployeeSummary = () => {
             {showBellMenu && (
               <div className="absolute right-0 mt-4 w-[320px] sm:w-[400px] bg-white rounded-[3rem] shadow-2xl border z-[100] overflow-hidden animate-pop">
                 <div className="p-8 bg-slate-50 border-b">
-                   <div className="flex justify-between items-center mb-6">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notices</span>
-                      <X size={18} className="cursor-pointer text-slate-300 hover:text-red-500" onClick={()=>setShowBellMenu(false)}/>
-                   </div>
-                   <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                         <div className="text-xs font-black text-amber-500">{announcements.filter(a => a.status === "Ongoing").length}</div>
-                         <div className="text-[7px] font-black uppercase text-slate-400">Ongoing</div>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                         <div className="text-xs font-black text-green-500">{announcements.filter(a => a.status === "Completed").length}</div>
-                         <div className="text-[7px] font-black uppercase text-slate-400">Done</div>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                         <div className="text-xs font-black text-blue-500">{announcements.filter(a => a.status === "Coming").length}</div>
-                         <div className="text-[7px] font-black uppercase text-slate-400">Coming</div>
-                      </div>
-                   </div>
+                    <div className="flex justify-between items-center mb-6">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notices</span>
+                       <X size={18} className="cursor-pointer text-slate-300 hover:text-red-500" onClick={()=>setShowBellMenu(false)}/>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                       <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                          <div className="text-xs font-black text-amber-500">{announcements.filter(a => a.status === "Ongoing").length}</div>
+                          <div className="text-[7px] font-black uppercase text-slate-400">Ongoing</div>
+                       </div>
+                       <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                          <div className="text-xs font-black text-green-500">{announcements.filter(a => a.status === "Completed").length}</div>
+                          <div className="text-[7px] font-black uppercase text-slate-400">Done</div>
+                       </div>
+                       <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                          <div className="text-xs font-black text-blue-500">{announcements.filter(a => a.status === "Coming").length}</div>
+                          <div className="text-[7px] font-black uppercase text-slate-400">Coming</div>
+                       </div>
+                    </div>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto p-4 space-y-2">
                   {announcements.map(a => {
@@ -241,8 +248,6 @@ const EmployeeSummary = () => {
 
         {/* Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          
-          {/* Card 1: Team Pulse */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-lg h-[240px] flex flex-col border border-slate-50">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest"><Activity size={16} className="text-red-500" /> Team Pulse</div>
             <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-1 custom-scrollbar">
@@ -257,7 +262,6 @@ const EmployeeSummary = () => {
             </div>
           </div>
 
-          {/* Card 2: Birthdays */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-lg h-[240px] flex flex-col border border-slate-50">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest"><Cake size={16} className="text-pink-500" /> Birthdays</div>
             <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-1 custom-scrollbar">
@@ -279,7 +283,6 @@ const EmployeeSummary = () => {
             </div>
           </div>
 
-          {/* Card 3: Holidays */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-lg h-[240px] flex flex-col border border-slate-50">
              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest"><CalendarDays size={16} className="text-indigo-500" /> Holidays</div>
              <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar">
@@ -294,7 +297,6 @@ const EmployeeSummary = () => {
              </div>
           </div>
 
-          {/* Card 4: Leave Credits */}
           <div onClick={() => setShowLeaveBreakdown(true)} className="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-[240px] transition-transform active:scale-95 group relative overflow-hidden">
             <Umbrella size={120} className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity text-red-500 -rotate-12" />
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 z-10">Available Credits</span>
@@ -312,15 +314,14 @@ const EmployeeSummary = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10">
             <h3 className="text-2xl font-black uppercase italic tracking-tighter">Attendance History</h3>
             <div className="flex items-center gap-3 bg-slate-100 p-2 rounded-2xl w-full sm:w-auto justify-between shadow-inner">
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-2 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors"><ChevronLeft/></button>
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-2 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors cursor-pointer"><ChevronLeft/></button>
               <span className="text-xs font-black uppercase w-40 text-center tracking-widest">
                 {calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </span>
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-2 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors"><ChevronRight/></button>
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-2 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors cursor-pointer"><ChevronRight/></button>
             </div>
           </div>
 
-          {/* DESKTOP GRID VIEW */}
           <div className="hidden sm:grid grid-cols-7 gap-4">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
                 <div key={d} className="text-center text-[10px] font-black text-slate-300 uppercase pb-4 tracking-[0.2em]">{d}</div>
@@ -345,7 +346,6 @@ const EmployeeSummary = () => {
             })}
           </div>
 
-          {/* MOBILE LIST VIEW (Restored) */}
           <div className="sm:hidden space-y-3">
              {generateCalendar().filter(d => d !== null).reverse().map((day) => {
                 const { status, title } = getDayInfo(day);

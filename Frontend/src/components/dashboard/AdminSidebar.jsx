@@ -13,13 +13,15 @@ import {
   PartyPopper, 
   BadgeDollarSign, 
   Store, 
-  ChevronRight 
+  ChevronRight, 
+  UserCog
 } from "lucide-react";
 import { useSidebar } from "../../context/sidebarContext";
 
 const sidebarLinks = [
   { link: "/admin-dashboard", icon: LayoutDashboard, title: "Dashboard" },
   { link: "/admin-dashboard/departments", icon: Building, title: "Departments" },
+  // { link: "/admin-dashboard/employees/managers", icon: UserCog, title: "Managers" },
   { link: "/admin-dashboard/employees", icon: User, title: "Employees" },
   { link: "/admin-dashboard/clients", icon: UserSquare, title: "Clients" },
   { link: "/admin-dashboard/sponsors", icon: BadgeDollarSign, title: "Sponsors" },
