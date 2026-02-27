@@ -4,10 +4,19 @@
 * { font-family: "Outfit", sans-serif; }
 body { @apply bg-slate-50 text-slate-900; }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Global */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Utility to hide scrollbar (removes the red bar from sidebar) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Animations */
 @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

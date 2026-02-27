@@ -145,13 +145,13 @@ const AdminSidebar = () => {
             </NavLink>
           ))}
         </nav>
-
+        
         {/* FOOTER DECORATION */}
         <div className="absolute bottom-4 left-0 w-full px-8 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-all duration-500">
           <div className="h-[1px] bg-gradient-to-r from-transparent via-red-100 to-transparent w-full mb-4" />
           <div className="flex items-center gap-3 text-slate-400">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em]">Systems Nominal</span>
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em]">Node Online</span>
           </div>
         </div>
       </aside>

@@ -3,8 +3,30 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   UploadCloud, CheckCircle2, ArrowLeft, ShieldCheck,
-  History, FileText, ChevronRight, Wallet, Activity, Receipt
+  History, FileText, Wallet, Activity, Receipt
 } from "lucide-react";
+
+/* ===== SHARED SUCCESS ALERT COMPONENT ===== */
+const SuccessAlert = ({ onClose }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" />
+    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
+      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto mb-6">
+        <CheckCircle2 size={40} strokeWidth={2.5} />
+      </div>
+      <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">Vaulted!</h3>
+      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-8">
+        Financial statement has been securely posted.
+      </p>
+      <button 
+        onClick={onClose} 
+        className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95 shadow-lg cursor-pointer"
+      >
+        Dismiss Ledger
+      </button>
+    </div>
+  </div>
+);
 
 const AddPayslip = () => {
   const { id } = useParams();
@@ -16,16 +38,9 @@ const AddPayslip = () => {
   const [fetchingHistory, setFetchingHistory] = useState(true);
 
   const [form, setForm] = useState({
-    month: "",
-    basicSalary: "",
-    hra: "",
-    conveyanceAllowance: "",
-    medicalAllowance: "",
-    bonus: "",
-    providentFund: "",
-    professionalTax: "",
-    incomeTax: "",
-    lossOfPay: ""
+    month: "", basicSalary: "", hra: "", conveyanceAllowance: "",
+    medicalAllowance: "", bonus: "", providentFund: "",
+    professionalTax: "", incomeTax: "", lossOfPay: ""
   });
 
   const fetchHistory = async () => {
@@ -43,12 +58,10 @@ const AddPayslip = () => {
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const calculations = useMemo(() => {
-    const gross = Object.entries(form)
-      .filter(([k]) => ["basicSalary", "hra", "conveyanceAllowance", "medicalAllowance", "bonus"].includes(k))
-      .reduce((acc, [, v]) => acc + Number(v || 0), 0);
-    const ded = Object.entries(form)
-      .filter(([k]) => ["providentFund", "professionalTax", "incomeTax", "lossOfPay"].includes(k))
-      .reduce((acc, [, v]) => acc + Number(v || 0), 0);
+    const gross = ["basicSalary", "hra", "conveyanceAllowance", "medicalAllowance", "bonus"]
+      .reduce((acc, k) => acc + Number(form[k] || 0), 0);
+    const ded = ["providentFund", "professionalTax", "incomeTax", "lossOfPay"]
+      .reduce((acc, k) => acc + Number(form[k] || 0), 0);
     return { gross, ded, net: gross - ded };
   }, [form]);
 
@@ -76,121 +89,113 @@ const AddPayslip = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
-      {/* --- TOP BAR --- */}
-      <nav className="sticky top-0 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center z-50">
-        <button onClick={() => navigate(-1)} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform"/> Back to Personnel
+      <nav className="sticky top-0 px-6 py-3 flex justify-between items-center z-50">
+        <button onClick={() => navigate(-1)} className="group px-30 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer pt-5">
+          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform"/> Back
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-5">
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Secure Node</span>
-          <ShieldCheck size={18} className="text-emerald-500" />
+          <ShieldCheck size={16} className="text-emerald-500" />
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <main className="max-w-6xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* LEFT: FORM SECTION (7 COLS) */}
-          <div className="lg:col-span-7 space-y-8">
-            <div className="flex items-end gap-4">
-               <h1 className="text-5xl font-black uppercase italic tracking-tighter">Issue <span className="text-red-600">Statement</span></h1>
-               <Activity size={24} className="mb-2 text-slate-300 animate-pulse" />
+          {/* LEFT: FORM SECTION */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-end gap-3">
+               <h1 className="text-3xl font-black uppercase italic tracking-tighter">Issue <span className="text-red-600">Statement</span></h1>
+               <Activity size={20} className="mb-1 text-slate-300 animate-pulse" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-8">
-                
-                {/* Month Picker */}
-                <div className="w-full md:w-1/2">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm space-y-8">
+                <div className="w-full md:w-1/3">
                    <Input label="Payroll Month" name="month" type="month" value={form.month} onChange={handleChange} required />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                  <div className="space-y-6">
-                    <SectionLabel icon={<Wallet size={14}/>} title="Earnings" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                  <div className="space-y-4">
+                    <SectionLabel icon={<Wallet size={12}/>} title="Earnings" />
                     <Input label="Basic Salary" name="basicSalary" type="number" value={form.basicSalary} onChange={handleChange} />
                     <Input label="HRA" name="hra" type="number" value={form.hra} onChange={handleChange} />
-                    <Input label="Bonus / Incentives" name="bonus" type="number" value={form.bonus} onChange={handleChange} />
+                    <Input label="Bonus" name="bonus" type="number" value={form.bonus} onChange={handleChange} />
                   </div>
 
-                  <div className="space-y-6">
-                    <SectionLabel icon={<Receipt size={14}/>} title="Deductions" color="text-red-500" />
+                  <div className="space-y-4">
+                    <SectionLabel icon={<Receipt size={12}/>} title="Deductions" color="text-red-500" />
                     <Input label="Provident Fund" name="providentFund" type="number" value={form.providentFund} onChange={handleChange} />
-                    <Input label="Income Tax (TDS)" name="incomeTax" type="number" value={form.incomeTax} onChange={handleChange} />
+                    <Input label="Income Tax" name="incomeTax" type="number" value={form.incomeTax} onChange={handleChange} />
                     <Input label="Loss of Pay" name="lossOfPay" type="number" value={form.lossOfPay} onChange={handleChange} />
                   </div>
                 </div>
 
-                {/* File Upload Area */}
-                <div className="group relative border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center transition-all hover:border-red-500 hover:bg-red-50/30">
+                <div className="group relative border-2 border-dashed border-slate-100 rounded-[2rem] p-6 text-center transition-all hover:border-red-500 hover:bg-red-50/30">
                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setFile(e.target.files[0])} />
-                  <UploadCloud size={32} className="mx-auto text-slate-300 mb-2 group-hover:text-red-500 transition-colors" />
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-red-600">
-                    {file ? file.name : "Drop PDF Statement Here"}
+                  <UploadCloud size={24} className="mx-auto text-slate-200 mb-2 group-hover:text-red-500 transition-colors" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-red-600 transition-colors">
+                    {file ? file.name : "Drop PDF Statement"}
                   </p>
                 </div>
               </div>
 
-              {/* POST BUTTON */}
-              <button disabled={loading} className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-red-600 transition-all active:scale-[0.98] disabled:opacity-50">
-                {loading ? "Authenticating & Uploading..." : "Finalize & Post Statement"}
+              <button disabled={loading} className="w-full bg-gradient-to-br from-slate-900 to-slate-800 text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed">
+                {loading ? "COMMITTING DATA..." : "Finalize & Post Statement"}
               </button>
             </form>
           </div>
 
-          {/* RIGHT: LIVE LEDGER & HISTORY (5 COLS) */}
-          <div className="lg:col-span-5 space-y-8">
-            
-            {/* LIVE CALCULATOR CARD */}
-            <div className="sticky top-28 bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl shadow-slate-300 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/20 rounded-full blur-3xl" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8 flex items-center gap-2">
-                <Activity size={12}/> Net Calculation
+          {/* RIGHT: LIVE LEDGER & HISTORY */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="sticky top-24 bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 rounded-full blur-3xl" />
+              <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8 flex items-center gap-2">
+                <Activity size={10}/> Real-time Calculation
               </h3>
               
-              <div className="space-y-6">
-                <div className="flex justify-between items-end border-b border-white/10 pb-4">
-                  <span className="text-xs text-slate-400 uppercase font-bold">Gross Total</span>
-                  <span className="text-xl font-bold">₹{calculations.gross.toLocaleString("en-IN")}</span>
+              <div className="space-y-5">
+                <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Gross Yield</span>
+                  <span className="text-xl font-black italic tracking-tight">₹{calculations.gross.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between items-end border-b border-white/10 pb-4 text-red-400">
-                  <span className="text-xs uppercase font-bold">Deductions</span>
-                  <span className="text-xl font-bold">- ₹{calculations.ded.toLocaleString("en-IN")}</span>
+                <div className="flex justify-between items-center border-b border-white/5 pb-3 text-red-400">
+                  <span className="text-[10px] uppercase font-bold tracking-widest">Total Deductions</span>
+                  <span className="text-xl font-black italic tracking-tight">- ₹{calculations.ded.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="pt-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-1">Final Disbursable</p>
-                  <p className="text-6xl font-black italic tracking-tighter">₹{calculations.net.toLocaleString("en-IN")}</p>
+                <div className="pt-4 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-[0.4em] text-red-500 mb-1">Final Net Pay</p>
+                  <p className="text-5xl font-black italic tracking-tighter">₹{calculations.net.toLocaleString("en-IN")}</p>
                 </div>
               </div>
             </div>
 
-            {/* HISTORY LIST */}
-            <section className="space-y-6">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-2">
-                <History size={14} /> Audit Trail
+            <section className="space-y-4">
+              <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2 ml-2">
+                <History size={12} /> Recent Dispatches
               </h2>
               <div className="space-y-3">
                 {fetchingHistory ? (
-                   <div className="p-4 bg-white rounded-2xl border border-slate-100 animate-pulse text-[10px] font-bold uppercase text-slate-300">Syncing Ledger...</div>
+                   <div className="p-4 bg-white/50 rounded-2xl border border-slate-100 animate-pulse text-[10px] font-black uppercase text-slate-300 text-center tracking-widest">Syncing Vault...</div>
                 ) : history.length === 0 ? (
-                  <div className="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem] text-[10px] font-bold uppercase text-slate-400">No records found</div>
+                  <div className="p-10 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-[10px] font-black uppercase text-slate-300 tracking-widest">No entries found</div>
                 ) : (
-                  history.slice(0, 5).map((item) => (
-                    <div key={item._id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex justify-between items-center group hover:border-red-200 transition-all">
+                  history.slice(0, 4).map((item) => (
+                    <div key={item._id} className="bg-white rounded-[1.5rem] p-4 border border-slate-100 shadow-sm flex justify-between items-center group hover:border-red-200 hover:translate-x-1 transition-all">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
-                           <Receipt size={18} />
+                        <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                           <Receipt size={16} />
                         </div>
                         <div>
-                          <p className="font-black uppercase text-sm italic">{item.month}</p>
+                          <p className="font-black uppercase text-xs italic tracking-tight text-slate-800">{item.month}</p>
                           <p className="text-[10px] font-bold text-slate-400">₹{item.netSalary?.toLocaleString("en-IN")}</p>
                         </div>
                       </div>
-                      <a href={item.payslipFile} target="_blank" rel="noreferrer" className="p-2 text-slate-300 hover:text-red-600 transition-colors">
-                        <FileText size={20} />
+                      <a href={item.payslipFile} target="_blank" rel="noreferrer" className="h-10 w-10 flex items-center justify-center rounded-xl text-slate-200 hover:bg-slate-900 hover:text-white transition-all">
+                        <FileText size={18} />
                       </a>
                     </div>
                   ))
@@ -204,41 +209,23 @@ const AddPayslip = () => {
   );
 };
 
-/* --- SUB-COMPONENTS --- */
-
 const SectionLabel = ({ icon, title, color = "text-slate-400" }) => (
-  <div className={`flex items-center gap-2 ${color} mb-4`}>
+  <div className={`flex items-center gap-2 ${color} mb-2`}>
     {icon}
-    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span>
+    <span className="text-[10px] font-black uppercase tracking-widest">{title}</span>
   </div>
 );
 
 const Input = ({ label, ...props }) => (
   <div className="group space-y-2">
-    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-red-500 transition-colors">
+    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-red-500 transition-colors ml-1">
       {label}
     </label>
     <input
       {...props}
-      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-black outline-none transition-all focus:bg-white focus:border-red-200 focus:ring-4 focus:ring-red-500/5 placeholder:text-slate-300"
+      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black italic tracking-tight outline-none transition-all focus:bg-white focus:border-red-200 focus:ring-4 focus:ring-red-500/5 placeholder:text-slate-200"
       placeholder="0.00"
     />
-  </div>
-);
-
-const SuccessAlert = ({ onClose }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
-    <div className="relative bg-white p-10 rounded-[3rem] text-center w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300">
-      <div className="h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500">
-        <CheckCircle2 size={40} />
-      </div>
-      <h3 className="text-2xl font-black uppercase italic mb-2">Authenticated</h3>
-      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-8">Statement has been posted to the employee's vault.</p>
-      <button onClick={onClose} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-600 transition-all">
-        Continue
-      </button>
-    </div>
   </div>
 );
 

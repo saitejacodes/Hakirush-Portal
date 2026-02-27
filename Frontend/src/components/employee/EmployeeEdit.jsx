@@ -1,54 +1,46 @@
-import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
-import { UserCog, Camera, CheckCircle2, ArrowLeft } from "lucide-react";
+import { 
+  User, Calendar, CreditCard, DollarSign,
+  Heart, Fingerprint, Droplets, Briefcase, 
+  Camera, CheckCircle2, X
+} from "lucide-react";
 
-/* ================= IMAGE URL HELPER ================= */
-const getImageUrl = (url) => {
-  if (!url) return "/default-avatar.png";
-  if (url.startsWith("blob:") || url.startsWith("http")) return url;
-  return `${import.meta.env.VITE_BACKEND_URL}/${url}`;
-};
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /* ================= PREMIUM SUCCESS ALERT ================= */
-const SuccessAlert = ({ onClose }) => {
-  return (
-    <>
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100]" />
-      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-pop">
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mx-auto mb-6 shadow-inner">
-              <CheckCircle2 size={32} strokeWidth={2.5} />
-            </div>
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
-              Updated!
-            </h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2">
-              Personnel record synchronized.
-            </p>
+const SuccessAlert = ({ onClose }) => (
+  <>
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-50 animate-in fade-in duration-300" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="p-10 text-center">
+          <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <CheckCircle2 size={40} />
           </div>
-          <div className="px-8 pb-8">
-            <button
-              onClick={onClose}
-              className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-slate-200 cursor-pointer"
-            >
-              Continue
-            </button>
-          </div>
+          <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+            Update Verified
+          </h3>
+          <p className="text-sm text-slate-500 mt-3 font-medium leading-relaxed">
+            The personnel database has been synchronized with your new records.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+          >
+            Continue to Dashboard
+          </button>
         </div>
       </div>
-    </>
-  );
-};
+    </div>
+  </>
+);
 
 const EmployeeEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   const [employee, setEmployee] = useState({
     employeeId: "",
@@ -60,41 +52,42 @@ const EmployeeEdit = () => {
   });
 
   const [departments, setDepartments] = useState([]);
-  const [loadingDept, setLoadingDept] = useState(false);
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState("/default-avatar.png");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoadingDept(true);
         const deptData = await fetchDepartments();
         setDepartments(deptData || []);
 
         const res = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
+          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
 
         const emp = res.data.employee;
         setEmployee({
-          employeeId: emp?.employeeId || "", 
+          employeeId: emp?.employeeId || "",
           name: emp?.userId?.name || "",
           maritalStatus: emp?.maritalStatus || "",
           designation: emp?.designation || "",
           salary: emp?.salary || "",
           department: emp?.department?._id || "",
         });
-        setPreview(emp?.userId?.profileImage || null);
-      } catch (error) {
-        console.error(error);
+
+        const profileImg = emp?.userId?.profileImage;
+        if (profileImg) {
+          setPreview(profileImg.startsWith("http") ? profileImg : `${import.meta.env.VITE_BACKEND_URL}/${profileImg}`);
+        }
+      } catch (err) {
+        console.error("Failed to load employee data", err);
       } finally {
-        setLoadingDept(false);
+        setLoading(false);
       }
     };
     loadData();
@@ -102,141 +95,212 @@ const EmployeeEdit = () => {
 
   /* ================= HANDLERS ================= */
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "profileImage") {
-      const file = files[0];
-      if (!file || file.size > MAX_FILE_SIZE) return;
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
-      return;
-    }
+    const { name, value } = e.target;
     setEmployee((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file || file.size > MAX_FILE_SIZE) return;
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    const fd = new FormData();
-    Object.keys(employee).forEach((key) => fd.append(key, employee[key]));
-    if (image) fd.append("profileImage", image);
-
     try {
+      setSaving(true);
+      const fd = new FormData();
+      Object.keys(employee).forEach((key) => fd.append(key, employee[key]));
+      if (image) fd.append("profileImage", image);
+
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
         fd,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
+
       if (res.data.success) {
         setShowAlert(true);
-        setTimeout(() => navigate("/admin-dashboard/employees"), 1800);
       }
-    } catch (error) {
-      alert(error.response?.data?.error || "Update failed");
+    } catch (err) {
+      alert(err.response?.data?.error || "Update failed");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const inputClass = "w-full bg-slate-50 border-2 border-transparent focus:border-red-500/20 focus:bg-white rounded-2xl px-5 py-4 text-xs font-black uppercase italic tracking-tight text-slate-700 outline-none transition-all placeholder:text-slate-300";
+  if (loading) return <LoadingPulse />;
 
   return (
-    <>
-      {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-12">
+      {showAlert && (
+        <SuccessAlert onClose={() => navigate("/admin-dashboard/employees")} />
+      )}
 
-      <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 p-4 sm:p-8 flex items-center justify-center">
-        <div className="w-full max-w-4xl bg-white/70 backdrop-blur-2xl p-8 sm:p-12 rounded-[3rem] shadow-2xl border border-white">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-10 px-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Administration</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Modify <span className="not-italic text-red-600">Personnel</span></h1>
+          </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all shadow-sm cursor-pointer"
+          >
+            <X size={16} className="group-hover:rotate-90 transition-transform" /> Discard
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          <header className="flex flex-col items-center mb-10">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100 mb-4">
-              <UserCog size={30} strokeWidth={2.5} />
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 uppercase italic tracking-tighter">
-              Modify <span className="text-red-600">Personnel.</span>
-            </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-3">Edit Record ID: {employee.employeeId}</p>
-          </header>
-
-          <form onSubmit={handleSubmit} className="space-y-10">
-            {/* IMAGE UPDATE AREA */}
-            <div className="flex flex-col items-center">
+          {/* --- LEFT: AVATAR --- */}
+          <div className="lg:col-span-4">
+            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm flex flex-col items-center">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-[2.5rem] bg-white p-2 shadow-2xl transition-transform group-hover:scale-105">
+                <div className="w-48 h-48 rounded-[4rem] overflow-hidden ring-8 ring-slate-50 p-1 shadow-inner">
                   <img
-                    src={getImageUrl(preview)}
+                    src={preview}
                     alt="preview"
-                    className="w-full h-full object-cover rounded-[2rem] border border-slate-50"
-                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                    className="w-full h-full object-cover rounded-[3.5rem]"
                   />
                 </div>
-                <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white cursor-pointer shadow-xl hover:bg-red-600 transition-colors">
-                  <Camera size={18} />
-                  <input type="file" name="profileImage" accept="image/*" className="hidden" onChange={handleChange} />
+                <label className="absolute bottom-2 right-2 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-600 transition-all active:scale-90">
+                  <Camera size={24} />
+                  <input type="file" hidden accept="image/*" onChange={handleImageChange} />
                 </label>
               </div>
-            </div>
 
-            {/* FORM FIELDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
-                <input name="name" value={employee.name} required onChange={handleChange} className={inputClass} />
+              <div className="mt-8 w-full">
+                <InputItem
+                  label="Full Legal Name"
+                  icon={<User size={14}/>}
+                  name="name"
+                  value={employee.name}
+                  onChange={handleChange}
+                  placeholder="Enter full name"
+                  required
+                />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Marital Status</label>
-                <select name="maritalStatus" value={employee.maritalStatus} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="">Select Status</option>
-                  <option value="Single">SINGLE</option>
-                  <option value="Married">MARRIED</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Department</label>
-                <select name="department" value={employee.department} required onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="">{loadingDept ? "SYNCING..." : "SELECT DEPT"}</option>
-                  {departments.map((d) => (
-                    <option key={d._id} value={d._id}>{d.dep_name.toUpperCase()}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Designation</label>
-                <input name="designation" value={employee.designation} onChange={handleChange} className={inputClass} />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Salary (LPA)</label>
-                <input type="number" name="salary" value={employee.salary} onChange={handleChange} className={inputClass} />
+              <div className="mt-6 p-6 bg-slate-50 rounded-[2rem] w-full border border-slate-100">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">System Identity</p>
+                <p className="text-sm font-bold text-slate-800 text-center mt-1 italic tracking-tight">{employee.employeeId}</p>
               </div>
             </div>
+          </div>
 
-            {/* BUTTONS */}
-            <div className="flex gap-4 pt-4">
+          {/* --- RIGHT: FORM DATA --- */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
+              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
+                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Briefcase size={14}/></div>
+                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Personnel Registry</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputItem
+                  label="Designation Title"
+                  icon={<Briefcase size={14}/>}
+                  name="designation"
+                  value={employee.designation}
+                  onChange={handleChange}
+                />
+
+                <SelectItem
+                  label="Department Wing"
+                  icon={<Fingerprint size={14}/>}
+                  name="department"
+                  value={employee.department}
+                  onChange={handleChange}
+                  required
+                  options={departments.map(d => ({ label: d.dep_name.toUpperCase(), value: d._id }))}
+                />
+                
+                <InputItem
+                  label="Salary (LPA)"
+                  icon={<DollarSign size={14}/>}
+                  type="number"
+                  name="salary"
+                  value={employee.salary}
+                  onChange={handleChange}
+                />
+
+                <SelectItem
+                  label="Marital Registry"
+                  icon={<Heart size={14}/>}
+                  name="maritalStatus"
+                  value={employee.maritalStatus}
+                  onChange={handleChange}
+                  options={[
+                    { label: "SINGLE", value: "Single" },
+                    { label: "MARRIED", value: "Married" },
+                    { label: "DIVORCED", value: "Divorced" }
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* ACTION FOOTER */}
+            <div className="flex gap-4">
               <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="w-1/3 py-5 rounded-[1.5rem] bg-slate-100 text-slate-500 font-black uppercase text-xs tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 cursor-pointer"
+                type="submit"
+                disabled={saving}
+                className="w-full py-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-slate-200 hover:from-red-600 hover:to-rose-500 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
               >
-                Discard
-              </button>
-              <button
-                disabled={loading}
-                className="w-2/3 py-5 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-500 text-white font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-red-200 transition-all 
-                enabled:cursor-pointer enabled:hover:scale-[1.02] enabled:active:scale-95
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "SAVING..." : "UPDATE RECORD"}
+                {saving ? "Synchronizing..." : "Authorize & Commmit Changes"}
               </button>
             </div>
-          </form>
-        </div>
+          </div>
+
+        </form>
       </div>
-    </>
+    </div>
   );
 };
+
+/* ===== PREMIUM FORM COMPONENTS ===== */
+
+const InputItem = ({ label, icon, ...props }) => (
+  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
+        {label}
+      </p>
+    </div>
+    <input
+      {...props}
+      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 placeholder:text-slate-200 uppercase italic"
+    />
+  </div>
+);
+
+const SelectItem = ({ label, icon, options, ...props }) => (
+  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
+        {label}
+      </p>
+    </div>
+    <select
+      {...props}
+      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 cursor-pointer uppercase italic"
+    >
+      <option value="">Choose Variant</option>
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  </div>
+);
+
+const LoadingPulse = () => (
+  <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-6">
+    <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
+    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Establishing Secure Session</p>
+  </div>
+);
 
 export default EmployeeEdit;

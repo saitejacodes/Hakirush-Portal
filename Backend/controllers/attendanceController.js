@@ -58,8 +58,17 @@ const getAttendance = async (req, res) => {
                 return { ...record._doc, status: "Absent" };
             }
 
-            return record || { _id: null, date: todayStr, status: "Absent", workedHours: 0, employeeId: emp };
-        });
+            return record || { 
+                _id: null,
+                date: todayStr,
+                status: null, 
+                workedHours: 0,
+                checkIn: null,
+                checkOut: null,
+                isPaused: false,
+                totalPausedMs: 0,
+                employeeId: emp, };
+            });
 
         return res.json({ success: true, attendance });
     } catch (error) {
@@ -137,12 +146,8 @@ const attendanceReport = async (req, res) => {
         const groupData = {};
         filtered.forEach(r => {
             if (!groupData[r.date]) groupData[r.date] = [];
-            
-            let finalStatus = r.status;
-            if (r.date < todayStr && !r.checkOut) {
-                finalStatus = "Absent";
-            }
-
+            // Always trust the status field, regardless of checkIn/checkOut
+            let finalStatus = r.status || "Absent";
             groupData[r.date].push({
                 _id: r._id,
                 employeeId: r.employeeId?.employeeId || "N/A",
@@ -257,7 +262,21 @@ const updateAttendance = async (req, res) => {
         const { employeeId } = req.params;
         const { status } = req.body;
         const date = formatToLocalYMD(new Date());
-        const attendance = await Attendance.findOneAndUpdate({ employeeId, date }, { employeeId, status, date }, { upsert: true, new: true }).populate({ path: "employeeId", populate: ["userId", "department"] });
+        let updateFields = { status, date, employeeId };
+        if (status === "Absent" || status === "Leave") {
+            updateFields.checkIn = null;
+            updateFields.checkOut = null;
+            updateFields.workedHours = 0;
+        } else if (status === "Present") {
+            updateFields.workedHours = 8;
+        } else if (status === "Half Day") {
+            updateFields.workedHours = 4;
+        }
+        const attendance = await Attendance.findOneAndUpdate(
+            { employeeId, date },
+            updateFields,
+            { upsert: true, new: true }
+        ).populate({ path: "employeeId", populate: ["userId", "department"] });
         return res.json({ success: true, attendance });
     } catch (error) { return res.status(500).json({ success: false, message: error.message }); }
 };

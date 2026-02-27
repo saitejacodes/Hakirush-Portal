@@ -9,12 +9,10 @@ import {
   UserMinus,
   Calendar,
   AlertCircle,
-  Ticket,
-  Handshake,
   TrendingUp,
   LayoutDashboard,
   Download,
-  Cake // Added for Birthday Section
+  Cake
 } from "lucide-react";
 import {
   PieChart,
@@ -25,11 +23,9 @@ import {
   Legend,
 } from "recharts";
 
-/* ================= THEME CONSTANTS ================= */
 const PIE_COLORS = ["#ef4444", "#6366f1", "#06b6d4", "#f59e0b", "#8b5cf6", "#10b981"];
 
 /* ================= REUSABLE COMPONENTS ================= */
-
 const StatCard = ({ icon: Icon, label, value, colorClass = "text-red-600" }) => (
   <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-[180px] transition-all hover:shadow-xl hover:-translate-y-1">
     <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
@@ -59,7 +55,6 @@ const SectionCard = ({ title, children, subtitle }) => (
 );
 
 /* ================= MAIN DASHBOARD ================= */
-
 const AdminSummary = () => {
   const [summary, setSummary] = useState(null);
   const [attSummary, setAttSummary] = useState(null);
@@ -156,7 +151,6 @@ const AdminSummary = () => {
     stalls: Object.entries(summary?.stallSummary?.typeSummary || {}).map(([name, value]) => ({ name, value })),
   };
 
-  // Birthday Data Handling
   const birthdaySummary = summary?.birthdaySummary || { today: [], upcoming: [] };
 
   return (
@@ -165,12 +159,12 @@ const AdminSummary = () => {
         
         {/* HEADER */}
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 pt-4">
-          <div className="space-y-2">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <LayoutDashboard size={18} className="text-red-600" />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600">Admin Control v3.0</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600">Admin Control</p>
             </div>
-            <h1 className="text-3xl sm:text-6xl font-black text-slate-900 uppercase italic tracking-tighter leading-[0.8]">
+            <h1 className="text-2xl sm:text-5xl font-black text-slate-900 uppercase italic tracking-tighter leading-[0.9]">
               Dashboard<br/><span className="text-red-600">Summary</span>
             </h1>
           </div>

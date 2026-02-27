@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Users, Mail, Briefcase, Hash, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Users, Mail, Briefcase, ShieldCheck } from "lucide-react";
 
 const DepartmentEmployees = () => {
   const { id } = useParams();
@@ -45,18 +45,16 @@ const DepartmentEmployees = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 pb-12">
       <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
-        
-        {/* ================= HEADER ================= */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pt-2">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
-              <Users size={32} strokeWidth={2.5} />
+            <div className="w-14 h-14 rounded-[1rem] bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
+              <Users size={26} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
+              <h1 className="text-xl font-black text-red-700 uppercase tracking-tighter sm:text-3xl leading-none italic">
                 Team Roster
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
+              <p className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400 mt-1">
                 Department Personnel
               </p>
             </div>
@@ -64,9 +62,9 @@ const DepartmentEmployees = () => {
 
           <Link
             to="/admin-dashboard/departments"
-            className="group flex items-center gap-3 rounded-2xl bg-white border border-slate-100 px-6 py-4 font-black uppercase text-[10px] tracking-widest text-slate-500 shadow-lg transition-all hover:bg-red-600 hover:text-white active:scale-95"
+            className="group flex items-center gap-3 rounded-2xl bg-white border border-slate-100 px-6 py-4 font-black uppercase text-[8px] tracking-widest text-slate-500 shadow-lg transition-all hover:bg-red-600 hover:text-white active:scale-95"
           >
-            <ArrowLeft size={16} strokeWidth={3} className="text-slate-500 group-hover:text-white" /> 
+            <ArrowLeft size={12} strokeWidth={3} className="text-slate-500 group-hover:text-white" /> 
             Back to List
           </Link>
         </header>
@@ -107,7 +105,7 @@ const DepartmentEmployees = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50">
-                      <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><Hash size={14} className="inline mr-2 opacity-50"/>S.No</th>
+                      <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">S.No</th>
                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><ShieldCheck size={14} className="inline mr-2 opacity-50"/>Emp ID</th>
                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Full Name</th>
                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><Mail size={14} className="inline mr-2 opacity-50"/>Email</th>
@@ -117,7 +115,7 @@ const DepartmentEmployees = () => {
                   <tbody className="divide-y divide-slate-50">
                     {employees.map((emp, index) => (
                       <tr key={emp._id} className="hover:bg-red-50/30 transition-colors group">
-                        <td className="px-8 py-6 text-sm font-black text-slate-300 italic">#{index + 1}</td>
+                        <td className="px-8 py-6 text-sm font-black text-slate-300 italic">{index + 1}</td>
                         <td className="px-8 py-6">
                           <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[11px] font-black tracking-widest uppercase">
                             {emp.userId?.employeeId || emp.employeeId || "N/A"}

@@ -109,7 +109,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
     }
   };
 
-  const btnStyle = "p-2.5 rounded-xl border border-slate-100 text-slate-400 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200 hover:shadow-md transition-all active:scale-90 bg-white shadow-sm cursor-pointer";
+  const btnStyle = "p-2 rounded-xl border border-slate-100 text-slate-400 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200 hover:shadow-md transition-all active:scale-90 bg-white shadow-sm cursor-pointer";
 
   return (
     <>
@@ -140,7 +140,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
           onClick={() => navigate(`/admin-dashboard/employees/edit/${id}`)}
           className={btnStyle}
         >
-          <Edit2 size={16} strokeWidth={2.5} />
+          <Edit2 size={15} strokeWidth={2.5} />
         </button>
 
         {/* LEAVE MANAGEMENT */}
@@ -149,7 +149,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
           onClick={() => navigate(`/admin-dashboard/employees/leaves/${id}`)}
           className={btnStyle}
         >
-          <Plane size={16} strokeWidth={2.5} />
+          <Plane size={15} strokeWidth={2.5} />
         </button>
 
         {/* PAYROLL/PAYSLIP */}
@@ -158,7 +158,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
           onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
           className={btnStyle}
         >
-          <Receipt size={16} strokeWidth={2.5} />
+          <Receipt size={15} strokeWidth={2.5} />
         </button>
 
         {/* DANGER: TERMINATE */}
@@ -167,7 +167,7 @@ export const EmployeeButtons = ({ id, refresh }) => {
           onClick={() => setShowConfirm(true)}
           className="group p-2.5 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer shadow-sm hover:shadow-red-200"
         > 
-          <Trash2 size={16} strokeWidth={2.5} />
+          <Trash2 size={15} strokeWidth={2.5} />
         </button>
       </div>
     </>

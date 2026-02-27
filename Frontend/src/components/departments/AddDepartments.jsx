@@ -33,7 +33,7 @@ const SuccessAlert = ({ onClose }) => {
           <div className="px-8 pb-8">
             <button
               onClick={onClose}
-              className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-slate-200"
+              className="w-full py-4 rounded-2xl bg-red-600 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-slate-200"
             >
               Back to List
             </button>
@@ -96,16 +96,19 @@ const AddDepartments = () => {
         <div className="w-full max-w-xl bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl p-8 sm:p-12 border border-white">
           
           {/* Header */}
-          <div className="flex flex-col items-center mb-10 text-center">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100 mb-6">
-              <Building2 size={32} strokeWidth={2.5} />
+          <div className="flex items-center justify-center gap-4 mb-6 text-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-red-100 shrink-0">
+              <Building2 size={24} strokeWidth={2.5} />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-red-700 uppercase tracking-tighter italic leading-none">
-              Add New Dept<span className="text-slate-800">.</span>
-            </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-4">
-              Define a new business unit
-            </p>
+            
+            <div className="text-left">
+              <h2 className="text-xl sm:text-3xl font-black text-red-700 uppercase tracking-tighter italic leading-none">
+                Add New Dept
+              </h2>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mt-1">
+                Define a new business unit
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">

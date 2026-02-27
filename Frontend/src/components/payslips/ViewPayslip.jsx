@@ -1,7 +1,11 @@
 import axios from "axios";
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, X, ArrowLeft, Download, ShieldCheck, Calendar, TrendingDown, History } from "lucide-react";
+import { 
+  ArrowLeft, Download, ShieldCheck, 
+  Calendar, History, Lock, Wallet, 
+  ArrowUpRight, CreditCard 
+} from "lucide-react";
 
 const ViewPayslip = () => {
   const { id } = useParams();
@@ -17,13 +21,24 @@ const ViewPayslip = () => {
         const empRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const employeeId = empRes?.data?.employee?._id || id;
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/payslip/employee/${employeeId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setPayslips(res.data.payslips || []);
-      } catch (err) { console.error(err); } 
-      finally { setLoading(false); }
+        
+        const employeeId = empRes?.data?.employee?._id;
+        
+        if (employeeId) {
+          const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/payslip/employee/${employeeId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const sortedData = (res.data.payslips || []).sort((a, b) => 
+            new Date(b.month) - new Date(a.month)
+          );
+          setPayslips(sortedData);
+        }
+      } catch (err) { 
+        console.error("Fetch Error:", err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchPayslips();
   }, [id]);
@@ -33,114 +48,155 @@ const ViewPayslip = () => {
   [payslips]);
 
   return (
-    <div className="min-h-screen bg-[#FFFBFB] font-sans text-slate-900 selection:bg-red-100">
-      <div className="max-w-4xl mx-auto p-5 md:p-10">
+    /* UPDATED: flex and justify-center added to parent */
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-rose-100 font-sans text-slate-900 selection:bg-red-50 flex justify-center items-start overflow-x-hidden">
+      
+      {/* UPDATED: removed ml-12 and added mx-auto for perfect horizontal centering */}
+      <div className="w-full max-w-3xl p-6 md:p-12 mx-auto">
         
-        {/* TOP NAVIGATION */}
-        <div className="flex justify-between items-center mb-8">
-          <button onClick={() => navigate(-1)} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-700 transition-all cursor-pointer">
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
+        <div className="flex justify-between items-center mb-10">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="group flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm active:scale-95"
+          >
+            <ArrowLeft size={14} /> Back
           </button>
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-red-100 shadow-sm text-[9px] font-black text-red-500 uppercase tracking-tighter">
-            <ShieldCheck size={14} /> End-to-End Encrypted
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 rounded-full text-[8px] font-black text-white uppercase tracking-widest">
+            <Lock size={10} className="text-red-500" /> Secure Terminal
           </div>
         </div>
 
-        {/* RED GRADIENT SUMMARY CARD */}
-        <div className="bg-gradient-to-br from-red-600 via-red-700 to-rose-900 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-red-200 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl animate-pulse" />
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-8">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tighter italic uppercase leading-none">Earning Archive</h1>
-              <p className="text-red-100 text-xs font-bold opacity-70 uppercase tracking-[0.2em]">Fiscal History Ledger</p>
-            </div>
-            <div className="flex gap-10 border-l border-white/20 pl-10">
-              <div>
-                <p className="text-[10px] font-black text-red-200 uppercase tracking-widest mb-1">Total Assets</p>
-                <p className="text-3xl font-black tracking-tighter italic text-white">₹{totalLifetime.toLocaleString('en-IN')}</p>
+        {/* SUMMARY CARD */}
+        <div className="bg-white rounded-[2.5rem] p-8 mb-12 border border-slate-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+            <ShieldCheck size={120} className="text-slate-900" />
+          </div>
+          
+          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 text-center sm:text-left">
+            <div className="space-y-1 w-full sm:w-auto">
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-red-600 mb-1">
+                <Wallet size={14} />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Financial Ledger</span>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black text-red-200 uppercase tracking-widest mb-1">Records</p>
-                <p className="text-3xl font-black italic text-white">{payslips.length}</p>
+              <h1 className="text-2xl font-black tracking-tighter italic uppercase text-slate-900">
+                Payroll Archive
+              </h1>
+            </div>
+
+            <div className="flex justify-center sm:justify-end gap-10 w-full sm:w-auto">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aggregate</p>
+                <p className="text-3xl font-black tracking-tighter text-slate-900">
+                  <span className="text-red-600 mr-0.5">₹</span>{totalLifetime.toLocaleString('en-IN')}
+                </p>
+              </div>
+              <div className="space-y-0.5 text-right">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Slips</p>
+                <p className="text-3xl font-black italic text-slate-900">{payslips.length}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ARCHIVE FEED */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4 px-2 text-slate-400">
-             <History size={14} />
-             <span className="text-[10px] font-black uppercase tracking-widest">Recent Disbursements</span>
+        {/* LIST SECTION */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-center sm:justify-start gap-2 px-4 mb-6 text-slate-400">
+            <History size={14} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Transaction History</span>
           </div>
 
           {loading ? (
-             <div className="text-center py-20 text-red-300 font-black text-[11px] uppercase tracking-[0.4em] animate-pulse">Decrypting Statements...</div>
-          ) : (
+            <div className="py-20 flex flex-col items-center sm:items-start px-4 gap-4">
+              <div className="w-8 h-8 border-2 border-red-600/10 border-t-red-600 rounded-full animate-spin" />
+              <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Decrypting Records...</p>
+            </div>
+          ) : payslips.length > 0 ? (
             payslips.map((p) => (
               <div 
                 key={p._id} 
                 onClick={() => setSelectedSlip(p)}
-                className="group bg-white p-6 rounded-3xl border border-slate-100 flex items-center justify-between hover:border-red-200 hover:shadow-xl hover:shadow-red-500/5 transition-all cursor-pointer transform hover:-translate-y-1"
+                className="group bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between hover:border-red-500/30 hover:shadow-xl hover:shadow-red-500/5 transition-all cursor-pointer active:scale-[0.98]"
               >
-                <div className="flex items-center gap-5">
-                  <div className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shadow-sm">
-                    <Calendar size={20} />
+                <div className="flex items-center gap-6">
+                  <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-red-50 group-hover:text-red-600 transition-all">
+                    <Calendar size={24} />
                   </div>
                   <div>
-                    <p className="font-black text-lg uppercase italic tracking-tighter text-slate-800 group-hover:text-red-700 transition-colors">{p.month}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Released</span>
+                    <p className="font-black text-lg uppercase italic tracking-tight text-slate-900 group-hover:text-red-600">{p.month}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Verified Credit</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-8">
-                  <p className="font-black text-xl tracking-tighter text-slate-900 group-hover:text-red-600">₹{Number(p.netSalary).toLocaleString('en-IN')}</p>
-                  <div className="p-3 rounded-2xl text-slate-200 group-hover:text-red-600 group-hover:bg-red-50 transition-all">
-                    <Eye size={20} />
+
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="font-black text-xl tracking-tighter text-slate-900">
+                      ₹{Number(p.netSalary).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
+                    <ArrowUpRight size={18} />
                   </div>
                 </div>
               </div>
             ))
+          ) : (
+            <div className="py-20 text-center sm:text-left px-10 bg-white/40 rounded-[3rem] border border-dashed border-slate-200">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No records found in database</p>
+            </div>
           )}
         </div>
       </div>
 
       {/* DETAIL MODAL */}
       {selectedSlip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedSlip(null)} />
-          <div className="relative bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" 
+            onClick={() => setSelectedSlip(null)} 
+          />
+          <div className="relative bg-white w-full max-w-[360px] rounded-[3.5rem] shadow-2xl overflow-hidden border border-white animate-in zoom-in-95 duration-300">
             
-            <div className="p-8 border-b border-red-50 flex justify-between items-center bg-red-50/20">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Analysis Mode</span>
-                <span className="text-2xl font-black uppercase italic tracking-tighter">{selectedSlip.month}</span>
+            <div className="pt-12 pb-6 text-center">
+              <div className="inline-flex p-4 bg-red-50 rounded-2xl text-red-600 mb-4">
+                <CreditCard size={28} />
               </div>
-              <button onClick={() => setSelectedSlip(null)} className="p-3 hover:bg-white rounded-full transition-all text-red-400 shadow-sm cursor-pointer"><X size={20}/></button>
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">{selectedSlip.month}</h3>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Audit Breakdown</p>
             </div>
 
-            <div className="p-10 space-y-8">
-              <div className="text-center p-8 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden shadow-xl shadow-red-100">
-                <div className="absolute bottom-0 right-0 w-24 h-24 bg-red-600/20 rounded-full blur-2xl" />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-2">Net Payable</p>
-                <p className="text-5xl font-black tracking-tighter text-white italic">₹{Number(selectedSlip.netSalary).toLocaleString('en-IN')}</p>
-              </div>
-
-              <div className="space-y-4">
-                <MiniRow label="Basic Salary" value={selectedSlip.basicSalary} />
-                <MiniRow label="HRA Allowance" value={selectedSlip.hra} />
-                <div className="pt-4 border-t border-slate-50">
-                    <MiniRow label="Total Deductions" value={selectedSlip.totalDeductions} color="text-red-600" icon={<TrendingDown size={14} className="text-red-400"/>} />
+            <div className="px-10 space-y-6">
+              <div className="bg-slate-50/80 rounded-3xl p-6 space-y-4">
+                <MiniRow label="Base Compensation" value={selectedSlip.basicSalary} />
+                <MiniRow label="Housing / HRA" value={selectedSlip.hra} />
+                <div className="pt-4 border-t border-slate-200">
+                    <MiniRow label="Total Deductions" value={selectedSlip.totalDeductions} color="text-red-600" />
                 </div>
               </div>
+
+              <div className="text-center py-2">
+                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Final Disbursed Amount</p>
+                 <p className="text-4xl font-black tracking-tighter text-slate-900 italic">
+                   <span className="text-red-600 text-lg not-italic mr-1">₹</span>
+                   {Number(selectedSlip.netSalary).toLocaleString('en-IN')}
+                 </p>
+              </div>
             </div>
 
-            <div className="p-8 bg-slate-50/50 grid grid-cols-2 gap-4">
-              <button onClick={() => window.open(selectedSlip.payslipFile)} className="py-4 rounded-2xl border-2 border-red-100 bg-white font-black text-[10px] uppercase tracking-widest text-red-600 hover:border-red-600 hover:text-red-700 transition-all cursor-pointer">Preview</button>
-              <button onClick={() => window.open(selectedSlip.payslipFile)} className="py-4 rounded-2xl bg-red-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-200 cursor-pointer">
-                <Download size={16}/> Download PDF
+            <div className="p-10 pt-6 space-y-3">
+              <button 
+                onClick={() => window.open(selectedSlip.payslipFile, '_blank')} 
+                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-red-600 transition-all cursor-pointer shadow-xl active:scale-95"
+              >
+                <Download size={18}/> Get Statement
+              </button>
+              <button 
+                onClick={() => setSelectedSlip(null)} 
+                className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
+              >
+                Dismiss Analysis
               </button>
             </div>
           </div>
@@ -150,13 +206,10 @@ const ViewPayslip = () => {
   );
 };
 
-const MiniRow = ({ label, value, color = "text-slate-800", icon = null }) => (
-  <div className="flex justify-between items-center group">
-    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-slate-600 transition-colors">{label}</span>
-    <div className="flex items-center gap-2">
-        {icon}
-        <span className={`text-sm font-black tracking-tight ${color}`}>₹{Number(value || 0).toLocaleString('en-IN')}</span>
-    </div>
+const MiniRow = ({ label, value, color = "text-slate-900" }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+    <span className={`text-sm font-black tracking-tight ${color}`}>₹{Number(value || 0).toLocaleString('en-IN')}</span>
   </div>
 );
 
