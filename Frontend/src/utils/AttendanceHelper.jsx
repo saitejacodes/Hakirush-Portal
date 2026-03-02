@@ -95,7 +95,7 @@ const AttendanceHelper = ({ status, employeeId, statusChange }) => {
               key={s}
               onClick={() => markEmployee(s)}
               title={`Mark as ${s}`}
-              className={`group relative p-2 rounded-xl border border-slate-100 bg-white hover:border-transparent transition-all duration-300 active:scale-90 cursor-pointer overflow-hidden shadow-sm`}
+              className={`group relative p-2 rounded-full border border-slate-100 bg-white hover:border-transparent transition-all duration-300 active:scale-90 cursor-pointer overflow-hidden shadow-sm`}
             >
               {/* Hover Background Slide */}
               <div className={`absolute inset-0 translate-y-full group-hover:translate-y-0 ${config.color} transition-transform duration-300`} />

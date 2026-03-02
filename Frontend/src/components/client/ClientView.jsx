@@ -1,7 +1,12 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { User, Mail, Calendar, CreditCard, DollarSign, ArrowLeft, ShieldCheck } from "lucide-react";
+import { 
+  Building2, Calendar, CreditCard, ChevronLeft, 
+  ShieldCheck, ArrowUpRight, DollarSign,
+  Phone, Mail,
+  Edit, FileText
+} from "lucide-react";
 
 const ViewClient = () => {
   const { id } = useParams();
@@ -36,139 +41,168 @@ const ViewClient = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
-    // Ensure this matches your backend static folder path if not using full URLs
     if (imagePath.startsWith("http")) return imagePath;
-    return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
+    return `${import.meta.env.VITE_BACKEND_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin" />
-      </div>
-    );
-
-  if (!client)
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-slate-800">
-        <h2 className="text-2xl font-black uppercase italic tracking-tighter">Record Not Found</h2>
-        <button onClick={() => navigate(-1)} className="mt-4 text-red-600 font-bold uppercase text-xs tracking-widest hover:underline">Return to Dashboard</button>
-      </div>
-    );
+  if (loading) return <LoadingPulse />;
+  if (!client) return <ErrorView />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 sm:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-4xl bg-white/90 backdrop-blur-xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(220,38,38,0.15)] border border-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-12">
-          
-          {/* BRANDING SIDEBAR (Consistency with Add Page) */}
-          <div className="md:col-span-4 bg-gradient-to-b from-red-700 to-red-900 p-10 flex flex-col justify-between text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-            
-            <div className="relative z-10">
-              <button 
-                onClick={() => navigate(-1)}
-                className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center mb-12 hover:bg-white/20 transition-all border border-white/10 group"
-              >
-                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform cursor-pointer" />
-              </button>
-              
-              <h1 className="text-4xl font-black uppercase italic tracking-tighter leading-[0.9] mb-4">
-                Partner <br /> <span className="text-red-200 font-normal not-italic">Profile</span>
-              </h1>
-              <div className="h-1 w-12 bg-red-400 rounded-full mb-4" />
-              <p className="text-red-100/60 text-[10px] font-bold uppercase tracking-[0.3em]">Record ID: {id.slice(-6).toUpperCase()}</p>
-            </div>
-            
-            <div className="relative z-10 flex items-center gap-2 text-[9px] text-red-200/50 font-bold uppercase tracking-widest">
-              <ShieldCheck size={14} /> Authorized Personnel Access Only
-            </div>
-          </div>
-
-          {/* CONTENT SECTION */}
-          <div className="md:col-span-8 p-8 sm:p-14 bg-white/50">
-            
-            {/* PROFILE HEADER */}
-            <div className="flex flex-col items-center mb-12">
+        {/* --- LEFT COLUMN: IDENTITY CARD --- */}
+        <div className="lg:col-span-4">
+          <div className="sticky top-10 bg-white border border-slate-200 rounded-[3rem] p-8 shadow-sm">
+            <div className="flex flex-col items-center">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-red-50 shadow-2xl bg-white">
+                <div className="w-35 h-35 rounded-[3.5rem] overflow-hidden ring-4 ring-slate-50 p-1 transition-transform duration-500 group-hover:scale-105">
                   <img
-                    src={getImageUrl(client.companyLogo)}
-                    alt="logo"
-                    className="w-full h-full object-cover"
-                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                    src={getImageUrl(client?.companyLogo)}
+                    className="w-full h-full object-cover rounded-[3.2rem]"
+                    alt="Company Logo"
+                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${client?.userId?.name || 'Client'}&background=f1f5f9&color=64748b`)}
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg border-4 border-white">
-                  <ShieldCheck size={18} />
-                </div>
               </div>
+
+              {/* Client Name Mapping */}
+              <h1 className="mt-6 text-2xl font-black tracking-tight text-slate-800 text-center uppercase italic">
+                {client?.userId?.name || "N/A"}
+              </h1>
               
-              <h2 className="mt-6 text-3xl font-black uppercase italic tracking-tighter text-slate-800 text-center leading-none">
-                {client.userId?.name || "N/A"}
-              </h2>
-              <div className="mt-2 px-4 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest border border-red-100">
-                {client.planType || "Unassigned Plan"}
+              <p className="text-red-600 font-black text-[8px] uppercase tracking-[0.3em] mt-2 bg-red-50 px-4 py-1 rounded-full">
+                {client?.planType || "Unassigned Plan"}
+              </p>
+
+              <div className="flex gap-3 mt-8 w-full">
+                <button 
+                  onClick={() => navigate(-1)}
+                  className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600 cursor-pointer"
+                >
+                  <ChevronLeft size={16} /> Back
+                </button>
+                <button 
+                  onClick={() => navigate(`/admin-dashboard/clients/edit/${client._id}`)}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-white cursor-pointer"
+                >
+                  <Edit size={16} /> Edit
+                </button>
               </div>
             </div>
 
-            {/* INFO TILES */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <InfoCard 
-                icon={<Mail size={18} />} 
-                label="Communication" 
-                value={client.userId?.email} 
-              />
-              <InfoCard 
-                icon={<DollarSign size={18} />} 
-                label="Financial Budget" 
-                value={`₹ ${Number(client.budget || 0).toLocaleString('en-IN')}`} 
-              />
-              <InfoCard 
-                icon={<CreditCard size={18} />} 
-                label="Billing Tier" 
-                value={client.planType} 
-              />
-              <InfoCard 
-                icon={<Calendar size={18} />} 
-                label="Partner Since" 
-                value={client.dateOfJoining ? new Date(client.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A"} 
-              />
+            <div className="mt-10 space-y-5 border-t border-slate-100 pt-8">
+              <SidebarItem icon={<Building2 size={18}/>} label="Company Name" value={client?.userId?.name || "N/A"} />
+              <SidebarItem icon={<Calendar size={18}/>} label="Partner Since" value={client.dateOfJoining ? new Date(client.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "N/A"} />
             </div>
-
-            {/* ACTION FOOTER */}
-            <div className="mt-12 flex justify-center">
-              <button 
-                onClick={() => navigate(`/admin-dashboard/clients/edit/${id}`)}
-                className="px-8 py-4 bg-red-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-red-600 transition-all active:scale-95 cursor-pointer"
-              >
-                Modify Record Details
-              </button>
-            </div>
-
           </div>
         </div>
+
+        {/* --- RIGHT COLUMN: BENTO CONTENT --- */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <BentoCard title="General Protocol" icon={<FileText size={15} className="text-blue-500"/>}>
+              {/* User Email Mapping */}
+              <DataRow icon={<Mail size={16} className="text-blue-400"/>} label="Contact Email" value={client.userId?.email} isEmail />
+              <DataRow icon={<Building2 size={16} className="text-blue-400"/>} label="Company Name" value={client?.userId?.name} />
+            </BentoCard>
+
+            <BentoCard title="Financial Snapshot" icon={<DollarSign size={15} className="text-emerald-500"/>}>
+              <DataRow icon={<CreditCard size={16} className="text-emerald-400"/>} label="Billing Tier" value={client.planType} />
+              <DataRow icon={<DollarSign size={16} className="text-emerald-400"/>} label="Contract Value" value={`₹ ${Number(client.budget || 0).toLocaleString('en-IN')}`} />
+            </BentoCard>
+          </div>
+
+          {/* FINANCIAL STRIP (LARGE) */}
+          <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Total Contract Value</p>
+              <h2 className="text-4xl font-black text-red-600 tracking-tighter italic">
+                ₹{Number(client.budget || 0).toLocaleString('en-IN')}
+                <span className="text-sm text-slate-400 font-medium ml-2">/year</span>
+              </h2>
+            </div>
+            <div className="p-5 bg-red-50 rounded-[2rem] text-red-600 shadow-inner">
+              <DollarSign size={24} />
+            </div>
+          </div>
+
+          {/* STATUS HIGHLIGHTS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatusTile icon={<ShieldCheck size={20} />} label="Security" value="Authorized" color="text-emerald-600" bgColor="bg-emerald-50" />
+            <StatusTile icon={<ArrowUpRight size={20} />} label="Protocol" value="Active" color="text-blue-600" bgColor="bg-blue-50" />
+            <StatusTile icon={<Phone size={20} />} label="Support" value="Priority" color="text-purple-600" bgColor="bg-purple-50" />
+          </div>
+        </div>
+
       </div>
     </div>
   );
 };
 
-/* PREMIUM INFO CARD SUB-COMPONENT */
-const InfoCard = ({ icon, label, value }) => (
-  <div className="group bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-red-100 transition-all duration-300">
-    <div className="flex items-center gap-3 mb-2 text-red-500">
-      <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors">
-        {icon}
-      </div>
-      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-red-400 transition-colors">
-        {label}
-      </span>
+// --- SHARED COMPONENTS ---
+
+const BentoCard = ({ title, icon, children }) => (
+  <div className="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="flex items-center gap-3 mb-8">
+      <div className="p-2.5 bg-slate-50 rounded-xl">{icon}</div>
+      <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">{title}</h3>
     </div>
-    <div className="pl-11">
-      <p className="text-slate-800 font-bold text-sm tracking-tight break-all">
+    <div className="space-y-6">
+      {children}
+    </div>
+  </div>
+);
+
+const DataRow = ({ label, icon, value, isEmail }) => (
+  <div className="flex items-center gap-4">
+    <div className="p-2 bg-slate-50 rounded-lg shrink-0">
+      {icon}
+    </div>
+    <div className="overflow-hidden">
+      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{label}</p>
+      <p className={`text-sm font-black text-slate-800 mt-0.5 truncate italic ${isEmail ? 'lowercase' : 'uppercase'}`}>
         {value || "—"}
       </p>
+    </div>
+  </div>
+);
+
+const SidebarItem = ({ icon, label, value }) => (
+  <div className="flex items-center gap-4 group cursor-default">
+    <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-red-50 group-hover:text-red-600 transition-all text-slate-400">
+      {icon}
+    </div>
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="text-sm font-black text-slate-700 italic uppercase">{value || "—"}</p>
+    </div>
+  </div>
+);
+
+const StatusTile = ({ icon, label, value, color, bgColor }) => (
+  <div className={`${bgColor} border border-white p-6 rounded-[2.5rem] flex flex-col gap-3 shadow-sm`}>
+    <div className={`${color}`}>{icon}</div>
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-tighter text-slate-500 opacity-70">{label}</p>
+      <p className={`text-sm font-black uppercase italic ${color}`}>{value}</p>
+    </div>
+  </div>
+);
+
+const LoadingPulse = () => (
+  <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+    <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin"></div>
+    <p className="text-slate-300 font-black uppercase tracking-[0.3em] text-[10px]">Syncing Records</p>
+  </div>
+);
+
+const ErrorView = () => (
+  <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
+    <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-red-50">
+      <h2 className="text-2xl font-black text-slate-800 italic uppercase">Not Found</h2>
+      <button onClick={() => window.history.back()} className="mt-6 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest">Go Back</button>
     </div>
   </div>
 );

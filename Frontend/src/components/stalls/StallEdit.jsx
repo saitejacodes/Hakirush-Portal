@@ -1,238 +1,287 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Upload, 
-  Plus, 
-  Trash2, 
-  CheckCircle2, 
-  ChevronLeft, 
-  Loader2, 
-  Settings2,
-  AlertCircle
-} from "lucide-react";
+import { Camera, CheckCircle2, X, Store, Zap, Layers, Calendar, Trash2, Plus } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-/* ================= IMAGE HELPER ================= */
-const getImageUrl = (url) => {
-  if (!url) return "/default-avatar.png";
-  if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return `${url}?t=${Date.now()}`;
-  return `${import.meta.env.VITE_BACKEND_URL}/${url}`;
-};
-
-/* ================= PREMIUM SUCCESS ALERT (NO BLACK) ================= */
-const SuccessAlert = ({ onClose }) => {
-  return (
-    <>
-      <div className="fixed inset-0 bg-red-950/40 backdrop-blur-md z-[60]" />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-[2.5rem] bg-white shadow-[0_32px_64px_-16px_rgba(153,27,27,0.3)] border border-red-50 overflow-hidden animate-in fade-in zoom-in duration-300">
-          <div className="h-2 bg-gradient-to-r from-red-800 via-red-500 to-red-800" />
-          <div className="p-10 flex flex-col items-center text-center">
-            <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-600 mb-6 shadow-inner">
-              <CheckCircle2 size={40} strokeWidth={2.5} />
-            </div>
-            <h3 className="text-2xl font-black uppercase tracking-tighter text-red-950">Update Complete</h3>
-            <p className="text-sm font-bold text-red-400/80 uppercase tracking-widest mt-2">Asset Parameters Synchronized</p>
-            <button
-              onClick={onClose}
-              className="w-full mt-8 py-4 rounded-2xl bg-red-600 text-white text-[11px] font-black uppercase tracking-[0.3em] hover:bg-red-700 transition-all shadow-lg active:scale-95"
-            >
-              Confirm & Return
-            </button>
+/* ================= PREMIUM SUCCESS ALERT (Matched to SponsorEdit) ================= */
+const SuccessAlert = ({ onClose }) => (
+  <>
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-50 animate-in fade-in duration-300" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="p-10 text-center">
+          <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <CheckCircle2 size={40} />
           </div>
+          <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+            Update Verified
+          </h3>
+          <p className="text-sm text-slate-500 mt-3 font-medium leading-relaxed">
+            The stall database has been synchronized with your new records.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+          >
+            Continue to Dashboard
+          </button>
         </div>
       </div>
-    </>
-  );
-};
+    </div>
+  </>
+);
 
 const StallEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({
+  const [stall, setStall] = useState({
     name: "",
     number: "",
     type: "",
-    eventCount: 0,
+    eventCount: "",
     plans: [""],
   });
 
   const [logo, setLogo] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [error, setError] = useState(null);
+  const [preview, setPreview] = useState("/default-avatar.png");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
+  /* ================= FETCH DATA ================= */
   useEffect(() => {
     const fetchStall = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/stalls/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/stalls/${id}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          }
+        );
 
-        if (res.data.success && res.data.stall) {
+        if (res.data.success) {
           const s = res.data.stall;
-          setForm({
+          setStall({
             name: s.name || "",
             number: s.number || "",
             type: s.type || "",
-            eventCount: s.eventCount || 0,
+            eventCount: s.eventCount || "",
             plans: s.plans && s.plans.length ? s.plans : [""],
           });
-          setPreview(s.logo || null);
+          if (s.logo) {
+            setPreview(s.logo.startsWith("http") ? s.logo : `${import.meta.env.VITE_BACKEND_URL}/${s.logo}`);
+          }
         }
-      } catch {
-        setError("Critical Error: Asset Retrieval Failed");
+      } catch (err) {
+        console.error("Failed to load stall data", err);
+        alert("Failed to load stall protocol.");
       } finally {
-        setFetching(false);
+        setLoading(false);
       }
     };
     fetchStall();
   }, [id]);
 
+  /* ================= HANDLERS ================= */
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "logo") {
-      const file = files?.[0];
-      if (!file || file.size > MAX_FILE_SIZE) return;
-      setLogo(file);
-      setPreview(URL.createObjectURL(file));
-      return;
-    }
-    setForm((p) => ({ ...p, [name]: name === "eventCount" ? Number(value) : value }));
+    const { name, value } = e.target;
+    setStall((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePlanChange = (idx, value) => {
-    const plans = [...form.plans];
-    plans[idx] = value;
-    setForm((p) => ({ ...p, plans }));
+    const newPlans = [...stall.plans];
+    newPlans[idx] = value;
+    setStall((prev) => ({ ...prev, plans: newPlans }));
   };
 
-  const addPlan = () => setForm((p) => ({ ...p, plans: [...p.plans, ""] }));
-  const removePlan = (idx) => setForm((p) => ({ ...p, plans: p.plans.filter((_, i) => i !== idx) }));
+  const addPlan = () => {
+    setStall((prev) => ({ ...prev, plans: [...prev.plans, ""] }));
+  };
+
+  const removePlan = (idx) => {
+    setStall((prev) => ({ ...prev, plans: stall.plans.filter((_, i) => i !== idx) }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file || file.size > MAX_FILE_SIZE) {
+      alert("File too large. Max 10MB");
+      return;
+    }
+    setLogo(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
     try {
+      setSaving(true);
       const fd = new FormData();
-      Object.keys(form).forEach((key) => {
-        if (key === "plans") {
-          form.plans.forEach((p) => fd.append("plans", p));
-        } else {
-          fd.append(key, form[key]);
+      
+      // Append basic fields
+      Object.keys(stall).forEach((key) => {
+        if (key !== "plans") {
+          fd.append(key, stall[key]);
         }
       });
+      
+      // Append plans array
+      stall.plans.forEach((plan) => fd.append("plans", plan));
+      
       if (logo) fd.append("logo", logo);
 
-      const res = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/stalls/${id}`, fd, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/stalls/${id}`,
+        fd,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
       if (res.data.success) {
         setShowAlert(true);
-        setTimeout(() => navigate("/admin-dashboard/stalls"), 1800);
       }
-    } catch {
-      setError("Protocol Failure: Modification Rejected");
+    } catch (err) {
+      alert(err.response?.data?.error || "Update protocol failed.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (fetching) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Accessing Core Database...</p>
-    </div>
-  );
+  if (loading) return <LoadingPulse />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10 flex flex-col items-center">
-      {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-12">
+      {showAlert && (
+        <SuccessAlert onClose={() => navigate("/admin-dashboard/stalls")} />
+      )}
 
-      <div className="w-full max-w-4xl">
-        <button 
-          onClick={() => navigate(-1)}
-          className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-8 hover:text-red-600 transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
-          Discard Changes
-        </button>
-
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(220,38,38,0.1)] border border-white overflow-hidden">
-          
-          <div className="p-10 md:p-14 border-b border-red-50 bg-gradient-to-b from-red-50/50 to-transparent flex flex-col items-center text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest mb-6">
-              <Settings2 size={12} fill="currentColor" /> System Modification
-            </div>
-            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-red-950 leading-none">
-              Edit <span className="text-red-600">Asset</span>
-            </h1>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-10 px-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Administration</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Modify <span className="not-italic text-red-600">Stall</span></h1>
           </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
+          >
+            <X size={16} className="group-hover:rotate-90 transition-transform" /> Discard
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="p-10 md:p-14 space-y-12">
-            
-            <div className="flex flex-col items-center group">
-              <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-white shadow-2xl p-2 border border-red-50 rotate-3 overflow-hidden transition-transform group-hover:rotate-0">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* --- LEFT: AVATAR --- */}
+          <div className="lg:col-span-4">
+            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm flex flex-col items-center">
+              <div className="relative group">
+                <div className="w-48 h-48 rounded-[4rem] overflow-hidden ring-8 ring-slate-50 p-1 shadow-inner">
                   <img
-                    src={getImageUrl(preview)}
+                    src={preview}
                     alt="preview"
-                    className="w-full h-full object-cover rounded-[2rem]"
-                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                    className="w-full h-full object-cover rounded-[3.5rem]"
                   />
                 </div>
-                <label className="absolute -bottom-2 -right-2 bg-red-600 text-white p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-red-950 transition-colors">
-                  <Upload size={20} />
-                  <input ref={fileInputRef} type="file" name="logo" accept="image/*" className="hidden" onChange={handleChange} />
+                <label className="absolute bottom-2 right-2 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-600 transition-all active:scale-90">
+                  <Camera size={24} />
+                  <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleImageChange} />
                 </label>
               </div>
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.2em] text-red-400">Modify Visual Identity</p>
-            </div>
 
-            <div className="space-y-6">
-              <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 flex items-center gap-3">
-                <div className="w-8 h-[2px] bg-red-600" /> Identity Matrix
-              </h3>
+              <div className="mt-8 w-full">
+                <InputItem
+                  label="Stall Name"
+                  icon={<Store size={14}/>}
+                  name="name"
+                  value={stall.name}
+                  onChange={handleChange}
+                  placeholder="Enter stall name"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* --- RIGHT: FORM DATA --- */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
+              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
+                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Store size={14}/></div>
+                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Stall Registry</h3>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CustomInput label="Asset Name" name="name" value={form.name} onChange={handleChange} required />
-                <CustomInput label="Registry Code" name="number" value={form.number} onChange={handleChange} required />
-                <CustomInput label="Unit Class" name="type" value={form.type} onChange={handleChange} required />
-                <CustomInput label="Mission History" name="eventCount" type="number" value={form.eventCount} onChange={handleChange} />
+                <InputItem
+                  label="Stall Number"
+                  icon={<Layers size={14}/>}
+                  name="number"
+                  value={stall.number}
+                  onChange={handleChange}
+                  placeholder="E.G. A-101"
+                  required
+                />
+                
+                <InputItem
+                  label="Stall Type"
+                  icon={<Zap size={14}/>}
+                  name="type"
+                  value={stall.type}
+                  onChange={handleChange}
+                  placeholder="E.G. Food, Tech"
+                />
+
+                <InputItem
+                  label="Event Count"
+                  icon={<Calendar size={14}/>}
+                  type="number"
+                  name="eventCount"
+                  value={stall.eventCount}
+                  onChange={handleChange}
+                  placeholder="Enter count"
+                />
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 flex items-center gap-3">
-                  <div className="w-8 h-[2px] bg-red-600" /> Operational Protocols
-                </h3>
-                <button type="button" onClick={addPlan} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700">
-                  <Plus size={14} strokeWidth={3} /> New Protocol
+            {/* PROTOCOLS SECTION (Replaces Pipeline Section) */}
+            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
+              <div className="flex items-center justify-between mb-6 border-b border-slate-50 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Zap size={14}/></div>
+                  <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Operational Protocols</h3>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={addPlan}
+                  className="text-xs font-black uppercase tracking-widest text-red-600 hover:text-red-500 flex items-center gap-2"
+                >
+                  <Plus size={14} /> Add
                 </button>
               </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {form.plans.map((plan, idx) => (
-                  <div key={idx} className="flex gap-4 group">
-                    <input
-                      value={plan}
-                      onChange={(e) => handlePlanChange(idx, e.target.value)}
-                      className="w-full bg-red-50/50 border-2 border-transparent focus:border-red-600 focus:bg-white rounded-2xl px-6 py-4 outline-none text-sm font-bold text-red-950 placeholder-red-200 transition-all uppercase tracking-wider shadow-inner"
-                      placeholder={`PROTOCOL ${idx + 1}`}
-                    />
-                    {form.plans.length > 1 && (
-                      <button type="button" onClick={() => removePlan(idx)} className="bg-red-50 text-red-400 hover:bg-red-600 hover:text-white p-4 rounded-2xl transition-all">
-                        <Trash2 size={18} />
+              
+              <div className="space-y-4">
+                {stall.plans.map((plan, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <div className="flex-grow">
+                      <InputItem
+                        label={`Protocol ${index + 1}`}
+                        icon={<Zap size={14}/>}
+                        value={plan}
+                        onChange={(e) => handlePlanChange(index, e.target.value)}
+                        placeholder="Enter protocol details..."
+                      />
+                    </div>
+                    {stall.plans.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePlan(index)}
+                        className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:border-red-200 hover:text-red-500 transition-all"
+                      >
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
@@ -240,45 +289,45 @@ const StallEdit = () => {
               </div>
             </div>
 
-            <div className="pt-8">
+            {/* ACTION FOOTER */}
+            <div className="flex gap-4">
               <button
-                disabled={loading}
-                className={`group w-full relative overflow-hidden py-6 rounded-[2rem] text-[12px] font-black uppercase tracking-[0.5em] transition-all cursor-pointer shadow-2xl shadow-red-200
-                  ${loading ? "bg-red-200 text-red-400" : "bg-gradient-to-r from-red-800 via-red-600 to-red-800 text-white hover:scale-[1.02] active:scale-95"}`}
+                type="submit"
+                disabled={saving}
+                className="w-full py-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-slate-200 hover:from-red-600 hover:to-rose-500 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
               >
-                <div className="relative z-10 flex items-center justify-center gap-3">
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : "Re-Deploy Asset"}
-                </div>
+                {saving ? "Synchronizing..." : "Authorize & Commit Changes"}
               </button>
-
-              {error && (
-                <div className="mt-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center gap-3">
-                  <AlertCircle size={16} className="text-red-600" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-600">{error}</p>
-                </div>
-              )}
-            </div>
-          </form>
-
-          <div className="p-8 bg-red-950 flex justify-between items-center">
-            <p className="text-[9px] font-bold text-red-400/50 uppercase tracking-[0.3em]">
-              Security Clearance: Admin • Registry v3.0
-            </p>
-            <div className="flex gap-2">
-               <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-               <div className="w-1.5 h-1.5 rounded-full bg-red-800" />
             </div>
           </div>
-        </div>
+
+        </form>
       </div>
     </div>
   );
 };
 
-const CustomInput = ({ label, ...props }) => (
-  <div className="space-y-2">
-    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 ml-2">{label}</label>
-    <input {...props} className="w-full bg-red-50/50 border-2 border-transparent focus:border-red-600 focus:bg-white rounded-2xl px-6 py-4 outline-none text-sm font-bold text-red-950 placeholder-red-200 transition-all uppercase tracking-wider shadow-inner" />
+/* ===== PREMIUM FORM COMPONENTS (Shared) ===== */
+
+const InputItem = ({ label, icon, ...props }) => (
+  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
+        {label}
+      </p>
+    </div>
+    <input
+      {...props}
+      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 placeholder:text-slate-200 uppercase italic"
+    />
+  </div>
+);
+
+const LoadingPulse = () => (
+  <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-6">
+    <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
+    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Establishing Secure Session</p>
   </div>
 );
 

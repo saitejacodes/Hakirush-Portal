@@ -24,7 +24,7 @@ const SuccessAlert = ({ onClose }) => (
           </p>
           <button
             onClick={onClose}
-            className="w-full mt-6 py-4 rounded-xl bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[9px] hover:bg-red-600 transition-all active:scale-95 cursor-pointer"
+            className="w-full mt-6 py-4 rounded-xl bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[9px] hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 transition-all active:scale-95 cursor-pointer"
           >
             Return to Hub
           </button>
@@ -34,7 +34,7 @@ const SuccessAlert = ({ onClose }) => (
   </>
 );
 
-const EmployeeSetting = () => {
+const Setting = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -88,40 +88,31 @@ const EmployeeSetting = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex items-center justify-center p-4 sm:p-6">
       {showAlert && <SuccessAlert onClose={() => { setShowAlert(false); navigate(-1); }} />}
+      
       <div className="w-full max-w-md mx-auto">
-        <div className="flex justify-start mb-6">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="group flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all shadow-sm active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft size={12} /> Back
-          </button>
-        </div>
-
-        {/* REDUCED padding from p-16 to p-8 or p-10 */}
-        <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-8 md:p-10 relative overflow-hidden">
+        <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-xl border border-slate-100 p-6 sm:p-10 relative overflow-hidden">
           <ShieldAlert size={140} className="absolute -top-6 -right-6 opacity-[0.03] text-slate-900 pointer-events-none" />
 
-          <div className="text-center mb-8 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-full mb-4">
+          <div className="text-center mb-6 sm:mb-8 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-full mb-3">
               <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-[5px] font-black uppercase tracking-[0.3em] text-white">Encrypted Link</span>
+              <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-[0.3em] text-white">Encrypted Link</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
               Vault <span className="text-red-600">Keys</span>
             </h2>
           </div>
 
           {error && (
-            <div className="mb-6 flex items-center justify-center gap-2 bg-red-50 border-b-2 border-red-500 py-3 px-4 rounded-lg">
-              <AlertCircle size={16} className="text-red-600 shrink-0" />
-              <p className="text-[8px] font-black uppercase tracking-widest text-red-600">{error}</p>
+            <div className="mb-6 flex items-center justify-center gap-2 bg-red-50 border-b-2 border-red-500 py-3 px-4 rounded-xl">
+              <AlertCircle size={14} className="text-red-600 shrink-0" />
+              <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-red-600">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
             <PasswordField 
               label="Old Master Key" 
               name="oldPassword"
@@ -132,7 +123,7 @@ const EmployeeSetting = () => {
               icon={<KeyRound size={16} />}
             />
 
-            <div className="pt-4 border-t border-slate-50">
+            <div className="pt-2 sm:pt-4 border-t border-slate-50">
               <PasswordField 
                 label="New Key" 
                 name="newPassword"
@@ -175,13 +166,12 @@ const EmployeeSetting = () => {
               icon={<ShieldCheck size={16} />}
             />
 
-            <div className="pt-6">
+            <div className="pt-4 sm:pt-6">
               <button
                 disabled={loading}
-                className="group relative w-full py-4 rounded-xl bg-red-600 text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-lg hover:bg-red-500 transition-all active:scale-[0.98] cursor-pointer overflow-hidden"
+                className="w-full flex items-center justify-center gap-4 py-4 rounded-[1.5rem] sm:rounded-[2rem] bg-slate-900 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl transition-all hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer"
               >
-                <span className="relative z-10">{loading ? "Encrypting..." : "Update Vault"}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span>{loading ? "Encrypting..." : "Update Vault"}</span>
               </button>
             </div>
           </form>
@@ -192,10 +182,10 @@ const EmployeeSetting = () => {
 };
 
 const PasswordField = ({ label, name, value, show, onChange, toggle, icon }) => (
-  <div className="space-y-2">
+  <div className="space-y-1.5 sm:space-y-2">
     <label className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">{label}</label>
-    <div className="relative">
-      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors">
+    <div className="relative group">
+      <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors">
         {icon}
       </div>
       <input
@@ -203,13 +193,13 @@ const PasswordField = ({ label, name, value, show, onChange, toggle, icon }) => 
         name={name}
         value={value}
         onChange={onChange}
-        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 pl-12 pr-12 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-red-500 transition-all placeholder:text-slate-200"
+        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 sm:py-4 pl-11 sm:pl-12 pr-11 sm:pr-12 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-red-500 transition-all placeholder:text-slate-200"
         placeholder="••••••••"
       />
       <button
         type="button"
         onClick={toggle}
-        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-900 cursor-pointer"
+        className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-900 cursor-pointer"
       >
         {show ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
@@ -217,4 +207,4 @@ const PasswordField = ({ label, name, value, show, onChange, toggle, icon }) => 
   </div>
 );
 
-export default EmployeeSetting;
+export default Setting;

@@ -77,14 +77,14 @@ const ClientSportsPlan = () => {
   const plan = client.planType;
 
   return (
-    <div className="h-screen bg-white text-slate-900 font-sans overflow-hidden selection:bg-red-100">
+    <div className="h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans overflow-hidden selection:bg-red-100">
       {/* Container swapped to flex-row (Main Left, Sidebar Right) */}
       <div className="flex flex-col lg:flex-row h-full">
         
         {/* MAIN: OPERATIONS (Now on the Left) */}
-        <main className="flex-1 overflow-y-auto bg-white relative border-r border-slate-100">
+        <main className="flex-1 overflow-y-auto bg-white/80 backdrop-blur-2xl relative border-r border-slate-100 shadow-[0_8px_32px_0_rgba(220,38,38,0.06)]">
           {/* HEADER HUD */}
-          <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 py-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-[0_2px_12px_rgba(220,38,38,0.04)]">
             <div className="flex items-center gap-8">
                 <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Organization</p>
@@ -108,8 +108,8 @@ const ClientSportsPlan = () => {
         </main>
 
         {/* SIDEBAR: INTEL FEED (Now on the Right) */}
-        <aside className="w-full lg:w-[400px] bg-slate-50/50 flex flex-col z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
-          <div className="p-10 border-b border-slate-100 bg-white">
+        <aside className="w-full lg:w-[400px] bg-white/70 backdrop-blur-2xl flex flex-col z-20 shadow-[-10px_0_48px_rgba(220,38,38,0.06)] border-l border-red-100/40">
+          <div className="p-10 border-b border-slate-100 bg-white/90 backdrop-blur rounded-b-3xl shadow-[0_4px_24px_rgba(220,38,38,0.08)]">
             <div className="flex items-center gap-2 mb-3">
               <Bell size={14} className="text-red-600" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">Updates Feed</span>
@@ -122,7 +122,7 @@ const ClientSportsPlan = () => {
                 whileHover={{ x: -5 }} 
                 key={a._id}
                 onClick={() => setActiveAnnouncement(a)}
-                className="w-full text-left p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-900/5 transition-all group"
+                className="w-full text-left p-6 rounded-[2.2rem] bg-white/90 backdrop-blur border border-slate-100 hover:border-red-200 hover:shadow-xl hover:shadow-red-900/10 transition-all group"
               >
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{a.date}</span>
@@ -148,7 +148,7 @@ const ClientSportsPlan = () => {
             />
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white w-full max-w-3xl rounded-[3rem] overflow-hidden shadow-2xl"
+              className="relative bg-white/90 backdrop-blur-2xl w-full max-w-3xl rounded-[3.5rem] overflow-hidden shadow-[0_16px_64px_rgba(220,38,38,0.10)] border border-white/40"
             >
                 <div className="relative h-64 bg-slate-100">
                     {activeAnnouncement.image && (
@@ -169,7 +169,7 @@ const ClientSportsPlan = () => {
                         <span className="flex items-center gap-2"><Calendar size={14} className="text-red-600"/> {activeAnnouncement.date}</span>
                         <span className="flex items-center gap-2"><MapPin size={14} className="text-red-600"/> {activeAnnouncement.venue}</span>
                     </div>
-                    <p className="text-slate-600 leading-relaxed font-medium text-lg italic bg-slate-50 p-8 rounded-3xl">
+                    <p className="text-slate-600 leading-relaxed font-medium text-lg italic bg-slate-50/80 p-8 rounded-3xl">
                       "{activeAnnouncement.description}"
                     </p>
                 </div>

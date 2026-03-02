@@ -124,7 +124,7 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
         <button
           title="View Employees"
           onClick={() => navigate(`/admin-dashboard/department/${id}/employees`)}
-          className="group p-2 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
         >
           <Eye size={15} strokeWidth={2.5} />
         </button>
@@ -133,7 +133,7 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
         <button
           title="Edit Department"
           onClick={() => navigate(`/admin-dashboard/department/${id}`)}
-          className="group p-2 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
         >
           <Edit2 size={15} strokeWidth={2.5} />
         </button>
@@ -142,7 +142,7 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
         <button
           title="Delete Department"
           onClick={() => setShowConfirm(true)}
-          className="group p-2 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
         >
           <Trash2 size={15} strokeWidth={2.5} />
         </button>

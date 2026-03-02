@@ -2,45 +2,26 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { 
-  UserPlus, Mail, Lock, Calendar, 
-  CreditCard, DollarSign, Camera, 
-  CheckCircle2, Eye, EyeOff 
+  UserPlus, Camera, CheckCircle2, Eye, EyeOff, ChevronLeft
 } from "lucide-react";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
-const SuccessAlert = ({ onClose }) => {
-  return (
-    <>
-      <div className="fixed inset-0 bg-red-900/20 backdrop-blur-md z-[100] animate-in fade-in duration-300" />
-      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-        <div className="relative w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-200">
-          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 mx-auto mb-6 shadow-inner">
-              <CheckCircle2 size={32} strokeWidth={2.5} />
-            </div>
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
-              Client Added<span className="text-red-600">!</span>
-            </h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 leading-relaxed">
-              The partner profile has been <br/> successfully initialized.
-            </p>
-          </div>
-          <div className="px-8 pb-8">
-            <button
-              onClick={onClose}
-              className="w-full py-4 rounded-2xl bg-red-600 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-red-200 cursor-pointer hover:bg-red-700"
-            >
-              Acknowledge
-            </button>
-          </div>
-        </div>
+const SuccessAlert = ({ onClose }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" />
+    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
+      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto mb-6">
+        <CheckCircle2 size={40} strokeWidth={2.5} />
       </div>
-    </>
-  );
-};
+      <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">Onboarded!</h3>
+      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-8">Client record has been initialized.</p>
+      <button onClick={onClose} className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95 shadow-lg">
+        Back to List
+      </button>
+    </div>
+  </div>
+);
 
 /* ================= MAIN COMPONENT ================= */
 const AddClient = () => {
@@ -48,23 +29,19 @@ const AddClient = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Toggle state
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "companyLogo") {
       const file = files[0];
-      if (!file) return;
-      if (file.size > MAX_FILE_SIZE) {
-        alert("Image must be less than 10MB");
-        return;
-      }
-      setFormData((prev) => ({ ...prev, companyLogo: file }));
+      if (!file || file.size > MAX_FILE_SIZE) return;
+      setFormData((p) => ({ ...p, companyLogo: file }));
       setPreview(URL.createObjectURL(file));
       return;
     }
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -72,7 +49,6 @@ const AddClient = () => {
     setLoading(true);
     const fd = new FormData();
     Object.keys(formData).forEach((key) => fd.append(key, formData[key]));
-
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/client/add`, fd, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -82,131 +58,112 @@ const AddClient = () => {
         setTimeout(() => navigate("/admin-dashboard/clients"), 1800);
       }
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to add client.");
+      alert(error.response?.data?.error || "Submission error");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputBase = "w-full pl-12 pr-12 py-3.5 bg-red-50/30 border border-red-100 rounded-2xl text-sm focus:bg-white focus:border-red-400 focus:ring-4 focus:ring-red-400/10 transition-all outline-none text-slate-700 font-medium";
-  const iconBase = "absolute left-4 top-1/2 -translate-y-1/2 text-red-300 group-focus-within:text-red-600 transition-colors";
+  const inputBase = "w-full bg-slate-50 border border-slate-100 focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/5 rounded-2xl px-5 py-3.5 outline-none transition-all placeholder:text-slate-300";
+  const punchyInput = `${inputBase} text-xs font-black uppercase italic tracking-tight`;
+  const manualCaseInput = `${inputBase} text-sm font-bold normal-case not-italic`;
+  const labelCls = "text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block ml-1";
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 p-4 lg:p-10">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
-
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 sm:p-8 flex items-center justify-center">
-        <div className="w-full max-w-4xl bg-white/90 backdrop-blur-xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(220,38,38,0.1)] border border-white overflow-hidden">
-          
-          <div className="grid grid-cols-1 md:grid-cols-12">
-            
-            {/* BRANDING SIDEBAR */}
-            <div className="md:col-span-4 bg-gradient-to-b from-red-700 to-red-900 p-10 flex flex-col justify-between text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-              <div className="relative z-10">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-12 shadow-xl border border-white/20">
-                  <UserPlus className="text-white" size={28} />
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12">
+            {/* PHOTO SIDEBAR */}
+            <div className="lg:col-span-4 bg-slate-50/50 p-10 border-r border-slate-100 flex flex-col items-center justify-center text-center">
+              <div className="relative group mb-6">
+                <div className="w-40 h-40 rounded-[3rem] bg-white p-2 shadow-2xl transition-transform group-hover:rotate-2">
+                  <img src={preview || "/default-avatar.png"} alt="preview" className="w-full h-full object-cover rounded-[2.5rem]" />
                 </div>
-                <h1 className="text-4xl font-black uppercase italic tracking-tighter leading-[0.9] mb-4">
-                  Partner <br /> <span className="text-red-200 font-normal not-italic">Sync</span>
-                </h1>
-                <div className="h-1 w-12 bg-red-400 rounded-full mb-4" />
-                <p className="text-red-100/60 text-[10px] font-bold uppercase tracking-[0.3em]">Onboarding Module</p>
+                <label className="absolute -bottom-2 -right-2 w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white cursor-pointer shadow-xl hover:bg-red-600 transition-all hover:scale-110">
+                  <Camera size={20} />
+                  <input type="file" name="companyLogo" accept="image/*" className="hidden" onChange={handleChange} />
+                </label>
               </div>
-              <div className="relative z-10 text-[9px] text-red-200/50 font-bold uppercase tracking-widest leading-relaxed">
-                Secure encryption enabled. <br /> Initialize partner protocol.
-              </div>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter">New <span className="text-red-600">Client</span></h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">Initialize Registry Entry</p>
             </div>
-
-            {/* FORM SECTION */}
-            <div className="md:col-span-8 p-8 sm:p-14 bg-white/50">
-              <form onSubmit={handleSubmit} className="space-y-10">
-                
-                {/* LOGO UPLOAD */}
-                <div className="flex flex-col items-center justify-center group">
-                  <div className="relative w-32 h-32">
-                    <div className="w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-red-50 shadow-2xl bg-white transition-transform duration-500 group-hover:scale-105">
-                      <img src={preview || "/default-avatar.png"} alt="logo" className="w-full h-full object-cover" />
+            {/* FORM AREA */}
+            <div className="lg:col-span-8 p-8 lg:p-12">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* IDENTIFICATION SECTION */}
+                <section>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-6 flex items-center gap-2">
+                    <UserPlus size={14}/> Primary Identification
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className={labelCls}>Client Name</label>
+                      <input name="name" placeholder="CLIENT NAME" required onChange={handleChange} className={punchyInput} />
                     </div>
-                    <label className="absolute -bottom-2 -right-2 w-11 h-11 bg-red-600 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-700 transition-all hover:rotate-12 z-10 border-4 border-white">
-                      <Camera size={20} />
-                      <input type="file" name="companyLogo" accept="image/*" className="hidden" onChange={handleChange} />
-                    </label>
+                    <div>
+                      <label className={labelCls}>Email Address (Manual Case)</label>
+                      <input name="email" type="email" placeholder="email address" required onChange={handleChange} className={manualCaseInput} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Access Key (Manual Case)</label>
+                      <div className="relative">
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          name="password" 
+                          placeholder="Access Key" 
+                          required 
+                          onChange={handleChange} 
+                          className={manualCaseInput} 
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors">
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Date of Onboarding</label>
+                      <input type="date" name="dateOfJoining" onChange={handleChange} className={punchyInput} />
+                    </div>
                   </div>
-                  <span className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-red-400">Corporate Identity</span>
+                </section>
+                {/* BUSINESS SECTION */}
+                <section>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Business Details</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                    <div>
+                      <label className={labelCls}>Plan Type</label>
+                      <select name="planType" onChange={handleChange} className={punchyInput}>
+                        <option value="">SELECT PLAN</option>
+                        <option value="Annual">ANNUAL PREMIUM</option>
+                        <option value="Quarterly">QUARTERLY STANDARD</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Budget (INR)</label>
+                      <input type="number" name="budget" placeholder="BUDGET" onChange={handleChange} className={punchyInput} />
+                    </div>
+                  </div>
+                </section>
+                {/* ACTION BUTTONS */}
+                <div className="flex items-center gap-4 pt-4">
+                  <button type="button" onClick={() => navigate(-1)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer">
+                    Discard
+                  </button>
+                  <button 
+                    disabled={loading} 
+                    className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    {loading ? "INITIALIZING..." : "EXECUTE ONBOARDING"}
+                  </button>
                 </div>
-
-                {/* FORM GRID */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="group relative">
-                    <UserPlus className={iconBase} size={18} />
-                    <input name="name" placeholder="CLIENT NAME" required onChange={handleChange} className={`${inputBase} uppercase`} />
-                  </div>
-
-                  <div className="group relative">
-                    <Mail className={iconBase} size={18} />
-                    <input name="email" placeholder="Email Address" type="email" required onChange={handleChange} className={`${inputBase} normal-case`} />
-                  </div>
-
-                  {/* PASSWORD FIELD WITH VIEW ICON */}
-                  <div className="group relative">
-                    <Lock className={iconBase} size={18} />
-                    <input 
-                      name="password" 
-                      placeholder="Access Password" 
-                      type={showPassword ? "text" : "password"} 
-                      required 
-                      onChange={handleChange} 
-                      className={`${inputBase} normal-case`} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-600 transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-
-                  <div className="group relative">
-                    <Calendar className={iconBase} size={18} />
-                    <input type="date" name="dateOfJoining" onChange={handleChange} className={inputBase} />
-                  </div>
-
-                  <div className="group relative">
-                    <CreditCard className={iconBase} size={18} />
-                    <select name="planType" onChange={handleChange} className={`${inputBase} appearance-none cursor-pointer uppercase text-[11px]`}>
-                      <option value="">SELECT PLAN</option>
-                      <option value="Annual">ANNUAL PREMIUM</option>
-                      <option value="Quarterly">QUARTERLY STANDARD</option>
-                    </select>
-                  </div>
-
-                  <div className="group relative">
-                    <DollarSign className={iconBase} size={18} />
-                    <input type="number" name="budget" placeholder="BUDGET (INR)" onChange={handleChange} className={`${inputBase} uppercase`} />
-                  </div>
-                </div>
-
-                <button
-                  disabled={loading}
-                  className="group relative w-full h-16 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-[1.5rem] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-red-200 overflow-hidden transition-all active:scale-[0.97] disabled:opacity-70 cursor-pointer"
-                >
-                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    {loading ? (
-                      <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>Establish Partner <UserPlus size={18} /></>
-                    )}
-                  </span>
-                </button>
               </form>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

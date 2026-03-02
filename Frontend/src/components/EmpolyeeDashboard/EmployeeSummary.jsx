@@ -175,7 +175,18 @@ const EmployeeSummary = () => {
     }).catch(console.error);
   }, [user, calendarMonth]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Refetch data when calendarMonth changes (for calendar view update)
+  useEffect(() => {
+    fetchData();
+  }, [calendarMonth, fetchData]);
+
+  // Refetch data after attendance punch (onSuccess)
+  const handleAttendanceSuccess = () => {
+    fetchData();
+  };
+
+  // Remove old useEffect (now handled above)
 
   if (loading || !user) return (
     <div className="h-screen flex items-center justify-center font-black italic text-slate-400 uppercase tracking-tighter text-4xl">
@@ -239,7 +250,7 @@ const EmployeeSummary = () => {
           </div>
         </header>
 
-        <EmployeePunch onSuccess={fetchData} />
+        <EmployeePunch onSuccess={handleAttendanceSuccess} />
 
         {/* Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -435,21 +446,21 @@ const EmployeeSummary = () => {
         </section>
 
         {/* Calendar Section */}
-        <section className="bg-white p-6 sm:p-10 rounded-[3rem] shadow-2xl border border-white">
+        <section className="bg-white/80 backdrop-blur-2xl p-6 sm:p-12 rounded-[3.5rem] shadow-[0_12px_48px_0_rgba(220,38,38,0.10)] border border-white/40 transition-all duration-300">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10">
-            <h3 className="text-xl text-red-600 font-black uppercase italic tracking-tighter">Attendance History</h3>
-            <div className="flex items-center gap-3 bg-slate-100 p-2 rounded-2xl w-full sm:w-auto justify-between shadow-inner">
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-1 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors cursor-pointer"><ChevronLeft/></button>
-              <span className="text-xs font-black uppercase w-40 text-center tracking-widest">
+            <h3 className="text-2xl sm:text-3xl text-red-600 font-black uppercase italic tracking-tighter drop-shadow-sm bg-white/60 px-6 py-2 rounded-2xl shadow-[0_2px_8px_rgba(220,38,38,0.04)]">Attendance History</h3>
+            <div className="flex items-center gap-3 bg-white/70 backdrop-blur px-4 py-2 rounded-2xl w-full sm:w-auto justify-between shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-slate-100">
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-2 bg-white/90 rounded-xl shadow hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer border border-white/60"><ChevronLeft/></button>
+              <span className="text-base font-black uppercase w-44 text-center tracking-widest text-slate-700">
                 {calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </span>
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-1 bg-white rounded-xl shadow-sm hover:text-red-500 transition-colors cursor-pointer"><ChevronRight/></button>
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-2 bg-white/90 rounded-xl shadow hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer border border-white/60"><ChevronRight/></button>
             </div>
           </div>
 
-          <div className="hidden sm:grid grid-cols-7 gap-4">
+          <div className="hidden sm:grid grid-cols-7 gap-4 bg-white/60 rounded-2xl p-4 shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-white/40">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                <div key={d} className="text-center text-[7px] font-black text-slate-300 uppercase pb-4 tracking-[0.2em]">{d}</div>
+                <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase pb-4 tracking-[0.2em]">{d}</div>
             ))}
             {generateCalendar().map((day, i) => {
               const { status, title } = getDayInfo(day);
@@ -460,29 +471,27 @@ const EmployeeSummary = () => {
                 leave: "bg-amber-400 text-white border-amber-200",
                 holiday: "bg-indigo-600 text-white border-indigo-200", 
                 weekend: "bg-slate-50 text-slate-300 border-slate-100", 
-                none: "bg-white text-slate-900 border-slate-50 shadow-sm"
+                none: "bg-white/80 text-slate-900 border-slate-50 shadow-sm"
               };
               return (
-                <div key={i} className={`min-h-[90px] rounded-[2.5rem] border-2 flex flex-col items-center justify-center p-4 transition-all hover:scale-105 ${day ? styles[status] : "opacity-0 pointer-events-none"}`}>
-                  <span className="text-2xl font-black italic">{day}</span>
-                  {day && title && <span className="text-[6px] font-black uppercase text-center mt-2 tracking-tighter px-2 leading-tight">{title}</span>}
+                <div key={i} className={`min-h-[90px] rounded-[2.7rem] border-2 flex flex-col items-center justify-center p-4 transition-all hover:scale-110 hover:shadow-xl ${day ? styles[status] : "opacity-0 pointer-events-none"}`}>
+                  <span className="text-2xl font-black italic drop-shadow-sm">{day}</span>
+                  {day && title && <span className="text-[8px] font-black uppercase text-center mt-2 tracking-tighter px-2 leading-tight text-slate-500">{title}</span>}
                 </div>
               );
             })}
           </div>
 
           <div className="sm:hidden w-full px-2 py-4">
-            <div className="grid grid-cols-7 mb-2">
+            <div className="grid grid-cols-7 mb-2 bg-white/60 rounded-xl p-2 shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-white/40">
               {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
-                <span key={d} className="text-[8px] font-black text-slate-300 text-center tracking-widest">{d}</span>
+                <span key={d} className="text-[10px] font-black text-slate-400 text-center tracking-widest">{d}</span>
               ))}
             </div>
 
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="grid grid-cols-7 gap-2 bg-white/70 backdrop-blur rounded-2xl p-2 shadow-[0_4px_16px_rgba(220,38,38,0.08)] border border-white/40">
               {generateCalendar().map((day, i) => {
                 const { status, title } = day ? getDayInfo(day) : { status: 'none', title: '' };
-
                 const statusStyles = {
                   present: "bg-green-500 text-white border-green-200 shadow-lg shadow-green-100", 
                   halfday: "bg-blue-500 text-white border-blue-200 shadow-lg shadow-blue-100",
@@ -490,7 +499,7 @@ const EmployeeSummary = () => {
                   leave: "bg-amber-400 text-white border-amber-200",
                   holiday: "bg-indigo-600 text-white border-indigo-200", 
                   weekend: "bg-slate-50 text-slate-300 border-slate-100", 
-                  none: "bg-white text-slate-900 border-slate-50 shadow-sm"
+                  none: "bg-white/90 text-slate-900 border-slate-50 shadow-sm"
                 };
 
                 const currentStyle = statusStyles[status] || statusStyles.none;
@@ -498,14 +507,11 @@ const EmployeeSummary = () => {
                 return (
                   <div
                     key={i}
-                    className={`
-                      aspect-square rounded-[1.2rem] border-[1.5px] flex flex-col items-center justify-center
-                      transition-all active:scale-90
-                      ${!day ? "opacity-0 pointer-events-none" : currentStyle}
-                    `}
+                    className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-1 transition-all hover:scale-110 hover:shadow-xl active:scale-95 ${!day ? "opacity-0 pointer-events-none" : currentStyle}`}
+                    style={{backdropFilter:'blur(8px)'}}
                   >
-                    {/* Day Number - Smaller for 7-col mobile grid */}
-                    <span className="text-sm font-[1000] italic tracking-tighter leading-none">
+                    {/* Day Number - Slightly larger, modern look */}
+                    <span className="text-lg font-black italic drop-shadow-sm">
                       {day}
                     </span>
                     
@@ -548,8 +554,8 @@ const EmployeeSummary = () => {
       {/* LEAVE MODAL */}
       {showLeaveBreakdown && (
         <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-xl transition-all">
-  {/* Modal Container */}
-  <div className="bg-white w-full max-w-md rounded-t-[4rem] sm:rounded-[3.5rem] p-10 pt-12 animate-in fade-in slide-in-from-bottom-10 duration-500 relative shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)]">
+          {/* Modal Container */}
+          <div className="bg-white/90 backdrop-blur-2xl w-full max-w-md rounded-t-[4rem] sm:rounded-[3.5rem] p-10 pt-12 animate-in fade-in slide-in-from-bottom-10 duration-500 relative shadow-[0_32px_64px_-15px_rgba(220,38,38,0.15)] border border-white/40">
     
     {/* Decorative Top Handle for Mobile */}
     <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-100 rounded-full sm:hidden" />

@@ -63,14 +63,14 @@ const ClientRelationship = () => {
 
   return (
     // Removed h-screen and overflow-hidden for mobile scrolling
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans selection:bg-red-50">
       <div className="flex flex-col lg:flex-row min-h-screen">
         
         {/* MAIN CONTENT (LEFT/TOP) */}
-        <main className="flex-1 bg-white relative border-r border-slate-100 order-2 lg:order-1">
+        <main className="flex-1 bg-white/80 backdrop-blur-2xl relative border-r border-slate-100 shadow-[0_8px_32px_0_rgba(220,38,38,0.06)] order-2 lg:order-1">
           
           {/* HEADER HUD - Responsive padding and stacking */}
-          <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-5 md:px-10 md:py-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-5 md:px-10 md:py-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-[0_2px_12px_rgba(220,38,38,0.04)]">
             <div className="flex items-center gap-4 md:gap-8">
               <div>
                 <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Strategic_Partner</p>
@@ -109,8 +109,8 @@ const ClientRelationship = () => {
 
         {/* SIDEBAR/METRICS SUMMARY (RIGHT/BOTTOM) */}
         {/* On mobile, this acts as the top summary or bottom footer */}
-        <aside className="w-full lg:w-[350px] xl:w-[400px] bg-slate-50/50 flex flex-col z-20 order-1 lg:order-2 lg:sticky lg:top-0 lg:h-screen">
-          <div className="p-6 md:p-10 border-b border-slate-100 bg-white">
+        <aside className="w-full lg:w-[350px] xl:w-[400px] bg-white/70 backdrop-blur-2xl flex flex-col z-20 order-1 lg:order-2 lg:sticky lg:top-0 lg:h-screen shadow-[-10px_0_48px_rgba(220,38,38,0.06)] border-l border-red-100/40">
+          <div className="p-6 md:p-10 border-b border-slate-100 bg-white/90 backdrop-blur rounded-b-3xl shadow-[0_4px_24px_rgba(220,38,38,0.08)]">
             <div className="flex items-center gap-2 mb-2">
               <Award size={12} className="text-red-600" />
               <span className="text-[9px] font-black uppercase tracking-widest text-red-600">Performance Index</span>
@@ -123,18 +123,17 @@ const ClientRelationship = () => {
             <MetricTile icon={<Users />} label="Adoption" value="84%" />
             <MetricTile icon={<Activity />} label="Score" value="Elite" />
             <MetricTile icon={<Briefcase />} label="Completed" value="12/12" />
-            
-            <div className="sm:col-span-3 lg:col-span-1 mt-4 md:mt-6 p-6 md:p-8 bg-red-600 rounded-[1.5rem] md:rounded-[2rem] text-white shadow-xl shadow-red-200 relative overflow-hidden group">
-               <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-700">
-                  <Zap size={120} />
-               </div>
-               <Zap className="mb-4 text-white" size={24} />
-               <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Next Milestone</p>
-               <h4 className="text-lg md:text-xl font-black uppercase italic leading-tight">Q3 Executive <br className="hidden md:block"/>Review Session</h4>
-               <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter cursor-pointer hover:gap-4 transition-all">
-                  <span>Schedule Now</span>
-                  <ChevronRight size={14} />
-               </div>
+            <div className="sm:col-span-3 lg:col-span-1 mt-4 md:mt-6 p-6 md:p-8 bg-red-600/90 backdrop-blur rounded-[1.7rem] md:rounded-[2.2rem] text-white shadow-xl shadow-red-200 relative overflow-hidden group border border-white/20">
+              <div className="absolute top-[-20%] right-[-10%] opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-700">
+                <Zap size={120} />
+              </div>
+              <Zap className="mb-4 text-white" size={24} />
+              <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Next Milestone</p>
+              <h4 className="text-lg md:text-xl font-black uppercase italic leading-tight">Q3 Executive <br className="hidden md:block"/>Review Session</h4>
+              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter cursor-pointer hover:gap-4 transition-all">
+                <span>Schedule Now</span>
+                <ChevronRight size={14} />
+              </div>
             </div>
           </div>
         </aside>
@@ -189,7 +188,7 @@ const QuarterlyStrategy = () => (
 );
 
 const InfoCard = ({ icon, title, value }) => (
-  <div className="bg-slate-50/50 border border-slate-100 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] hover:bg-white hover:shadow-xl hover:shadow-red-900/5 transition-all">
+  <div className="bg-white/80 backdrop-blur border border-slate-100 p-6 md:p-8 rounded-[1.7rem] md:rounded-[2.5rem] hover:bg-white hover:shadow-xl hover:shadow-red-900/5 transition-all">
     <div className="text-red-600 mb-3 md:mb-4">{icon}</div>
     <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{title}</p>
     <p className="text-lg md:text-xl font-black uppercase italic text-slate-900 tracking-tight">{value}</p>
@@ -197,7 +196,7 @@ const InfoCard = ({ icon, title, value }) => (
 );
 
 const RoadmapStep = ({ q, title, points }) => (
-  <div className="bg-white border-2 border-slate-50 p-6 md:p-8 rounded-[1.5rem] md:rounded-[3rem] group hover:border-red-100 transition-all flex flex-row justify-between items-center gap-4">
+  <div className="bg-white/90 backdrop-blur border-2 border-slate-50 p-6 md:p-8 rounded-[1.7rem] md:rounded-[3rem] group hover:border-red-100 transition-all flex flex-row justify-between items-center gap-4 shadow-sm hover:shadow-xl">
     <div className="flex-1">
       <span className="text-red-600 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-1 md:mb-2 block">{q} Directive</span>
       <h4 className="text-xl md:text-2xl font-black uppercase italic text-slate-900 leading-tight">{title}</h4>
@@ -212,7 +211,7 @@ const RoadmapStep = ({ q, title, points }) => (
 );
 
 const MetricTile = ({ icon, label, value }) => (
-  <div className="bg-white border border-slate-100 p-4 md:p-6 rounded-2xl md:rounded-[2rem] flex items-center justify-between group hover:shadow-md transition-all">
+  <div className="bg-white/90 backdrop-blur border border-slate-100 p-4 md:p-6 rounded-2xl md:rounded-[2rem] flex items-center justify-between group hover:shadow-md transition-all">
     <div className="flex items-center gap-3 md:gap-4">
       <div className="p-2 bg-slate-50 text-slate-400 group-hover:text-red-600 transition-colors rounded-lg">{icon}</div>
       <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</span>

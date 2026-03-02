@@ -2,15 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
-  ChevronLeft, 
-  Store, 
-  Layers, 
-  Activity, 
-  Calendar, 
-  ShieldCheck, 
-  MapPin,
-  ClipboardList,
-  Loader2
+  Building2, Calendar, ChevronLeft, 
+  ShieldCheck, ArrowUpRight, Zap,
+  Globe, Users, Store, Activity, Edit
 } from "lucide-react";
 
 const StallView = () => {
@@ -31,8 +25,8 @@ const StallView = () => {
           }
         );
         if (res.data?.success) setStall(res.data.stall);
-      } catch {
-        console.error("Critical failure in asset retrieval.");
+      } catch (error) {
+        console.error("Critical failure in asset retrieval.", error);
       } finally {
         setLoading(false);
       }
@@ -43,156 +37,169 @@ const StallView = () => {
   const getImageUrl = (url) => {
     if (!url) return "/default-avatar.png";
     if (url.startsWith("http")) return url;
-    return `${import.meta.env.VITE_BACKEND_URL}/${url}`;
+    return `${import.meta.env.VITE_BACKEND_URL}/${url.replace(/^\/+/, "")}`;
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500">Syncing Intelligence...</p>
-    </div>
-  );
-
-  if (!stall) return (
-    <div className="min-h-screen flex items-center justify-center bg-red-50">
-      <p className="text-red-600 font-black uppercase tracking-widest text-center">
-        Protocol Error: <br/> Asset Not Found
-      </p>
-    </div>
-  );
+  if (loading) return <LoadingPulse />;
+  if (!stall) return <ErrorView />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-4 md:p-10">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* TOP NAVIGATION */}
-        <button 
-          onClick={() => navigate(-1)}
-          className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-8 hover:text-red-600 transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
-          Back to Terminal
-        </button>
-
-        <div className="relative bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(153,27,27,0.15)] border border-white overflow-hidden">
-          
-          {/* HEADER SECTION */}
-          <div className="relative p-8 md:p-12 border-b border-red-50">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              {/* Profile Image */}
-              <div className="relative">
-                <div className="w-32 h-32 md:w-44 md:h-44 rounded-[2.5rem] bg-white shadow-2xl p-2 border border-red-50 rotate-3 overflow-hidden group hover:rotate-0 transition-transform duration-500">
+        {/* --- LEFT COLUMN: IDENTITY CARD --- */}
+        <div className="lg:col-span-4">
+          <div className="sticky top-10 bg-white border border-slate-200 rounded-[3rem] p-8 shadow-sm">
+            <div className="flex flex-col items-center">
+              <div className="relative group">
+                <div className="w-35 h-35 rounded-[3.5rem] overflow-hidden ring-4 ring-slate-50 p-1 transition-transform duration-500 group-hover:scale-105">
                   <img
                     src={getImageUrl(stall.logo)}
+                    className="w-full h-full object-cover rounded-[3.2rem]"
                     alt="Stall Logo"
-                    className="w-full h-full object-cover rounded-[2rem]"
-                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${stall.name || 'Stall'}&background=f1f5f9&color=64748b`)}
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-red-600 text-white p-3 rounded-2xl shadow-lg">
-                  <Store size={20} />
-                </div>
               </div>
 
-              {/* Title Info */}
-              <div className="flex-1 text-center md:text-left space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest">
-                  <ShieldCheck size={12} fill="currentColor" /> Verified Stall
-                </div>
-                <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-red-950 leading-none">
-                  {stall.name}
-                </h1>
-                <p className="text-[11px] font-bold text-red-300 uppercase tracking-[0.2em]">
-                  Stall Registry: {stall.number} • Status: Active
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* METRICS STRIP */}
-          <div className="grid grid-cols-2 md:grid-cols-4 border-b border-red-50 bg-red-50/30">
-            <StatCard icon={<MapPin size={18} />} label="Location" value={stall.number || "N/A"} color="text-red-600" />
-            <StatCard icon={<Activity size={18} />} label="Events" value={stall.eventCount || "0"} color="text-red-950" />
-            <StatCard icon={<Layers size={18} />} label="Type" value={stall.type || "Standard"} color="text-red-950" />
-            <StatCard icon={<Calendar size={18} />} label="Year" value={new Date(stall.createdAt).getFullYear()} color="text-red-950" />
-          </div>
-
-          {/* DETAILED DATA SECTION */}
-          <div className="p-8 md:p-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              {/* Stall Name Mapping */}
+              <h1 className="mt-6 text-2xl font-black tracking-tight text-slate-800 text-center uppercase italic">
+                {stall.name || "N/A"}
+              </h1>
               
-              {/* Left Column: Core Data */}
-              <div className="space-y-8">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 flex items-center gap-3">
-                  <div className="w-8 h-[2px] bg-red-600" /> Technical Specs
-                </h3>
-                <div className="space-y-6">
-                  <DataRow label="Assigned Name" value={stall.name} icon={<Store size={16}/>} />
-                  <DataRow label="Deployment Type" value={stall.type} icon={<Layers size={16}/>} />
-                  <DataRow label="System Logged" value={new Date(stall.createdAt).toDateString()} icon={<Calendar size={16}/>} />
-                </div>
-              </div>
+              <p className="text-red-600 font-black text-[8px] uppercase tracking-[0.3em] mt-2 bg-red-50 px-4 py-1 rounded-full">
+                {stall.type || "Stall"}
+              </p>
 
-              {/* Right Column: Plans */}
-              <div className="space-y-8">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 flex items-center gap-3">
-                  <div className="w-8 h-[2px] bg-red-600" /> Mission Protocols
-                </h3>
-                <div className="bg-red-50/50 rounded-3xl p-8 border border-red-100 min-h-[160px] flex flex-col justify-center">
-                  <div className="flex items-center gap-2 text-red-600 mb-4">
-                    <ClipboardList size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Active Plans</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {stall.plans && stall.plans.length ? (
-                      stall.plans.map((plan, i) => (
-                        <span key={i} className="px-4 py-2 bg-white border border-red-100 rounded-xl text-xs font-black uppercase tracking-wider text-red-900 shadow-sm italic">
-                          "{plan}"
-                        </span>
-                      ))
-                    ) : (
-                      <p className="text-red-300 text-xs italic font-bold">No mission protocols assigned.</p>
-                    )}
-                  </div>
-                </div>
+              <div className="flex gap-3 mt-8 w-full">
+                <button 
+                  onClick={() => navigate(-1)}
+                  className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600 cursor-pointer"
+                >
+                  <ChevronLeft size={16} /> Back
+                </button>
+                <button 
+                  onClick={() => navigate(`/admin-dashboard/stalls/edit/${stall._id}`)}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-white cursor-pointer"
+                >
+                  <Edit size={16} /> Edit
+                </button>
               </div>
+            </div>
 
+            <div className="mt-10 space-y-5 border-t border-slate-100 pt-8">
+              <SidebarItem icon={<Store size={18}/>} label="Registry Number" value={stall.number} />
+              <SidebarItem icon={<Calendar size={18}/>} label="Registry Date" value={stall.createdAt ? new Date(stall.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "N/A"} />
             </div>
           </div>
-
-          {/* FOOTER ACTION (DEEP RED) */}
-          <div className="p-8 bg-red-950 flex justify-between items-center">
-            <p className="text-[9px] font-bold text-red-400/50 uppercase tracking-[0.2em]">
-              Authorized Access Only • Dashboard V3.0
-            </p>
-            <div className="flex gap-4">
-               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-               <div className="w-2 h-2 rounded-full bg-red-600" />
-            </div>
-          </div>
-
         </div>
+
+        {/* --- RIGHT COLUMN: BENTO CONTENT --- */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <BentoCard title="Core Intelligence" icon={<Zap size={15} className="text-blue-500"/>}>
+              <DataRow icon={<ShieldCheck size={16} className="text-blue-400"/>} label="Asset Name" value={stall.name} />
+              <DataRow icon={<Store size={16} className="text-blue-400"/>} label="Registry Number" value={stall.number} />
+            </BentoCard>
+
+            <BentoCard title="Performance Metrics" icon={<Building2 size={15} className="text-emerald-500"/>}>
+              <DataRow icon={<Activity size={16} className="text-emerald-400"/>} label="Operation Load" value={`${stall.eventCount || "0"} Events`} />
+              <DataRow icon={<Users size={16} className="text-emerald-400"/>} label="Deployment" value={stall.type || "—"} />
+            </BentoCard>
+          </div>
+
+          {/* MISSION PROTOCOLS (LARGE) */}
+          <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Mission Protocols</p>
+              <div className="flex flex-wrap gap-3">
+                {stall.plans && stall.plans.length ? (
+                  stall.plans.map((plan, i) => (
+                    <span key={i} className="px-5 py-2.5 bg-red-50 text-red-700 border border-red-100 rounded-full text-xs font-black uppercase tracking-wider shadow-inner italic">
+                        {plan}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-slate-400 text-sm font-bold">No mission protocols assigned.</p>
+                )}
+              </div>
+          </div>
+
+          {/* STATUS HIGHLIGHTS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatusTile icon={<ShieldCheck size={20} />} label="Security" value="Verified" color="text-emerald-600" bgColor="bg-emerald-50" />
+            <StatusTile icon={<ArrowUpRight size={20} />} label="Status" value="Active" color="text-blue-600" bgColor="bg-blue-50" />
+            <StatusTile icon={<Zap size={20} />} label="Asset Type" value={stall.type || "Standard"} color="text-purple-600" bgColor="bg-purple-50" />
+          </div>
+        </div>
+
       </div>
     </div>
   );
 };
 
-/* HELPER COMPONENTS */
-const StatCard = ({ icon, label, value, color }) => (
-  <div className="p-6 md:p-8 flex flex-col items-center justify-center border-r border-red-50 last:border-none text-center">
-    <div className={`${color} mb-2 opacity-60`}>{icon}</div>
-    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-300 mb-1">{label}</p>
-    <p className={`text-xl font-black uppercase tracking-tighter ${color}`}>{value}</p>
+// --- SHARED COMPONENTS (Consistent with SponsorView) ---
+
+const BentoCard = ({ title, icon, children }) => (
+  <div className="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="flex items-center gap-3 mb-8">
+      <div className="p-2.5 bg-slate-50 rounded-xl">{icon}</div>
+      <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">{title}</h3>
+    </div>
+    <div className="space-y-6">
+      {children}
+    </div>
   </div>
 );
 
-const DataRow = ({ label, value, icon }) => (
-  <div className="group border-b border-red-50 pb-4">
-    <div className="flex items-center gap-3 text-red-500/50 mb-1">
+const DataRow = ({ label, icon, value }) => (
+  <div className="flex items-center gap-4">
+    <div className="p-2 bg-slate-50 rounded-lg shrink-0">
       {icon}
-      <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
     </div>
-    <p className="text-red-950 font-bold text-lg pl-7">{value || "—"}</p>
+    <div className="overflow-hidden">
+      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{label}</p>
+      <p className="text-sm font-black text-slate-800 mt-0.5 truncate italic uppercase">
+        {value || "—"}
+      </p>
+    </div>
+  </div>
+);
+
+const SidebarItem = ({ icon, label, value }) => (
+  <div className="flex items-center gap-4 group cursor-default">
+    <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-red-50 group-hover:text-red-600 transition-all text-slate-400">
+      {icon}
+    </div>
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="text-sm font-black text-slate-700 italic uppercase">{value || "—"}</p>
+    </div>
+  </div>
+);
+
+const StatusTile = ({ icon, label, value, color, bgColor }) => (
+  <div className={`${bgColor} border border-white p-6 rounded-[2.5rem] flex flex-col gap-3 shadow-sm`}>
+    <div className={`${color}`}>{icon}</div>
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-tighter text-slate-500 opacity-70">{label}</p>
+      <p className={`text-sm font-black uppercase italic ${color}`}>{value}</p>
+    </div>
+  </div>
+);
+
+const LoadingPulse = () => (
+  <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+    <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin"></div>
+    <p className="text-slate-300 font-black uppercase tracking-[0.3em] text-[10px]">Syncing Records</p>
+  </div>
+);
+
+const ErrorView = () => (
+  <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
+    <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-red-50">
+      <h2 className="text-2xl font-black text-slate-800 italic uppercase">Not Found</h2>
+      <button onClick={() => window.history.back()} className="mt-6 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest">Go Back</button>
+    </div>
   </div>
 );
 

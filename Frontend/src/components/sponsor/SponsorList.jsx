@@ -11,44 +11,35 @@ const getImageUrl = (imagePath) => {
   return `${import.meta.env.VITE_BACKEND_URL}/${imagePath}`;
 };
 
-/* ================= PREMIUM MOBILE CARD ================= */
+/* ================= COMPACT PREMIUM MOBILE CARD (MATCH EMPLOYEE) ================= */
 const MobileSponsorCard = ({ s, refresh }) => {
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-lg border border-white p-6 transition-all active:scale-[0.98]">
-      <div className="flex items-center gap-4 mb-5">
+    <div className="bg-white rounded-[1.5rem] shadow-lg border border-white p-5 transition-all active:scale-[0.98]">
+      <div className="flex items-center gap-4">
         <div className="relative">
           <img
             src={getImageUrl(s.logo)}
             onError={(e) => (e.target.src = "/default-avatar.png")}
-            className="w-16 h-16 rounded-2xl object-cover border-2 border-red-50 shadow-sm shrink-0"
-            alt="logo"
+            className="w-14 h-14 rounded-[1.2rem] object-cover border-2 border-red-50 shadow-sm shrink-0"
+            alt={s.name}
           />
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center">
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center">
             <Award size={10} className="text-white" />
           </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
+        <div className="flex-1 min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-widest text-red-500 mb-0.5">
             {s.collaboration}
           </p>
-          <h4 className="font-black text-slate-800 uppercase italic tracking-tighter truncate leading-none">
+          <p className="font-black text-slate-800 uppercase italic tracking-tighter truncate leading-none text-base">
             {s.name}
-          </h4>
+          </p>
+          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+            {s.eventsSponsored} Events <span className="text-red-300 mx-1">•</span> {s.reach} Reach
+          </p>
         </div>
       </div>
-      
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="bg-slate-50 rounded-2xl p-3 text-center">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Events</p>
-          <p className="font-black text-slate-700">{s.eventsSponsored}</p>
-        </div>
-        <div className="bg-slate-50 rounded-2xl p-3 text-center">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Reach</p>
-          <p className="font-black text-slate-700">{s.reach}</p>
-        </div>
-      </div>
-
-      <div className="pt-4 border-t border-slate-50 flex justify-end">
+      <div className="mt-5 pt-4 border-t border-slate-50 flex justify-end">
         <SponsorButtons id={s._id} refresh={refresh} />
       </div>
     </div>
@@ -98,47 +89,47 @@ const SponsorList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 pb-12">
-      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
+      <div className="max-w-[1400px] mx-auto p-4 sm:p-8 space-y-8">
         
         {/* HEADER SECTION */}
-        <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-xl shadow-red-100">
-              <Award size={32} strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-red-700 uppercase tracking-tighter sm:text-5xl leading-none italic">
-                Sponsors
-              </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">
-                Manage Strategic Partnerships
-              </p>
-            </div>
+        <header className="flex items-center gap-6 pt-2">
+          <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-2xl shadow-red-200 shrink-0">
+            <Award size={32} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-red-800 uppercase tracking-tighter sm:text-4xl leading-none italic">
+              Sponsors
+            </h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 mt-3">
+              Real-time Sponsor Directory & Management
+            </p>
           </div>
         </header>
 
         {/* MAIN CONTAINER */}
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white overflow-hidden">
           
           {/* SEARCH & FILTERS BAR */}
-          <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row gap-4">
-            <div className="group relative flex-1 w-full flex items-center bg-slate-100/50 border-2 border-transparent rounded-[1.5rem] px-5 focus-within:border-red-500/20 focus-within:bg-white transition-all shadow-inner">
-              <Search className="text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
-              <input
-                type="text"
-                placeholder="SEARCH PARTNERS OR COLLABORATIONS..."
-                className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="p-6 md:p-10 border-b border-slate-50">
+            <div className="flex flex-col lg:flex-row gap-5 items-center">
+              <div className="group relative flex-1 w-full flex items-center bg-slate-100/50 border-2 border-transparent rounded-[1.5rem] px-6 focus-within:border-red-500/20 focus-within:bg-white transition-all shadow-inner">
+                <Search className="text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
+                <input
+                  type="text"
+                  placeholder="SEARCH SPONSOR BY NAME OR COLLABORATION..."
+                  className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               <Link
                 to="/admin-dashboard/add-sponsor"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-red-700 px-8 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-xl shadow-slate-200 transition-all hover:bg-red-600 hover:shadow-red-200 active:scale-95 whitespace-nowrap"
+                className="w-full lg:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-gradient-to-br from-slate-900 to-slate-800 px-10 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-2xl shadow-red-100 transition-all hover:from-red-600 hover:to-rose-500 hover:-translate-y-1 active:scale-95 whitespace-nowrap"
               >
                 <Plus size={18} strokeWidth={3} />
                 <span>Add Partner</span>
               </Link>
+            </div>
           </div>
 
           {loading ? (
@@ -149,46 +140,59 @@ const SponsorList = () => {
           ) : (
             <>
               {/* DESKTOP VIEW */}
-              <div className="hidden md:block overflow-x-auto px-4 pb-4">
-                <table className="w-full border-separate border-spacing-y-3">
+              <div className="hidden md:block overflow-x-auto px-8 pb-10">
+                <table className="w-full border-separate border-spacing-y-5">
                   <thead>
-                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                      <th className="px-6 py-4 text-left">Identity</th>
-                      <th className="px-6 py-4 text-center">Engagement</th>
-                      <th className="px-6 py-4 text-left">Reach Metrics</th>
-                      <th className="px-6 py-4 text-left">Current Status</th>
-                      <th className="px-6 py-4 text-right">Operations</th>
+                    <tr className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                      <th className="px-8 py-4 text-left">S.No</th>
+                      <th className="px-8 py-4 text-left">Logo</th>
+                      <th className="px-8 py-4 text-left">Sponsor Details</th>
+                      <th className="px-8 py-4 text-left">Collaboration</th>
+                      <th className="px-8 py-4 text-left">Events</th>
+                      <th className="px-8 py-4 text-left">Reach</th>
+                      <th className="px-8 py-4 text-right">Administrative Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedSponsors.map((s) => (
-                      <tr key={s._id} className="bg-slate-50/50 hover:bg-red-50/50 transition-all group">
-                        <td className="px-6 py-4 first:rounded-l-[1.5rem]">
-                          <div className="flex items-center gap-4">
-                            <img src={getImageUrl(s.logo)} className="w-12 h-12 rounded-xl border-2 border-white shadow-sm object-cover" alt="" />
-                            <div>
-                              <p className="font-black uppercase italic tracking-tighter text-slate-800 leading-none group-hover:text-red-700 transition-colors">{s.name}</p>
-                              <p className="text-[9px] font-bold text-red-500 uppercase mt-1 tracking-widest">{s.collaboration}</p>
-                            </div>
-                          </div>
+                    {paginatedSponsors.map((s, idx) => (
+                      <tr key={s._id} className="bg-slate-50/40 hover:bg-white transition-all group shadow-sm hover:shadow-xl hover:shadow-red-500/5">
+                        {/* S.No */}
+                        <td className="px-8 py-6 first:rounded-l-[2rem] text-[11px] font-black text-slate-300 italic">
+                          {(idx + 1 + (currentPage - 1) * ITEMS_PER_PAGE).toString().padStart(2, '0')}
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center justify-center px-4 py-1 bg-white border border-slate-100 rounded-lg text-slate-700 font-black text-xs">
+                        {/* Logo */}
+                        <td className="px-8 py-6">
+                          <img src={getImageUrl(s.logo)} className="w-12 h-12 rounded-[1rem] object-cover border-2 border-white shadow-md group-hover:scale-110 transition-transform duration-300" alt={s.name} />
+                        </td>
+                        {/* Name */}
+                        <td className="px-8 py-6">
+                          <p className="font-black text-slate-800 uppercase italic tracking-tighter group-hover:text-red-700 transition-colors text-base leading-tight">
+                            {s.name}
+                          </p>
+                        </td>
+                        {/* Collaboration */}
+                        <td className="px-8 py-6">
+                          <span className="px-4 py-2 bg-white rounded-[1rem] text-[10px] font-black uppercase tracking-widest text-slate-500 border border-slate-100 shadow-sm group-hover:border-red-100 transition-colors">
+                            {s.collaboration}
+                          </span>
+                        </td>
+                        {/* Events */}
+                        <td className="px-8 py-6">
+                          <span className="px-4 py-2 bg-white rounded-[1rem] text-[10px] font-black uppercase tracking-widest text-slate-500 border border-slate-100 shadow-sm group-hover:border-red-100 transition-colors">
                             {s.eventsSponsored}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-slate-600 font-black text-[11px] uppercase tracking-tight">
-                            <Users size={14} className="text-red-400" /> {s.reach}
-                          </div>
+                        {/* Reach */}
+                        <td className="px-8 py-6">
+                          <span className="px-4 py-2 bg-white rounded-[1rem] text-[10px] font-black uppercase tracking-widest text-slate-500 border border-slate-100 shadow-sm group-hover:border-red-100 transition-colors">
+                            {s.reach}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-[9px] font-black uppercase tracking-widest text-red-600 bg-white border border-red-50 px-3 py-1.5 inline-block rounded-lg shadow-sm">
-                            {s.upcomingEvents}
+                        {/* Actions */}
+                        <td className="px-8 py-6 last:rounded-r-[2rem] text-right">
+                          <div className="scale-110 origin-right transition-transform group-hover:translate-x-[-4px]">
+                            <SponsorButtons id={s._id} refresh={fetchSponsors} />
                           </div>
-                        </td>
-                        <td className="px-6 py-4 last:rounded-r-[1.5rem] text-right">
-                          <SponsorButtons id={s._id} refresh={fetchSponsors} />
                         </td>
                       </tr>
                     ))}
@@ -197,10 +201,14 @@ const SponsorList = () => {
               </div>
 
               {/* MOBILE VIEW */}
-              <div className="md:hidden p-4 space-y-6">
-                {paginatedSponsors.map((s) => (
-                  <MobileSponsorCard key={s._id} s={s} refresh={fetchSponsors} />
-                ))}
+              <div className="md:hidden p-4 space-y-4">
+                {paginatedSponsors.length ? (
+                  paginatedSponsors.map((s) => (
+                    <MobileSponsorCard key={s._id} s={s} refresh={fetchSponsors} />
+                  ))
+                ) : (
+                  <p className="text-center py-16 font-bold text-slate-300 uppercase text-xs">No records found</p>
+                )}
               </div>
 
               {/* EMPTY STATE */}
@@ -213,30 +221,29 @@ const SponsorList = () => {
 
               {/* PREMIUM PAGINATION */}
               {filteredSponsors.length > ITEMS_PER_PAGE && (
-                <div className="px-8 py-8 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Page <span className="text-red-600">{currentPage}</span> of {totalPages}
-                  </p>
-                  
-                  <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row items-center justify-between p-6 sm:p-8 bg-slate-50/50 border-t border-white gap-4 sm:gap-0">
+                  <div className="order-1 sm:order-2 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-inner">
+                    <p className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                      Page <span className="text-red-600">{currentPage}</span> 
+                      <span className="mx-2 text-slate-200">/</span> {totalPages}
+                    </p>
+                  </div>
+                  <div className="order-2 sm:order-1 flex w-full sm:w-auto gap-3 items-center justify-between sm:contents">
                     <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                       disabled={currentPage === 1}
-                      className="p-3 rounded-xl bg-white border border-slate-100 text-slate-400 transition-all shadow-sm 
-                                 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 
-                                 hover:enabled:text-red-600 hover:enabled:border-red-100"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-100 shadow-sm transition-all enabled:hover:text-red-600 enabled:hover:shadow-md enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <ChevronLeft size={20} strokeWidth={3} />
+                      <ChevronLeft size={14} className="sm:w-4 sm:h-4" strokeWidth={3} /> 
+                      <span>Prev</span>
                     </button>
-
                     <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="p-3 rounded-xl bg-red-600 text-white transition-all shadow-xl shadow-red-100 
-                                 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 
-                                 hover:enabled:bg-red-700 active:enabled:scale-95"
+                      className="flex-1 sm:flex-none order-3 flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-100 shadow-sm transition-all enabled:hover:text-red-600 enabled:hover:shadow-md enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <ChevronRight size={20} strokeWidth={3} />
+                      <span>Next</span>
+                      <ChevronRight size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
                     </button>
                   </div>
                 </div>

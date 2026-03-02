@@ -43,7 +43,7 @@ const Navbar = () => {
       <header
         className={`sticky top-0 z-50 transition-all duration-500 px-4 sm:px-8 py-2.5 ${
           scrolled 
-            ? "glass-effect shadow-premium border-b border-red-100/20" 
+            ? "glass-effect shadow-[0_4px_24px_rgba(153,27,27,0.10)] border-b border-red-100/30" 
             : "bg-white border-b border-transparent"
         }`}
       >

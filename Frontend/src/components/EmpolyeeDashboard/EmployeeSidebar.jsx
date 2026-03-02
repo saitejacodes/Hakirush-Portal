@@ -40,8 +40,8 @@ const EmployeeSidebar = () => {
         className={`
           fixed md:sticky top-0 left-0 z-50 h-screen
           bg-white/80 backdrop-blur-2xl
-          border-r border-red-100/50
-          shadow-[20px_0_50px_rgba(0,0,0,0.05)]
+          border-r border-red-100/60
+          shadow-[20px_0_60px_rgba(153,27,27,0.08)]
           transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
           ${open ? "translate-x-0 w-72" : "-translate-x-full w-72"}
           md:translate-x-0 md:w-24 md:hover:w-72
@@ -49,12 +49,12 @@ const EmployeeSidebar = () => {
         `}
       >
         {/* HEADER / LOGO SECTION */}
-        <div className="h-16 flex items-center gap-4 px-5 mb-4 relative overflow-hidden">
+        <div className="h-16 flex items-center gap-4 px-5 mb-4 relative overflow-hidden rounded-b-3xl shadow-[0_4px_24px_rgba(153,27,27,0.10)]">
           {/* Decorative Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-700 to-red-600" />
           
           <div className="relative z-10 flex items-center gap-4">
-            <div className="p-1.5 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/20">
+            <div className="p-1.5 bg-white/30 backdrop-blur-md rounded-2xl shadow-inner border border-white/30">
               <img
                 src={Logo}
                 className="w-9 h-9 rounded-xl object-contain shadow-lg"

@@ -146,7 +146,7 @@ const EmployeeEdit = () => {
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all shadow-sm cursor-pointer"
+            className="group flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
           >
             <X size={16} className="group-hover:rotate-90 transition-transform" /> Discard
           </button>

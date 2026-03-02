@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -38,31 +38,40 @@ const EmployeeLeaveAdd = () => {
   const navigate = useNavigate();
 
   const [leave, setLeave] = useState({ leaveType: "", startDate: "", endDate: "", reason: "" });
-  const [balance, setBalance] = useState({ casual: 0, sick: 0 });
+  const [balance, setBalance] = useState({ casual: 12, sick: 12 });
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [daysCount, setDaysCount] = useState(0);
 
-  const toLocalYMD = (dateObj) => {
-    const d = new Date(dateObj);
+  // Helper: Format to YYYY-MM-DD using Local Time
+  const toLocalYMD = (dateInput) => {
+    const d = new Date(dateInput);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
 
-  // Reusable logic to calculate working days (Excluding Weekends & Holidays)
+  // Logic to calculate working days (Excluding Weekends & Holidays)
   const calculateWorkingDays = useCallback((start, end, holidayList) => {
+    if (!start || !end) return 0;
     let count = 0;
     let cur = new Date(start);
     const stop = new Date(end);
+    
+    // Normalize to midnight local time
     cur.setHours(0,0,0,0);
     stop.setHours(0,0,0,0);
     
-    const hStrings = holidayList.map(h => toLocalYMD(h.date || h));
+    // Memoize holiday strings for faster lookup
+    const holidayStrings = new Set(holidayList.map(h => 
+      typeof h === 'string' ? h : toLocalYMD(h.date || h)
+    ));
 
     while (cur <= stop) {
-      const dayOfWeek = cur.getDay();
-      // 0 = Sunday, 6 = Saturday
-      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !hStrings.includes(toLocalYMD(cur))) {
+      const dayOfWeek = cur.getDay(); // 0 = Sunday, 6 = Saturday
+      const dateStr = toLocalYMD(cur);
+      
+      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.has(dateStr)) {
         count++;
       }
       cur.setDate(cur.getDate() + 1);
@@ -70,11 +79,13 @@ const EmployeeLeaveAdd = () => {
     return count;
   }, []);
 
+  // Initial Data Fetch
   useEffect(() => {
     const fetchData = async () => {
       if (!user?._id) return;
       const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
       try {
+        setFetchingData(true);
         const [holidayRes, leaveHistoryRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers })
@@ -97,12 +108,16 @@ const EmployeeLeaveAdd = () => {
           casual: Math.max(0, 12 - casualUsed), 
           sick: Math.max(0, 12 - sickUsed) 
         });
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error("Data Fetch Error:", e); 
+      } finally {
+        setFetchingData(false);
+      }
     };
     fetchData();
-  }, [user, calculateWorkingDays]);
+  }, [user?._id, calculateWorkingDays]);
 
-  // Update real-time days count for the form
+  // Real-time days counter
   useEffect(() => {
     if (leave.startDate && leave.endDate) {
       const count = calculateWorkingDays(leave.startDate, leave.endDate, holidays);
@@ -115,10 +130,9 @@ const EmployeeLeaveAdd = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Final Validation
     const currentBalance = leave.leaveType === "Sick Leave" ? balance.sick : balance.casual;
     if (daysCount > currentBalance) {
-      alert("Insufficient leave balance for this request.");
+      alert("Insufficient leave balance.");
       return;
     }
 
@@ -133,52 +147,57 @@ const EmployeeLeaveAdd = () => {
         setTimeout(() => navigate(`/employee-dashboard/leaves/${user._id}`), 2000);
       }
     } catch (err) { 
-      alert(err?.response?.data?.error || "Submit failed"); 
+      alert(err?.response?.data?.error || "Submission failed. Please try again."); 
     } finally { 
       setLoading(false); 
     }
   };
 
-  // Determine if the "Transmit" button should be active
   const isInsufficient = (leave.leaveType === "Sick Leave" && daysCount > balance.sick) || 
-                       (leave.leaveType === "Casual Leave" && daysCount > balance.casual);
+                         (leave.leaveType === "Casual Leave" && daysCount > balance.casual);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-white via-red-50 to-rose-100 flex items-center p-4 sm:p-10 selection:bg-rose-200">
+    <div className="min-h-screen w-full bg-gradient-to-br from-white via-slate-50 to-rose-50 flex items-center p-4 sm:p-10 selection:bg-rose-200">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* LEFT PANEL: STATS */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
+          <div className="bg-red-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div className="relative z-10">
-              <ShieldCheck className="text-rose-500 mb-4" size={20} />
-              <h2 className="text-xl text-red-600 font-black uppercase italic tracking-tighter">Registry Terminal</h2>
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">Verified Employee Session</p>
+              <ShieldCheck className="text-emerald-400 mb-4" size={20} />
+              <h2 className="text-xl font-black uppercase italic tracking-tighter">Registry Terminal</h2>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Active Session: {user?.name || "Verified"}</p>
             </div>
-            <div className="absolute -right-8 -bottom-8 opacity-10">
-              <TrendingUp size={150} className="text-red-400" />
+            <div className="absolute -right-8 -bottom-8 opacity-20">
+              <TrendingUp size={150} className="text-white" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all ${leave.leaveType === "Casual Leave" ? "border-rose-500 shadow-rose-100" : "border-transparent shadow-xl"}`}>
+            {/* Casual Leave Card */}
+            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all duration-500 ${leave.leaveType === "Casual Leave" ? "border-rose-500 shadow-rose-100" : "border-transparent shadow-xl"}`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Casual Leave</span>
-                <div className={`w-2 h-2 rounded-full ${balance.casual > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Casual Balance</span>
+                <div className={`w-2 h-2 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.casual > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
               </div>
-              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">{balance.casual}</div>
-              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Days Available</p>
+              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">
+                {fetchingData ? "..." : balance.casual}
+              </div>
+              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Working Days Available</p>
             </div>
 
-            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all ${leave.leaveType === "Sick Leave" ? "border-blue-500 shadow-blue-100" : "border-transparent shadow-xl"}`}>
+            {/* Sick Leave Card */}
+            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all duration-500 ${leave.leaveType === "Sick Leave" ? "border-blue-500 shadow-blue-100" : "border-transparent shadow-xl"}`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sick Leave</span>
-                <div className={`w-2 h-2 rounded-full ${balance.sick > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sick Balance</span>
+                <div className={`w-2 h-2 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.sick > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
               </div>
-              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">{balance.sick}</div>
-              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Days Available</p>
+              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">
+                {fetchingData ? "..." : balance.sick}
+              </div>
+              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Medical Credit Available</p>
             </div>
           </div>
         </div>
@@ -189,15 +208,16 @@ const EmployeeLeaveAdd = () => {
             <div className="flex justify-between items-end mb-10">
               <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter">New Application</h3>
               <div className="text-right">
-                <p className="text-[6px] font-black text-slate-400 uppercase tracking-widest">Calculated Deduction</p>
-                <p className={`text-xl font-black leading-none ${isInsufficient ? 'text-red-600' : 'text-emerald-600'}`}>
+                <p className="text-[6px] font-black text-slate-400 uppercase tracking-widest">Total Working Days</p>
+                <p className={`text-xl font-black leading-none transition-colors ${isInsufficient ? 'text-red-600' : 'text-emerald-600'}`}>
                   {daysCount} Days
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="relative group">
+              {/* Category Select */}
+              <div className="relative">
                 <label className="absolute -top-3 left-1 bg-white px-2 text-[8px] font-black uppercase text-rose-600 tracking-widest z-10">Leave Category</label>
                 <select 
                   name="leaveType" 
@@ -206,19 +226,19 @@ const EmployeeLeaveAdd = () => {
                   required 
                   className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-4 rounded-2xl font-bold text-slate-700 outline-none transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">Choose category...</option>
+                  <option value="">Select Category</option>
                   <option value="Sick Leave">Sick Leave</option>
                   <option value="Casual Leave">Casual Leave</option>
                 </select>
-                <Briefcase size={18} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Briefcase size={18} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
               </div>
 
+              {/* Dates */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="relative group">
-                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Commencement</label>
+                <div className="relative">
+                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Start Date</label>
                   <input 
                     type="date" 
-                    name="startDate" 
                     min={toLocalYMD(new Date())}
                     value={leave.startDate} 
                     onChange={(e) => setLeave(p => ({...p, startDate: e.target.value}))} 
@@ -226,11 +246,10 @@ const EmployeeLeaveAdd = () => {
                     className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-5 rounded-2xl font-bold text-slate-700 outline-none transition-all" 
                   />
                 </div>
-                <div className="relative group">
-                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Termination</label>
+                <div className="relative">
+                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">End Date</label>
                   <input 
                     type="date" 
-                    name="endDate" 
                     min={leave.startDate || toLocalYMD(new Date())}
                     value={leave.endDate} 
                     onChange={(e) => setLeave(p => ({...p, endDate: e.target.value}))} 
@@ -240,44 +259,45 @@ const EmployeeLeaveAdd = () => {
                 </div>
               </div>
 
-              <div className="relative group">
-                <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Formal Justification</label>
+              {/* Reason */}
+              <div className="relative">
+                <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Justification</label>
                 <textarea 
-                  name="reason" 
                   rows="3" 
                   value={leave.reason} 
                   onChange={(e) => setLeave(p => ({...p, reason: e.target.value}))} 
                   required
                   className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-5 rounded-2xl font-medium text-slate-600 outline-none transition-all resize-none placeholder:text-slate-200" 
-                  placeholder="Enter detailed reason for the requested period..." 
+                  placeholder="Provide context for your leave request..." 
                 />
               </div>
 
-              {/* Status Notices */}
+              {/* Conditional Alerts */}
               {leave.startDate && leave.endDate && (
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
                   {daysCount === 0 && (
                     <div className="bg-amber-50 p-4 rounded-2xl flex items-center gap-3 border border-amber-100">
                       <AlertTriangle className="text-amber-500" size={18} />
-                      <p className="text-[10px] font-black uppercase text-amber-700 tracking-tight">Notice: Range consists only of non-working days.</p>
+                      <p className="text-[10px] font-black uppercase text-amber-700 tracking-tight">Range only contains non-working days.</p>
                     </div>
                   )}
                   {isInsufficient && (
                     <div className="bg-red-50 p-4 rounded-2xl flex items-center gap-3 border border-red-100">
                       <AlertTriangle className="text-red-500" size={18} />
-                      <p className="text-[10px] font-black uppercase text-red-700 tracking-tight">Warning: Requested days exceed available balance.</p>
+                      <p className="text-[10px] font-black uppercase text-red-700 tracking-tight">Requested days exceed available balance.</p>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Submit Button */}
               <button 
                 type="submit" 
-                disabled={loading || daysCount <= 0 || isInsufficient} 
-                className="w-full group relative py-6 rounded-2xl bg-red-600 text-white font-black uppercase text-[11px] tracking-[0.4em] shadow-2xl hover:bg-red-500 transition-all duration-500 disabled:opacity-20 disabled:grayscale disabled:cursor-not-allowed cursor-pointer active:scale-95 overflow-hidden"
+                disabled={loading || daysCount <= 0 || isInsufficient || !leave.leaveType} 
+                className="w-full flex items-center justify-center gap-4 py-4 rounded-[2rem] bg-slate-900 hover:bg-rose-600 text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer group"
               >
                 <span className="relative z-10 flex items-center justify-center gap-4">
-                  {loading ? "Processing Transmission..." : "Transmit to Registry"}
+                  {loading ? "Transmitting..." : "Submit Application"}
                   <ArrowRight size={20} className="group-hover:translate-x-3 transition-transform" />
                 </span>
               </button>

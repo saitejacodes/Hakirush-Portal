@@ -23,30 +23,54 @@ import {
   Legend,
 } from "recharts";
 
-const PIE_COLORS = ["#ef4444", "#6366f1", "#06b6d4", "#f59e0b", "#8b5cf6", "#10b981"];
+/* ================= CONFIGURATION ================= */
+const PIE_COLORS = [
+  "#6366f1", // Indigo
+  "#06b6d4", // Cyan
+  "#f59e0b", // Amber
+  "#10b981", // Emerald
+  "#ec4899", // Pink
+  "#f97316", // Orange
+  "#3b82f6", // Blue
+  "#14b8a6", // Teal
+  "#8b5cf6", // Violet
+  "#ef4444", // Red
+  "#e11d48", // Rose
+  "#fbbf24"  // Yellow
+];
+
+const SEMANTIC_COLORS = {
+  Approved: "#10b981", // Emerald
+  Pending: "#f59e0b",  // Amber
+  Rejected: "#ef4444", // Red
+};
 
 /* ================= REUSABLE COMPONENTS ================= */
 const StatCard = ({ icon: Icon, label, value, colorClass = "text-red-600" }) => (
-  <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-[180px] transition-all hover:shadow-xl hover:-translate-y-1">
-    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
-      <div className={`p-2 rounded-xl bg-slate-50 ${colorClass}`}>
-        {Icon && <Icon size={16} />}
+  <div className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100 flex flex-col justify-between h-[180px] transition-all hover:shadow-2xl hover:-translate-y-2 hover:border-red-200 group">
+    <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase text-slate-400 tracking-[0.3em]">
+      <div className={`p-2 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-100 ${colorClass} group-hover:scale-110 transition-transform`}>
+        {Icon && <Icon size={18} className="drop-shadow-sm" />}
       </div>
-      {label}
+      <span className="group-hover:text-red-600 transition-colors">{label}</span>
     </div>
-    <div className="text-5xl font-black text-slate-900 italic tracking-tighter leading-none">
+    <div className="text-5xl font-black text-slate-900 italic tracking-tighter leading-none group-hover:text-red-600 transition-colors">
       {value ?? 0}
     </div>
   </div>
 );
 
 const SectionCard = ({ title, children, subtitle }) => (
-  <div className="bg-white p-6 sm:p-8 rounded-[3rem] shadow-xl border border-slate-50 flex flex-col">
-    <div className="mb-4 shrink-0">
+  <div className="bg-white p-6 sm:p-8 rounded-[3rem] shadow-xl border border-slate-50 flex flex-col hover:shadow-2xl transition-all">
+    <div className="mb-4 shrink-0 flex items-center gap-2">
       <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">
         {title}
       </h3>
-      {subtitle && <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">{subtitle}</p>}
+      {subtitle && (
+        <span className="ml-2 px-2 py-1 rounded-full bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 border border-slate-200">
+          {subtitle}
+        </span>
+      )}
     </div>
     <div className="w-full min-h-[300px] flex items-center justify-center">
       {children}
@@ -64,7 +88,6 @@ const AdminSummary = () => {
 
   useEffect(() => {
     setDomReady(true);
-    
     const fetchAllData = async () => {
       try {
         const config = {
@@ -88,7 +111,6 @@ const AdminSummary = () => {
   const handleExport = () => {
     if (!summary || !attSummary) return;
     setIsExporting(true);
-
     const reportData = [
       ["TODAY'S OPERATIONAL SUMMARY REPORT"],
       [`Generated on: ${new Date().toLocaleDateString()}`],
@@ -98,33 +120,21 @@ const AdminSummary = () => {
       ["Late Arrivals", attSummary.lateLogins],
       ["On Leave", attSummary.onLeaveToday],
       ["Absent Today", attSummary.absentToday],
-      ["Holiday Status", attSummary.isHoliday ? `YES (${attSummary.holidayName})` : "NO"],
       [""],
       ["SECTION 2: STAFFING & OPERATIONS"],
       ["Total Employees", summary.totalEmployees],
       ["Total Departments", summary.totalDepartments],
       ["Total Clients", summary.totalClients],
-      [""],
-      ["SECTION 3: SPONSORS & STALLS"],
-      ["Total Sponsors", summary.sponsorSummary?.totalSponsors],
-      ["Sponsored Events", summary.sponsorSummary?.totalSponsoredEvents],
-      ["Total Stalls", summary.stallSummary?.totalStalls],
-      ["Stall Events", summary.stallSummary?.totalStallEvents],
     ];
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + reportData.map(e => e.join(",")).join("\n");
-
+    const csvContent = "data:text/csv;charset=utf-8," + reportData.map(e => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    const dateStamp = new Date().toISOString().split('T')[0];
-    link.setAttribute("download", `Today_Report_${dateStamp}.csv`);
-    
+    link.setAttribute("download", `Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
     setTimeout(() => setIsExporting(false), 1000);
   };
 
@@ -135,7 +145,6 @@ const AdminSummary = () => {
     </div>
   );
 
-  // Chart Data Formatting
   const chartData = {
     plans: [
       { name: "Annual", value: summary?.totalAnnual || 0 },
@@ -155,10 +164,10 @@ const AdminSummary = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 pb-20 selection:bg-red-100">
-      <div className="max-w-[1440px] mx-auto p-4 sm:p-8 space-y-10">
+      <div className="max-w-[1440px] mx-auto p-4 sm:p-8 space-y-12">
         
         {/* HEADER */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 pt-4">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 pt-4">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <LayoutDashboard size={18} className="text-red-600" />
@@ -169,31 +178,31 @@ const AdminSummary = () => {
             </h1>
           </div>
 
-          <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-6">
+           <div className="bg-white p-5 rounded-[2rem] shadow-md border border-slate-100 flex items-center gap-8">
              <div className="flex items-center gap-3 pr-6 border-r border-slate-100">
-                <Calendar className="text-red-600" size={20} />
-                <div>
-                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Date</p>
-                   <p className="text-xs font-black uppercase">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                </div>
+               <Calendar className="text-red-600" size={22} />
+               <div>
+                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</p>
+                 <p className="text-sm font-black uppercase">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+               </div>
              </div>
              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full animate-ping ${attSummary?.isHoliday ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                <p className="text-[10px] font-black uppercase tracking-widest">{attSummary?.isHoliday ? attSummary.holidayName : 'Live Status'}</p>
+               <div className={`w-3 h-3 rounded-full animate-pulse ${attSummary?.isHoliday ? 'bg-red-500' : 'bg-emerald-500'} border border-white`} />
+               <p className="text-[11px] font-black uppercase tracking-widest">{attSummary?.isHoliday ? attSummary.holidayName : 'Live Status'}</p>
              </div>
-          </div>
+           </div>
         </header>
 
-        {/* STATS CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* TOP STATS: ATTENDANCE PULSE */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard icon={Activity} label="Active Today" value={attSummary?.activeToday} colorClass="text-emerald-500" />
           <StatCard icon={Clock} label="Late Arrivals" value={attSummary?.lateLogins} colorClass="text-amber-500" />
           <StatCard icon={UserMinus} label="Staff on Leave" value={attSummary?.onLeaveToday} colorClass="text-blue-500" />
           <StatCard icon={AlertCircle} label="Absent Count" value={attSummary?.absentToday} colorClass="text-red-600" />
         </div>
 
-        {/* WORKFORCE OVERVIEW */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* MIDDLE STATS: WORKFORCE OVERVIEW (THE SECTION YOU MISSED) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
            <div className="bg-white p-8 rounded-[3rem] flex justify-between items-center group relative overflow-hidden shadow-2xl shadow-slate-200">
               <TrendingUp className="absolute -right-4 -bottom-4 text-slate-100" size={120} />
               <div className="relative z-10">
@@ -204,7 +213,7 @@ const AdminSummary = () => {
            </div>
 
            <div className="bg-white p-8 rounded-[3rem] border border-slate-100 flex justify-between items-center shadow-sm group hover:border-red-100 transition-colors">
-              <div>
+             <div>
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Departments</p>
                 <p className="text-6xl font-black italic tracking-tighter text-slate-900 leading-none">{summary?.totalDepartments}</p>
               </div>
@@ -212,7 +221,7 @@ const AdminSummary = () => {
            </div>
 
            <div className="bg-white p-8 rounded-[3rem] border border-slate-100 flex justify-between items-center shadow-sm group hover:border-red-100 transition-colors">
-              <div>
+             <div>
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Clients</p>
                 <p className="text-6xl font-black italic tracking-tighter text-slate-900 leading-none">{summary?.totalClients}</p>
               </div>
@@ -220,90 +229,40 @@ const AdminSummary = () => {
            </div>
         </div>
 
-        {/* ================= BIRTHDAY SECTION ================= */}
+        {/* BIRTHDAY SECTION */}
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-pink-100 space-y-6">
           <div className="flex items-center gap-3">
-            <Cake className="text-pink-500" size={22} />
-            <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-900">
-              Birthday Spotlight
-            </h3>
+            <Cake className="text-pink-500" size={28} />
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">Birthday Spotlight</h3>
           </div>
-
-          {/* TODAY */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
-              Today
-            </p>
-            {birthdaySummary.today.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">No birthdays today 🎈</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {birthdaySummary.today.map((emp) => (
-                  <div key={emp._id} className="flex items-center gap-4 bg-pink-50 p-4 rounded-2xl border border-pink-100 transition-all hover:scale-[1.02]">
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_URL}/${emp.profileImage}`}
-                      alt={emp.name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                    />
-                    <div>
-                      <p className="font-bold text-slate-900">{emp.name}</p>
-                      <p className="text-xs text-slate-500 uppercase">
-                        {emp.department?.dep_name || emp.department}
-                      </p>
-                      <p className="text-xs text-pink-600 font-semibold">
-                        Turning {emp.age} 🎉
-                      </p>
-                    </div>
+          {birthdaySummary.today.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {birthdaySummary.today.map((emp) => (
+                <div key={emp._id} className="flex items-center gap-4 bg-pink-50 p-4 rounded-2xl border border-pink-100 transition-all hover:scale-[1.04]">
+                  <img src={`${import.meta.env.VITE_BACKEND_URL}/${emp.profileImage}`} className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm" alt="" />
+                  <div>
+                    <p className="font-bold text-slate-900">{emp.name} 🎂</p>
+                    <p className="text-xs text-pink-600 font-semibold uppercase tracking-tighter">Celebrate Today!</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* UPCOMING */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
-              Upcoming (Next 7 Days)
-            </p>
-            {birthdaySummary.upcoming.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">No upcoming birthdays</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {birthdaySummary.upcoming.map((emp) => (
-                  <div key={emp._id} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_URL}/${emp.profileImage}`}
-                      alt={emp.name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                    />
-                    <div>
-                      <p className="font-bold text-slate-900">{emp.name}</p>
-                      <p className="text-xs text-slate-500 uppercase">
-                        {emp.department?.dep_name || emp.department}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(emp.dob).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 italic text-sm">No birthdays today.</p>
+          )}
         </div>
 
         {/* CHARTS GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
           <SectionCard title="Client Mix" subtitle="Plan Distribution">
             {domReady && (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData.plans} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
-                    {chartData.plans.map((e, i) => <Cell key={i} fill={PIE_COLORS[i % 6]} strokeWidth={0} />)}
+                    {chartData.plans.map((e, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', paddingTop: '20px' }} />
@@ -317,7 +276,9 @@ const AdminSummary = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData.sponsors} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
-                    {chartData.sponsors.map((e, i) => <Cell key={i} fill={PIE_COLORS[(i + 1) % 6]} strokeWidth={0} />)}
+                    {chartData.sponsors.map((e, i) => (
+                      <Cell key={i} fill={PIE_COLORS[(i + 3) % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', paddingTop: '20px' }} />
@@ -331,7 +292,9 @@ const AdminSummary = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData.stalls} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
-                    {chartData.stalls.map((e, i) => <Cell key={i} fill={PIE_COLORS[(i + 3) % 6]} strokeWidth={0} />)}
+                    {chartData.stalls.map((e, i) => (
+                      <Cell key={i} fill={PIE_COLORS[(i + 6) % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', paddingTop: '20px' }} />
@@ -345,7 +308,9 @@ const AdminSummary = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData.depts} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
-                    {chartData.depts.map((e, i) => <Cell key={i} fill={PIE_COLORS[(i + 4) % 6]} strokeWidth={0} />)}
+                    {chartData.depts.map((e, i) => (
+                      <Cell key={i} fill={PIE_COLORS[(i + 9) % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', paddingTop: '20px' }} />
@@ -359,7 +324,9 @@ const AdminSummary = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData.leaves} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
-                    {chartData.leaves.map((e, i) => <Cell key={i} fill={PIE_COLORS[(i + 5) % 6]} strokeWidth={0} />)}
+                    {chartData.leaves.map((e, i) => (
+                      <Cell key={i} fill={SEMANTIC_COLORS[e.name] || PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', paddingTop: '20px' }} />
@@ -368,22 +335,21 @@ const AdminSummary = () => {
             )}
           </SectionCard>
 
-          {/* REPORT EXPORT CARD */}
-          <div className="bg-red-600 rounded-[3rem] p-10 text-white flex flex-col justify-between items-start shadow-2xl shadow-red-200 group">
+          {/* EXPORT CARD */}
+          <div className="bg-red-600 rounded-[3rem] p-10 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden">
              <div className="space-y-4">
-                <h4 className="text-4xl font-black uppercase italic tracking-tighter leading-none">Global<br/>Reporting</h4>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 max-w-[200px]">Strategic organizational intelligence.</p>
+               <h4 className="text-4xl font-black uppercase italic tracking-tighter leading-none">Global<br/>Reporting</h4>
+               <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-90">Strategic organizational intelligence.</p>
              </div>
              <button 
-                onClick={handleExport}
-                disabled={isExporting}
-                className="mt-6 bg-white text-red-600 w-full py-4 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:bg-slate-900 hover:text-white active:scale-95 disabled:opacity-70 cursor-pointer"
+               onClick={handleExport}
+               disabled={isExporting}
+               className="mt-6 bg-white text-red-600 w-full py-4 rounded-full text-[12px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:bg-slate-900 hover:text-white"
              >
-                {isExporting ? "Downloading..." : <><Download size={16} /> Export CSV Report</>}
+               {isExporting ? "Downloading..." : <><Download size={18} /> Export CSV Report</>}
              </button>
-          </div>
+           </div>
         </div>
-
       </div>
     </div>
   );

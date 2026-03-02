@@ -89,14 +89,10 @@ const Add = () => {
   const labelCls = "text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block ml-1";
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] text-slate-900 p-4 lg:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 p-4 lg:p-10">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
       
       <div className="max-w-5xl mx-auto">
-        <button onClick={() => navigate(-1)} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all mb-8 cursor-pointer">
-          <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform"/> Back to Personnel
-        </button>
-
         <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             
@@ -138,12 +134,12 @@ const Add = () => {
                       <input name="employeeId" placeholder="IDENTITY NO." required onChange={handleChange} className={punchyInput} />
                     </div>
                     <div>
-                      <label className={labelCls}>Access Key (Manual Case)</label>
+                      <label className={labelCls}>Password (Manual Case)</label>
                       <div className="relative">
                         <input 
                           type={showPassword ? "text" : "password"} 
                           name="password" 
-                          placeholder="Access Key" 
+                          placeholder="Password" 
                           required 
                           onChange={handleChange} 
                           className={manualCaseInput} 

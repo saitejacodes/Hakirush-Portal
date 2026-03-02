@@ -27,7 +27,7 @@ const SuccessAlert = ({ onClose }) => (
           </p>
           <button
             onClick={onClose}
-            className="w-full mt-8 py-5 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest text-[11px] hover:bg-red-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
           >
             Return to Profile
           </button>
@@ -142,7 +142,7 @@ const EditEmployeeProfile = () => {
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all shadow-sm cursor-pointer"
+            className="group flex items-center gap-2 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
           >
             <X size={16} className="group-hover:rotate-90 transition-transform" /> Cancel
           </button>
@@ -230,7 +230,7 @@ const EditEmployeeProfile = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-[2] py-4 bg-red-600 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-slate-200 hover:bg-red-500 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full flex items-center justify-center gap-4 py-4 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 hover:from-red-600 hover:to-rose-500 text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl shadow-red-200 transition-all hover:scale-[1.02] hover:shadow-red-300 active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer overflow-hidden relative group"
               >
                 {saving ? "Synchronizing..." : "Authorize & Save Changes"}
               </button>

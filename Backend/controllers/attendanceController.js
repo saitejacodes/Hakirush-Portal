@@ -30,20 +30,28 @@ const getAttendance = async (req, res) => {
     try {
         const today = new Date();
         const todayStr = formatToLocalYMD(today);
-        const dayOfWeek = today.getDay(); 
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
 
         const holidays = await Holiday.find();
         const holidayMatch = holidays.find(h => formatToLocalYMD(h.date) === todayStr);
 
+        // --- UPDATED LOGIC HERE ---
         if (dayOfWeek === 0 || dayOfWeek === 6 || holidayMatch) {
-            let reason = holidayMatch ? holidayMatch.title : (dayOfWeek === 0 ? "Sunday" : "Saturday");
+            let reason = "";
+            if (holidayMatch) {
+                reason = holidayMatch.title; // e.g., "Sankranti"
+            } else {
+                reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
+            }
+            
             return res.json({ 
                 success: true, 
                 attendance: [], 
                 isOffDay: true, 
-                reason: reason 
+                reason: reason
             });
         }
+        // --------------------------
 
         const employees = await Employee.find().populate("userId").populate("department");
         const todayAttendance = await Attendance.find({ date: todayStr }).populate({
@@ -67,8 +75,9 @@ const getAttendance = async (req, res) => {
                 checkOut: null,
                 isPaused: false,
                 totalPausedMs: 0,
-                employeeId: emp, };
-            });
+                employeeId: emp, 
+            };
+        });
 
         return res.json({ success: true, attendance });
     } catch (error) {
@@ -87,10 +96,17 @@ const getAdminTodaySummary = async (req, res) => {
         const holidays = await Holiday.find();
         const holidayMatch = holidays.find(h => formatToLocalYMD(h.date) === todayStr);
 
-        // Saturday (6) check included
+        // --- UPDATED LOGIC HERE ---
         if (dayOfWeek === 0 || dayOfWeek === 6 || holidayMatch) {
-            return res.json({ success: true, isOffDay: true, activeToday: 0, onLeaveToday: 0, absentToday: 0 });
+            let reason = "";
+            if (holidayMatch) {
+                reason = holidayMatch.title;
+            } else {
+                reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
+            }
+            return res.json({ success: true, isOffDay: true, reason: reason, activeToday: 0, onLeaveToday: 0, absentToday: 0 });
         }
+        // --------------------------
 
         const totalEmployees = await Employee.countDocuments();
         const leaves = await Leave.find({
@@ -122,7 +138,6 @@ const getAdminTodaySummary = async (req, res) => {
 const attendanceReport = async (req, res) => {
     try {
         const { date, search } = req.query;
-        const todayStr = formatToLocalYMD(new Date());
         
         const filter = date ? { date } : {};
         const records = await Attendance.find(filter).populate({ 
@@ -146,7 +161,6 @@ const attendanceReport = async (req, res) => {
         const groupData = {};
         filtered.forEach(r => {
             if (!groupData[r.date]) groupData[r.date] = [];
-            // Always trust the status field, regardless of checkIn/checkOut
             let finalStatus = r.status || "Absent";
             groupData[r.date].push({
                 _id: r._id,

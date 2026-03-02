@@ -48,19 +48,13 @@ const ViewPayslip = () => {
   [payslips]);
 
   return (
-    /* UPDATED: flex and justify-center added to parent */
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-rose-100 font-sans text-slate-900 selection:bg-red-50 flex justify-center items-start overflow-x-hidden">
       
-      {/* UPDATED: removed ml-12 and added mx-auto for perfect horizontal centering */}
-      <div className="w-full max-w-3xl p-6 md:p-12 mx-auto">
+      {/* Main container */}
+      <div className="w-full max-w-5xl p-6 md:p-12">
         
-        <div className="flex justify-between items-center mb-10">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="group flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm active:scale-95"
-          >
-            <ArrowLeft size={14} /> Back
-          </button>
+        {/* Header Section */}
+        <div className="flex justify-end items-center mb-10">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 rounded-full text-[8px] font-black text-white uppercase tracking-widest">
             <Lock size={10} className="text-red-500" /> Secure Terminal
           </div>
@@ -78,7 +72,7 @@ const ViewPayslip = () => {
                 <Wallet size={14} />
                 <span className="text-[9px] font-black uppercase tracking-[0.3em]">Financial Ledger</span>
               </div>
-              <h1 className="text-2xl font-black tracking-tighter italic uppercase text-slate-900">
+              <h1 className="text-4xl font-black tracking-tighter italic uppercase text-slate-900">
                 Payroll Archive
               </h1>
             </div>

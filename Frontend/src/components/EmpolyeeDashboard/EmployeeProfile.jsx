@@ -67,14 +67,8 @@ const EmployeeProfile = () => {
 
               <div className="flex gap-3 mt-8 w-full">
                 <button 
-                  onClick={() => navigate(-1)}
-                  className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600 cursor-pointer"
-                >
-                  <ChevronLeft size={16} /> Back
-                </button>
-                <button 
                   onClick={() => navigate(`/employee-dashboard/profile/${employee._id}/edit`)}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-white cursor-pointer"
+                  className="flex-1 py-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:from-red-600 hover:to-rose-500 text-white cursor-pointer"
                 >
                   <Edit size={16} /> Edit
                 </button>

@@ -152,7 +152,7 @@ const Login = () => {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full rounded-2xl bg-slate-900 py-4 font-black uppercase tracking-[0.3em] text-white shadow-xl shadow-slate-900/20 disabled:opacity-70 flex items-center justify-center gap-3 transition-all hover:bg-red-700 cursor-pointer"
+              className="w-full flex items-center justify-center gap-4 py-4 rounded-[2rem] bg-slate-900 hover:bg-rose-600 text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer group"
             >
               {loading ? (
                 <>

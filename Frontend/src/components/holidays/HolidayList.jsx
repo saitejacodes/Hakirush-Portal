@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Trash2, CalendarDays, Plus, Search, Loader2, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, CalendarDays, Plus, Search, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 /* ================= PROTOCOL: DELETE CONFIRMATION ================= */
@@ -76,6 +76,8 @@ const HolidayList = () => {
         setHolidays(formatted);
         setFiltered(formatted);
       }
+    } catch (err) {
+      console.error(err);
     } finally { setLoading(false); }
   };
 
@@ -109,7 +111,8 @@ const HolidayList = () => {
       {deleteId && <ConfirmDeleteAlert onConfirm={confirmDelete} onCancel={() => setDeleteId(null)} />}
       {showSuccess && <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />}
 
-      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-8">
+      {/* Widened container to 1400px to match employee list */}
+      <div className="max-w-[1400px] mx-auto p-4 sm:p-8 space-y-8">
         
         {/* HEADER SECTION */}
         <header className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2 text-center sm:text-left">
@@ -127,7 +130,7 @@ const HolidayList = () => {
 
           <Link
             to="/admin-dashboard/add-holiday"
-            className="flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 transition-all shadow-xl shadow-red-100 active:scale-95"
+            className="flex items-center gap-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl shadow-red-100 active:scale-95"
           >
             <Plus size={16} strokeWidth={3} /> Issue New Directive
           </Link>
@@ -179,9 +182,9 @@ const HolidayList = () => {
                 ))}
               </div>
 
-              {/* DESKTOP TABLE */}
-              <div className="hidden md:block overflow-x-auto p-8">
-                <table className="w-full border-separate border-spacing-y-3">
+              {/* DESKTOP TABLE - Now full width */}
+              <div className="hidden md:block w-full overflow-x-auto px-8 pb-10">
+                <table className="w-full border-separate border-spacing-y-5">
                   <thead>
                     <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                       <th className="px-6 py-2 text-left">Reference</th>
@@ -212,7 +215,7 @@ const HolidayList = () => {
                         </td>
                         <td className="px-6 py-5 last:rounded-r-[1.5rem] text-right">
                           {h.status === "Upcoming" && (
-                            <button onClick={() => setDeleteId(h._id)} className="group p-2.5 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer">
+                            <button onClick={() => setDeleteId(h._id)} className="group p-2.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer">
                               <Trash2 size={16} strokeWidth={2.5} />
                             </button>
                           )}
@@ -224,43 +227,39 @@ const HolidayList = () => {
               </div>
 
               {/* PAGINATION CONTROLS */}
-              <div className="px-8 py-6 bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  Registry Range: <span className="text-white">{indexOfFirstItem + 1}—{Math.min(indexOfLastItem, filtered.length)}</span> of {filtered.length}
-                </p>
-                
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => p - 1)}
-                    className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:enabled:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <ChevronLeft size={20} strokeWidth={3} />
-                  </button>
+              {filtered.length > itemsPerPage && (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-6 sm:p-8 bg-slate-50/50 border-t border-white gap-4 sm:gap-0">
                   
-                  <div className="flex gap-1">
-                    {[...Array(totalPages)].map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all cursor-pointer ${
-                          currentPage === i + 1 ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-slate-800 text-slate-500 hover:text-white"
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
+                  {/* Page Counter */}
+                  <div className="order-1 sm:order-2 px-6 py-2 bg-white rounded-full border border-slate-100 shadow-inner">
+                    <p className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                      Page <span className="text-red-600">{currentPage}</span> 
+                      <span className="mx-2 text-slate-200">/</span> {totalPages}
+                    </p>
                   </div>
 
-                  <button
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    onClick={() => setCurrentPage(p => p + 1)}
-                    className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:enabled:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <ChevronRight size={20} strokeWidth={3} />
-                  </button>
+                  {/* Buttons Container */}
+                  <div className="order-2 sm:order-1 flex w-full sm:w-auto gap-3 items-center justify-between sm:contents">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-100 shadow-sm transition-all enabled:hover:text-red-600 enabled:hover:shadow-md enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={14} className="sm:w-4 sm:h-4" strokeWidth={3} /> 
+                      <span>Prev</span>
+                    </button>
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="flex-1 sm:flex-none order-3 flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-100 shadow-sm transition-all enabled:hover:text-red-600 enabled:hover:shadow-md enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <span>Next</span>
+                      <ChevronRight size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>

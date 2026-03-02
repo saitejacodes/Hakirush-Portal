@@ -147,7 +147,7 @@ const AdminAnnouncement = () => {
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => setForm({ ...form, image: e.target.files[0] })} />
                 </label>
 
-                <button disabled={loading} className="w-full py-5 rounded-[2rem] bg-red-950 text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed">
+                <button disabled={loading} className="w-full py-5 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed">
                   {loading ? <Loader2 size={16} className="animate-spin" /> : "Authorize & Broadcast"}
                 </button>
               </form>

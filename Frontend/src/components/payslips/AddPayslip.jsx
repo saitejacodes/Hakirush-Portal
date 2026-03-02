@@ -92,8 +92,8 @@ const AddPayslip = () => {
     <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans">
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
-      <nav className="sticky top-0 px-6 py-3 flex justify-between items-center z-50">
-        <button onClick={() => navigate(-1)} className="group px-30 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer pt-5">
+      <nav className="top-0 px-6 py-3 flex justify-between items-center z-50">
+        <button onClick={() => navigate(-1)} className="group px-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer pt-5">
           <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform"/> Back
         </button>
         <div className="flex items-center gap-2 pt-5">

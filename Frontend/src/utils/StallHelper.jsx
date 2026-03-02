@@ -124,7 +124,7 @@ export const StallButtons = ({ id, refresh }) => {
         {/* View Action */}
         <button
           onClick={() => navigate(`/admin-dashboard/stalls/${id}`)}
-          className="group p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
           title="View Details"
         >
           <Eye size={16} strokeWidth={2.5} />
@@ -133,7 +133,7 @@ export const StallButtons = ({ id, refresh }) => {
         {/* Edit Action */}
         <button
           onClick={() => navigate(`/admin-dashboard/stalls/edit/${id}`)}
-          className="group p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
           title="Modify Stall"
         >
           <Edit2 size={16} strokeWidth={2.5} />
@@ -142,7 +142,7 @@ export const StallButtons = ({ id, refresh }) => {
         {/* Delete Action */}
         <button
           onClick={() => setShowConfirm(true)}
-          className="group p-2.5 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group p-2.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
           title="Delete Permanent"
         >
           <Trash2 size={16} strokeWidth={2.5} />
