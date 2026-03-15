@@ -69,12 +69,10 @@ const EmployeeLeaveList = () => {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const processedData = useMemo(() => {
-    const holidaySet = new Set(holidays.map(h => new Date(h.date).toISOString().split('T')[0]));
     return leaves
       .filter(l => (l.leaveType || "").toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .map(l => ({ ...l, net: getNetDays(l.startDate, l.endDate, holidaySet) }));
-  }, [leaves, search, holidays]);
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [leaves, search]);
 
   const totalPages = Math.ceil(processedData.length / itemsPerPage);
   const currentItems = processedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -178,7 +176,7 @@ const EmployeeLeaveList = () => {
                         <p className="text-[11px] font-medium text-slate-400 italic truncate">{leave.reason || "No reason provided"}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-3xl font-black text-slate-900 leading-none">{leave.net}</p>
+                        <p className="text-3xl font-black text-slate-900 leading-none">{leave.days}</p>
                         <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mt-1">Days</p>
                       </div>
                     </div>
@@ -214,7 +212,7 @@ const EmployeeLeaveList = () => {
                           </span>
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <span className="text-2xl font-black text-slate-900">{leave.net}</span>
+                          <span className="text-2xl font-black text-slate-900">{leave.days}</span>
                         </td>
                         <td className="px-8 py-6 max-w-[250px]">
                           <p className="text-[12px] font-medium text-slate-400 truncate italic">

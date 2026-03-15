@@ -83,25 +83,25 @@ const LeaveDetails = () => {
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
   /* --- NET DAYS CALCULATION (Excluding Sat, Sun & Holidays) --- */
+  const toLocalYMD = (dateInput) => {
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const calculateNetDays = useCallback((start, end, holidayList) => {
     if (!start || !end) return 0;
-    
     let count = 0;
-    let current = new Date(start);
-    const lastDate = new Date(end);
-    
-    current.setHours(0, 0, 0, 0);
-    lastDate.setHours(0, 0, 0, 0);
-
-    const holidayStrings = holidayList.map(h => 
-      new Date(h.date).toISOString().split('T')[0]
-    );
-
-    while (current <= lastDate) {
-      const dayOfWeek = current.getDay(); 
-      const dateStr = current.toISOString().split('T')[0];
-      
-      // 0 is Sunday, 6 is Saturday
+    const s = new Date(start);
+    const e = new Date(end);
+    let current = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+    const last = new Date(e.getFullYear(), e.getMonth(), e.getDate());
+    const holidayStrings = holidayList.map(h => toLocalYMD(h.date));
+    while (current <= last) {
+      const dateStr = toLocalYMD(current);
+      const dayOfWeek = current.getDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
         count++;
       }

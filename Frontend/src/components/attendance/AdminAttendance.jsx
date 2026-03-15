@@ -25,8 +25,7 @@ const AdminAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // States to manage special days
-  const [dayStatus, setDayStatus] = useState(""); // Will hold "Sunday (Weekend)", "Sankranti", etc.
+  const [dayStatus, setDayStatus] = useState(""); 
   const [isOffDay, setIsOffDay] = useState(false);
 
   const fetchAttendance = async () => {
@@ -36,9 +35,10 @@ const AdminAttendance = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data.success) {
-        // Set the status based on the backend response
         setIsOffDay(res.data.isOffDay || false);
         setDayStatus(res.data.reason || "");
+
+        const incomingData = res.data.attendance || [];
         
         setAttendance((res.data.attendance || []).map((a) => ({
           ...a,
@@ -178,8 +178,10 @@ const AdminAttendance = () => {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan="4" className="text-center py-10 text-slate-400 font-bold uppercase tracking-widest text-xs">
-                          No records found for today.
+                        <td colSpan="4" className="text-center py-10 text-red-600 font-black uppercase tracking-widest text-xs">
+                          {isOffDay && dayStatus
+                            ? dayStatus
+                            : 'No records found for today.'}
                         </td>
                       </tr>
                     )}
@@ -221,8 +223,10 @@ const AdminAttendance = () => {
                     </div>
                   </div>
                 )) : (
-                  <div className="text-center py-10 text-slate-400 font-bold uppercase tracking-widest text-xs bg-white rounded-2xl shadow-sm border border-slate-100">
-                    No records found for today.
+                  <div className="text-center py-10 text-red-600 font-black uppercase tracking-widest text-xs bg-white rounded-2xl shadow-sm border border-slate-100">
+                    {isOffDay && dayStatus
+                      ? dayStatus
+                      : 'No records found for today.'}
                   </div>
                 )}
               </div>

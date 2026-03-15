@@ -21,6 +21,9 @@ const addEmployee = async (req, res) => {
       role,
       bloodGroup,
       manager,
+      aadharcard,
+      pancard,
+      pfNumber,
     } = req.body;
 
     if (!name || !email || !employeeId || !department || !designation || !salary || !password || !role) {
@@ -59,6 +62,9 @@ const addEmployee = async (req, res) => {
       bloodGroup,
       manager: manager || null,
       dateOfJoining: new Date(),
+      aadharcard: aadharcard || "",
+      pancard: pancard || "",
+      pfNumber: pfNumber || "",
     });
 
     res.status(201).json({ success: true, employee });
@@ -154,6 +160,9 @@ const editEmployeeProfile = async (req, res) => {
       designation,
       salary,
       department,
+      aadharcard,
+      pancard,
+      pfNumber,
     } = req.body;
 
     let employee = await Employee.findById(id);
@@ -194,6 +203,9 @@ const editEmployeeProfile = async (req, res) => {
     if (designation !== undefined) updateFields.designation = designation;
     if (salary !== undefined) updateFields.salary = salary;
     if (department !== undefined) updateFields.department = department;
+    if (aadharcard !== undefined) updateFields.aadharcard = aadharcard;
+    if (pancard !== undefined) updateFields.pancard = pancard;
+    if (pfNumber !== undefined) updateFields.pfNumber = pfNumber;
 
     if (Object.keys(updateFields).length > 0) {
       await Employee.updateOne(
@@ -363,6 +375,62 @@ const getLeaveBalance = async (req, res) => {
   }
 };
 
+/* ================= GET ANNIVERSARIES ================= */
+const getAllEmployeeAnniversaries = async (req, res) => {
+  try {
+    const today = new Date();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    const employees = await Employee.find({ dateOfJoining: { $ne: null } })
+      .populate("userId", "name profileImage")
+      .populate("department", "dep_name");
+
+    const todayAnniversaries = [];
+    const upcomingAnniversaries = [];
+
+    employees.forEach(emp => {
+      const joiningDate = new Date(emp.dateOfJoining);
+      const m = joiningDate.getMonth() + 1;
+      const day = joiningDate.getDate();
+
+      const yearsCompleted = today.getFullYear() - joiningDate.getFullYear();
+
+      if (yearsCompleted <= 0) return;
+
+      const result = {
+        _id: emp._id,
+        name: emp.userId?.name,
+        profileImage: emp.userId?.profileImage,
+        department: emp.department?.dep_name,
+        joiningDate: emp.dateOfJoining,
+        years: yearsCompleted
+      };
+
+      if (m === todayMonth && day === todayDay) {
+        todayAnniversaries.push(result);
+      } else {
+        const anniversaryThisYear = new Date(today.getFullYear(), joiningDate.getMonth(), joiningDate.getDate());
+        
+        if (anniversaryThisYear > today && anniversaryThisYear <= nextWeek) {
+          upcomingAnniversaries.push(result);
+        }
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      today: todayAnniversaries, 
+      upcoming: upcomingAnniversaries 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 export {
   addEmployee,
   getEmployees,
@@ -375,4 +443,5 @@ export {
   getNewEmployees,
   getLeaveBalance,
   getAllEmployeeBirthdays,
+  getAllEmployeeAnniversaries,
 };

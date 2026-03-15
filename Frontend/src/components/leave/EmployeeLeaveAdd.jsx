@@ -138,8 +138,16 @@ const EmployeeLeaveAdd = () => {
 
     try {
       setLoading(true);
+      // Ensure startDate and endDate are sent as YYYY-MM-DD (local)
+      const payload = {
+        ...leave,
+        startDate: toLocalYMD(leave.startDate),
+        endDate: toLocalYMD(leave.endDate),
+        days: daysCount,
+        userId: user._id
+      };
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/leave/add`, 
-        { ...leave, days: daysCount, userId: user._id }, 
+        payload, 
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       if (res.data?.success) {

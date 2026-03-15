@@ -116,43 +116,38 @@ const sponsorSummary = {
         return age;
       };
 
-      const employees = await Employee.find(
-        { dob: { $exists: true, $ne: null } },
-        "name dob department profileImage"
-      );
+
+      // Use the same logic as getAllEmployeeBirthdays in employeeController.js for consistency
+      const employees = await Employee.find({ dob: { $ne: null } })
+        .populate("userId", "name profileImage")
+        .populate("department", "dep_name");
 
       const todayBirthdays = [];
       const upcomingBirthdays = [];
 
-      employees.forEach((emp) => {
-        const birthDate = new Date(emp.dob);
+      employees.forEach(emp => {
+        const d = new Date(emp.dob);
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const age = today.getFullYear() - d.getFullYear();
 
-        const currentYearBirthday = new Date(
-          today.getFullYear(),
-          birthDate.getMonth(),
-          birthDate.getDate()
-        );
+        const result = {
+          _id: emp._id,
+          name: emp.userId?.name,
+          profileImage: emp.userId?.profileImage,
+          department: emp.department?.dep_name,
+          age: age,
+          dob: emp.dob
+        };
 
-        // 🎂 Today
-        if (
-          birthDate.getMonth() === today.getMonth() &&
-          birthDate.getDate() === today.getDate()
-        ) {
-          todayBirthdays.push({
-            ...emp._doc,
-            age: calculateAge(emp.dob),
-          });
-        }
-
-        // 🎉 Upcoming (next 7 days)
-        else if (
-          currentYearBirthday > today &&
-          currentYearBirthday <= next7Days
-        ) {
-          upcomingBirthdays.push({
-            ...emp._doc,
-            age: calculateAge(emp.dob),
-          });
+        if (m === (today.getMonth() + 1) && day === today.getDate()) {
+          todayBirthdays.push(result);
+        } else {
+          // Check if birthday falls within the next 7 days
+          const bdayThisYear = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+          if (bdayThisYear > today && bdayThisYear <= next7Days) {
+            upcomingBirthdays.push(result);
+          }
         }
       });
 

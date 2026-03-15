@@ -1,38 +1,37 @@
 import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
 import Holiday from "../models/Holiday.js";
+import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 const toRawDateString = (dateInput) => {
-    const d = new Date(dateInput);
-    return d.toISOString().split('T')[0]; 
+  const d = new Date(dateInput);
+  // Use local date, not UTC/ISO
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 /* ================= UPDATED HELPER: EXCLUDES SAT & SUN ================= */
 const calculateNetWorkDays = (startDate, endDate, holidays = []) => {
     let count = 0;
-   
-    const startStr = toRawDateString(startDate);
-    const endStr = toRawDateString(endDate);
-    
-    let current = new Date(startStr);
-    const end = new Date(endStr);
-    
+    // Always construct dates using year, month, day (local)
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
     const holidayStrings = holidays.map(h => toRawDateString(h.date));
-
-    while (current <= end) {
+    while (current <= last) {
         const dateStr = toRawDateString(current);
-        const dayOfWeek = current.getUTCDay(); 
-
+        const dayOfWeek = current.getDay();
         const isSunday = dayOfWeek === 0;
-        const isSaturday = dayOfWeek === 6; // Added Saturday check
+        const isSaturday = dayOfWeek === 6;
         const isHoliday = holidayStrings.includes(dateStr);
-
-        // Logic: Increment count ONLY if it is NOT a weekend and NOT a holiday
         if (!isSunday && !isSaturday && !isHoliday) {
             count++;
         }
-        
-        current.setUTCDate(current.getUTCDate() + 1);
+        current.setDate(current.getDate() + 1);
     }
     return count;
 };
@@ -42,10 +41,11 @@ const addLeave = async (req, res) => {
   try {
     const { leaveType, startDate, endDate, reason } = req.body;
     const employee = await Employee.findOne({ userId: req.user._id });
-    
     const holidays = await Holiday.find(); 
-    
     const daysRequested = calculateNetWorkDays(startDate, endDate, holidays);
+
+    // Debug logging for troubleshooting
+    console.log("[LEAVE DEBUG] Requested:", { startDate, endDate, holidays: holidays.map(h=>h.date), daysRequested });
 
     const leave = await Leave.create({
       employeeId: employee._id,
@@ -56,6 +56,16 @@ const addLeave = async (req, res) => {
       status: "Pending",
       days: daysRequested, 
     });
+
+    // Notify all admins of new leave request
+    const admins = await User.find({ role: "admin" });
+    const employeeUser = await User.findById(req.user._id);
+    const notifications = admins.map(admin => ({
+      type: "leave-request",
+      message: `${employeeUser.name} applied for ${leaveType} leave (${daysRequested} days)`,
+      data: { leaveId: leave._id, employeeId: employee._id, adminId: admin._id },
+    }));
+    await Notification.insertMany(notifications);
 
     return res.status(200).json({ success: true, leave });
   } catch (error) {
@@ -77,6 +87,18 @@ const updateLeave = async (req, res) => {
 
     leave.status = status;
     await leave.save();
+
+    // Notify employee of leave status update
+    const employee = await Employee.findById(leave.employeeId).populate("userId");
+    if (employee && employee.userId) {
+      let msg = `Your leave request from ${leave.startDate.toLocaleDateString()} to ${leave.endDate.toLocaleDateString()} was ${status}`;
+      await Notification.create({
+        type: "leave-status",
+        message: msg,
+        data: { leaveId: leave._id, employeeId: employee._id, userId: employee.userId._id, status },
+      });
+    }
+
     return res.status(200).json({ success: true, leave });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

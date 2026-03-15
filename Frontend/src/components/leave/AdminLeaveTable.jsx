@@ -19,25 +19,25 @@ const formatDate = (value) => {
 };
 
 /* ===== UPDATED NET DAYS CALCULATOR HELPER ===== */
+const toLocalYMD = (dateInput) => {
+  const d = new Date(dateInput);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const calculateNetDays = (startDate, endDate, holidays) => {
   if (!startDate || !endDate) return 0;
   let count = 0;
-  let current = new Date(startDate);
-  const lastDate = new Date(endDate);
-  
-  // Normalize times
-  current.setHours(0, 0, 0, 0);
-  lastDate.setHours(0, 0, 0, 0);
-
-  const holidayStrings = holidays.map(h => 
-    new Date(h.date).toISOString().split('T')[0]
-  );
-
-  while (current <= lastDate) {
-    const dayOfWeek = current.getDay(); 
-    const dateStr = current.toISOString().split('T')[0];
-    
-    // Skip Sunday (0), Saturday (6), and Holidays
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const holidayStrings = holidays.map(h => toLocalYMD(h.date));
+  while (current <= last) {
+    const dateStr = toLocalYMD(current);
+    const dayOfWeek = current.getDay();
     if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
       count++;
     }

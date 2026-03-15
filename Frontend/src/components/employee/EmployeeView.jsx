@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   User, Calendar, CreditCard, ChevronLeft, 
   ShieldCheck, Heart, ArrowUpRight, Globe, Fingerprint,
-  Phone, Mail, Droplets, Briefcase,
+  Phone, Mail, Droplets, Briefcase, IdCard, PiggyBank,
   Edit
 } from "lucide-react";
 
@@ -82,16 +82,16 @@ const EmployeeView = () => {
             </div>
 
             <div className="mt-10 space-y-5 border-t border-slate-100 pt-8">
-               <SidebarItem icon={<Fingerprint size={18}/>} label="Employee ID" value={employee.employeeId} />
-               <SidebarItem icon={<Globe size={18}/>} label="Department" value={employee.department?.dep_name} />
-               <SidebarItem icon={<Calendar size={18}/>} label="Official Join Date" value={new Date(employee.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} />
+              <SidebarItem icon={<Fingerprint size={18}/>} label="Employee ID" value={employee.employeeId} />
+              <SidebarItem icon={<Globe size={18}/>} label="Department" value={employee.department?.dep_name} />
+              <SidebarItem icon={<Calendar size={18}/>} label="Official Join Date" value={new Date(employee.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} />
             </div>
           </div>
         </div>
 
         {/* --- RIGHT COLUMN: BENTO CONTENT --- */}
         <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <BentoCard title="General Identity" icon={<User size={15} className="text-blue-500"/>}>
               <DataRow icon={<Mail size={16} className="text-blue-400"/>} label="Email Address" value={employee.userId?.email} isEmail />
               <DataRow icon={<User size={16} className="text-blue-400"/>} label="Gender" value={employee.gender} />
@@ -102,6 +102,12 @@ const EmployeeView = () => {
               <DataRow icon={<Calendar size={16} className="text-rose-400"/>} label="Date of Birth" value={new Date(employee.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} />
               <DataRow icon={<Heart size={16} className="text-rose-400"/>} label="Marital Status" value={employee.maritalStatus} />
               <DataRow icon={<Briefcase size={16} className="text-rose-400"/>} label="Total Experience" value={`${employee.experience} Years`} />
+            </BentoCard>
+
+            <BentoCard title="Identity History" icon={<CreditCard size={15} className="text-rose-500"/>}>
+              <DataRow icon={<IdCard size={16} className="text-rose-400"/>} label="Aadhar Card" value={employee.aadharcard} />
+              <DataRow icon={<CreditCard size={16} className="text-rose-400"/>} label="PAN Card" value={employee.pancard} />
+              <DataRow icon={<PiggyBank size={16} className="text-rose-400"/>} label="PF Number" value={employee.pfNumber} />
             </BentoCard>
           </div>
 

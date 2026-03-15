@@ -13,11 +13,11 @@ import {
   User,
   Hash,
   Briefcase,
-  ArrowLeft // <-- Added Import
+  ArrowLeft 
 } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // <-- Added Import
+import { useNavigate } from "react-router-dom"; 
 
-const ITEMS_PER_PAGE = 8; // Match AdminAttendance items per page
+const ITEMS_PER_PAGE = 8;
 
 /* ================= STATUS CONFIGURATION ================= */
 const normalizeStatus = (status) => {
@@ -75,7 +75,7 @@ const AdminAttendanceReport = () => {
   const [loading, setLoading] = useState(false);
   const [currentPageByDate, setCurrentPageByDate] = useState({});
   
-  const navigate = useNavigate(); // <-- Initialize Navigation
+  const navigate = useNavigate(); 
 
   const fetchReport = useCallback(async () => {
     try {
@@ -220,8 +220,6 @@ const AdminAttendanceReport = () => {
           {Object.entries(report).map(([date, records]) => {
             const selectedDate = new Date(date);
             const dayOfWeek = selectedDate.getDay();
-            
-            // LOGIC FOR OFF DAYS
             const isSunday = dayOfWeek === 0;
             const isSaturday = dayOfWeek === 6;
             const holidayName = holidayMap[date];
@@ -284,10 +282,6 @@ const AdminAttendanceReport = () => {
                         <tbody>
                           {paginated.map((r, i) => {
                             let status = normalizeStatus(r.status);
-                            const isToday = date === today;
-                            if (r.checkIn && !r.checkOut && !isToday) {
-                              status = "Absent";
-                            }
                             return (
                               <tr key={r.employeeId + i} className="bg-slate-50/40 hover:bg-white transition-all group shadow-sm hover:shadow-xl hover:shadow-red-500/5">
                                 <td className="px-8 py-6 first:rounded-l-[2rem] text-[11px] font-black text-slate-300 italic">
@@ -324,8 +318,6 @@ const AdminAttendanceReport = () => {
                     <div className="md:hidden p-4 space-y-4">
                       {paginated.map((r, i) => {
                         let status = normalizeStatus(r.status);
-                        const isToday = date === today;
-                        if (r.checkIn && !r.checkOut && !isToday) status = "Absent";
 
                         return (
                           <div key={r.employeeId + i} className="bg-white rounded-[1.8rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden">

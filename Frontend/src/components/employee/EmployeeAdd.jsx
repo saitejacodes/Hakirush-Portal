@@ -134,6 +134,18 @@ const Add = () => {
                       <input name="employeeId" placeholder="IDENTITY NO." required onChange={handleChange} className={punchyInput} />
                     </div>
                     <div>
+                      <label className={labelCls}>Aadhar Card</label>
+                      <input name="aadharcard" placeholder="AADHAR NUMBER" onChange={handleChange} className={manualCaseInput} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>PAN Card</label>
+                      <input name="pancard" placeholder="PAN NUMBER" onChange={handleChange} className={manualCaseInput} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>PF Number</label>
+                      <input name="pfNumber" placeholder="PF NUMBER" onChange={handleChange} className={manualCaseInput} />
+                    </div>
+                    <div>
                       <label className={labelCls}>Password (Manual Case)</label>
                       <div className="relative">
                         <input 

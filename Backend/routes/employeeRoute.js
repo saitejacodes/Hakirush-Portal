@@ -14,6 +14,7 @@ import {
   getLeaveBalance,
   getEmployeesByDepartmentId,
   getAllEmployeeBirthdays,
+  getAllEmployeeAnniversaries,
 } from "../controllers/employeeController.js";
 
 const router = express.Router();
@@ -30,6 +31,7 @@ router.get("/department/:id/employees", authMiddleware, getEmployeesByDepartment
 router.get("/new/recent", authMiddleware, getNewEmployees);
 router.get("/leave/balance/me", authMiddleware, getLeaveBalance);
 router.get("/birthdays", authMiddleware, getAllEmployeeBirthdays);
+router.get('/anniversaries', authMiddleware, getAllEmployeeAnniversaries);
 router.post("/add", authMiddleware, upload.single("profileImage"), addEmployee);
 router.put("/update-profile/:id", authMiddleware, upload.single("profileImage"), editEmployeeProfile);
 router.put("/:id", authMiddleware, upload.single("profileImage"), updateEmployee);

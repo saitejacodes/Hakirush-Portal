@@ -19,6 +19,7 @@ const employeeSchema = new Schema(
     experience: { type: String, default: "" },
     aadharcard: { type: String, default: "" },
     pancard: { type: String, default: "" },
+    pfNumber: { type: String, default: "" },
   },
   { timestamps: true }
 );

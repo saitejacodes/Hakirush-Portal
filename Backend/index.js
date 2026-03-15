@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import connectToDatabase from "./db/db.js";
 import { fileURLToPath } from "url";
+import startAttendanceCron from "./utils/attendanceCron.js";
 
 import authRouter from "./routes/authRoute.js";
 import departmentRouter from "./routes/departmentRoute.js";
@@ -17,11 +18,13 @@ import sponsorRouter from "./routes/sponsorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import stallRoutes from "./routes/stallRoutes.js";
 import payslipRoutes from "./routes/payslipRoutes.js";
+import notificationRoute from "./routes/notificationRoute.js";
 
 connectToDatabase();
 
 const app = express();
 
+startAttendanceCron();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,7 +51,7 @@ app.use("/api/sponsors", sponsorRouter);
 app.use("/api/stalls", stallRoutes);
 app.use("/api/payslip", payslipRoutes);
 
-
+app.use("/api/notifications", notificationRoute);
 
 app.get("/api/test", (req, res) => {
   res.json({ success: true, message: "Backend is working!" });

@@ -53,6 +53,9 @@ const EditEmployeeProfile = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
+  const [aadharcard, setAadharcard] = useState("");
+  const [pancard, setPancard] = useState("");
+  const [pfNumber, setPfNumber] = useState("");
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -69,6 +72,9 @@ const EditEmployeeProfile = () => {
         setDob(emp?.dob ? emp.dob.split("T")[0] : "");
         setBloodGroup(emp?.bloodGroup || "");
         setMaritalStatus(emp?.maritalStatus || "");
+          setAadharcard(emp?.aadharcard || "");
+          setPancard(emp?.pancard || "");
+          setPfNumber(emp?.pfNumber || "");
 
         const profileImg = emp?.userId?.profileImage;
         if (profileImg) {
@@ -108,6 +114,9 @@ const EditEmployeeProfile = () => {
       fd.append("dob", dob);
       fd.append("bloodGroup", bloodGroup);
       fd.append("maritalStatus", maritalStatus);
+        fd.append("aadharcard", aadharcard);
+        fd.append("pancard", pancard);
+        fd.append("pfNumber", pfNumber);
       if (image) fd.append("profileImage", image);
 
       await axios.put(
@@ -192,7 +201,7 @@ const EditEmployeeProfile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StaticItem label="Official Employee ID" value={employee.employeeId} icon={<Fingerprint size={16}/>} />
                 <StaticItem label="Primary Department" value={employee.department?.dep_name} icon={<CreditCard size={16}/>} />
-                
+
                 <InputItem
                   label="Birth Registry"
                   type="date"
@@ -207,7 +216,29 @@ const EditEmployeeProfile = () => {
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
                 />
-                
+
+                <InputItem
+                  label="Aadhar Card"
+                  icon={<CreditCard size={16} />}
+                  value={aadharcard}
+                  onChange={e => setAadharcard(e.target.value)}
+                  placeholder="Aadhar Number"
+                />
+                <InputItem
+                  label="PAN Card"
+                  icon={<CreditCard size={16} />}
+                  value={pancard}
+                  onChange={e => setPancard(e.target.value)}
+                  placeholder="PAN Number"
+                />
+                <InputItem
+                  label="PF Number"
+                  icon={<CreditCard size={16} />}
+                  value={pfNumber}
+                  onChange={e => setPfNumber(e.target.value)}
+                  placeholder="PF Number"
+                />
+
                 <SelectItem
                   label="Marital Registry"
                   icon={<Heart size={14}/>}

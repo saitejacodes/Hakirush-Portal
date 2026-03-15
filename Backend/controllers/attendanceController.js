@@ -30,29 +30,24 @@ const getAttendance = async (req, res) => {
     try {
         const today = new Date();
         const todayStr = formatToLocalYMD(today);
-        const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+        const dayOfWeek = today.getDay(); 
 
         const holidays = await Holiday.find();
         const holidayMatch = holidays.find(h => formatToLocalYMD(h.date) === todayStr);
 
-        // --- UPDATED LOGIC HERE ---
-        if (dayOfWeek === 0 || dayOfWeek === 6 || holidayMatch) {
-            let reason = "";
-            if (holidayMatch) {
-                reason = holidayMatch.title; // e.g., "Sankranti"
-            } else {
-                reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
-            }
-            
-            return res.json({ 
-                success: true, 
-                attendance: [], 
-                isOffDay: true, 
-                reason: reason
-            });
-        }
-        // --------------------------
+        // Define if today is an off-day but DON'T return yet
+        let isOffDay = false;
+        let reason = "";
 
+        if (holidayMatch) {
+            isOffDay = true;
+            reason = holidayMatch.title;
+        } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+            isOffDay = true;
+            reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
+        }
+
+        // Always fetch employees so the list is never "blank"
         const employees = await Employee.find().populate("userId").populate("department");
         const todayAttendance = await Attendance.find({ date: todayStr }).populate({
             path: "employeeId",
@@ -69,7 +64,7 @@ const getAttendance = async (req, res) => {
             return record || { 
                 _id: null,
                 date: todayStr,
-                status: null, 
+                status: isOffDay ? "Holiday" : null, // Label as Holiday if it's an off-day
                 workedHours: 0,
                 checkIn: null,
                 checkOut: null,
@@ -79,7 +74,14 @@ const getAttendance = async (req, res) => {
             };
         });
 
-        return res.json({ success: true, attendance });
+        // Send both the attendance list AND the off-day status
+        console.log('[DEBUG] getAttendance:', { isOffDay, reason, today: todayStr });
+        return res.json({ 
+            success: true, 
+            attendance, 
+            isOffDay, 
+            reason 
+        });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -222,14 +224,36 @@ const checkOut = async (req, res) => {
 const pauseAttendance = async (req, res) => {
     try {
         const date = formatToLocalYMD(new Date());
+        console.log("Searching for attendance with date:", date); // DEBUG THIS
+
         const employee = await Employee.findOne({ userId: req.user._id });
-        const attendance = await Attendance.findOne({ employeeId: employee._id, date });
-        if (!attendance || attendance.checkOut || attendance.isPaused) return res.json({ success: true, attendance });
-        attendance.isPaused = true;
-        attendance.pauseStartedAt = new Date();
-        await attendance.save();
+        // Use findOneAndUpdate to avoid race conditions and ensure update
+        const attendance = await Attendance.findOneAndUpdate(
+            { 
+                employeeId: employee._id, 
+                date: date,
+                checkOut: null // Can't pause if already checked out
+            },
+            { 
+                $set: { 
+                    isPaused: true, 
+                    pauseStartedAt: new Date() 
+                } 
+            },
+            { new: true }
+        );
+
+        if (!attendance) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "No active attendance record found for today." 
+            });
+        }
+
         return res.json({ success: true, attendance });
-    } catch (error) { return res.status(500).json({ success: false, message: error.message }); }
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
 };
 
 /* ================= RESUME ================= */
@@ -237,14 +261,35 @@ const resumeAttendance = async (req, res) => {
     try {
         const date = formatToLocalYMD(new Date());
         const employee = await Employee.findOne({ userId: req.user._id });
+        
+        // 1. Find the current record to get the pause timestamp
         const attendance = await Attendance.findOne({ employeeId: employee._id, date });
-        if (!attendance || !attendance.isPaused) return res.json({ success: true, attendance });
-        attendance.totalPausedMs += (new Date() - attendance.pauseStartedAt);
-        attendance.pauseStartedAt = null;
-        attendance.isPaused = false;
-        await attendance.save();
-        return res.json({ success: true, attendance });
-    } catch (error) { return res.status(500).json({ success: false, message: error.message }); }
+        
+        if (!attendance || !attendance.isPaused || !attendance.pauseStartedAt) {
+            return res.json({ success: true, attendance });
+        }
+
+        // 2. Calculate the duration of THIS specific break
+        const sessionPauseTime = new Date() - new Date(attendance.pauseStartedAt);
+        
+        // 3. Use findOneAndUpdate to update the document safely
+        const updatedAttendance = await Attendance.findOneAndUpdate(
+            { _id: attendance._id },
+            { 
+                $inc: { totalPausedMs: sessionPauseTime }, // Increment total by the new break time
+                $set: { 
+                    isPaused: false, 
+                    pauseStartedAt: null 
+                } 
+            },
+            { new: true } // Return the updated document to the frontend
+        );
+
+        return res.json({ success: true, attendance: updatedAttendance });
+    } catch (error) { 
+        console.error("Resume Error:", error);
+        return res.status(500).json({ success: false, message: error.message }); 
+    }
 };
 
 /* ================= GET MY TODAY ATTENDANCE ================= */
