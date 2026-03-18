@@ -2,7 +2,9 @@ import axios from "axios";
 import {
   CalendarDays, ChevronLeft, ChevronRight,
   X, Bell, Activity, ArrowRight, Umbrella,
-  Megaphone, Cake, Award
+  Megaphone, Cake, Award,
+  Users,
+  UserPlus
 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/authContext";
@@ -23,6 +25,7 @@ const EmployeeSummary = () => {
   const [birthdays, setBirthdays] = useState({ today: [], upcoming: [] });
   const [anniversaries, setAnniversaries] = useState({ today: [], upcoming: [] });
   const [notifications, setNotifications] = useState([]);
+  const [newEmployees, setNewEmployees] = useState([]);
   const TOTAL_ANNUAL_CASUAL = 12; 
   const TOTAL_ANNUAL_SICK = 12;   
   
@@ -147,36 +150,47 @@ const EmployeeSummary = () => {
     }).toUpperCase();
   };
 
+
+  // Helper: Get years since joining
+  const getYearsJoined = (date) => {
+    if (!date) return "1st";
+    const diff = new Date().getFullYear() - new Date(date).getFullYear();
+    return diff > 0 ? diff : "1st";
+  };
+
   /* ================= DATA FETCHING ================= */
   const fetchData = useCallback(() => {
-  if (!user?._id) return;
-  const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    if (!user?._id) return;
+    const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
 
-  Promise.all([
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/birthdays`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers }),
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/anniversaries`, { headers }) 
-  ])
-  .then(([d1, d2, d3, d4, d5, d6, d7]) => { // Matched destructuring
-    const employeeData = d1?.data?.employees || [];
-    const holidayData = d2?.data?.holidays || [];
-    const announcementData = d3?.data?.announcements || [];
-    const allLeaves = d4?.data?.leaves || [];
-    const birthdayData = d5?.data || { today: [], upcoming: [] };
-    const attendanceData = d6?.data?.attendance || [];
-    const anniversaryData = d7?.data || { today: [], upcoming: [] }; // Correct mapping
+    Promise.all([
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/birthdays`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/anniversaries`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/new/recent`, { headers })  
+    ])
+    .then(([d1, d2, d3, d4, d5, d6, d7, d8]) => { 
+      const employeeData = d1?.data?.employees || [];
+      const holidayData = d2?.data?.holidays || [];
+      const announcementData = d3?.data?.announcements || [];
+      const allLeaves = d4?.data?.leaves || [];
+      const birthdayData = d5?.data || { today: [], upcoming: [] };
+      const attendanceData = d6?.data?.attendance || [];
+      const anniversaryData = d7?.data || { today: [], upcoming: [] }; 
+      const newEmployeeData = d8?.data?.employees || [];
 
-    setDeptEmployees(employeeData);
-    setHolidays(holidayData);
-    setAnnouncements(announcementData);
-    setLeaves(allLeaves);
-    setBirthdays(birthdayData);
-    setAttendance(attendanceData);
-    setAnniversaries(anniversaryData);
+      setDeptEmployees(employeeData);
+      setHolidays(holidayData);
+      setAnnouncements(announcementData);
+      setLeaves(allLeaves);
+      setBirthdays(birthdayData);
+      setAttendance(attendanceData);
+      setAnniversaries(anniversaryData);
+      setNewEmployees(newEmployeeData);
 
       const getUsedDays = (lt) => {
         const hols = holidayData.map(h => toYMD(h.date));
@@ -186,7 +200,6 @@ const EmployeeSummary = () => {
             curr.setHours(0,0,0,0); last.setHours(0,0,0,0);
             while (curr <= last) {
               const dayOfWeek = curr.getDay();
-           
               if (dayOfWeek !== 0 && dayOfWeek !== 6 && !hols.includes(toYMD(curr))) {
                 count++;
               }
@@ -195,13 +208,13 @@ const EmployeeSummary = () => {
             return total + count;
           }, 0);
       };
-      
+
       setLeaveBalance({ 
         casual: Math.max(0, TOTAL_ANNUAL_CASUAL - getUsedDays("Casual Leave")), 
         sick: Math.max(0, TOTAL_ANNUAL_SICK - getUsedDays("Sick Leave")) 
       });
     }).catch(console.error);
-  }, [user, calendarMonth]);
+  }, [user, calendarMonth, deptEmployees]);
 
   useEffect(() => {
     fetchData();
@@ -308,12 +321,12 @@ const EmployeeSummary = () => {
 
         {/* Stats Grid - Improved Layout */}
         <section className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* Left Column: Team Pulse, Birthdays, Anniversaries */}
-            <div className="md:col-span-4 flex flex-col gap-8">
-              {/* Team Pulse */}
+          <div className="flex flex-col gap-8">
+            
+            {/* --- TOP ROW: Team Pulse, Birthdays, Anniversaries (Left to Right) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* 1. Team Pulse */}
               <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
-                {/* ...existing code... */}
                 <div className="flex items-center justify-between mb-5 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="relative flex h-3 w-3">
@@ -325,7 +338,7 @@ const EmployeeSummary = () => {
                   <span className="text-[6px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase">Live</span>
                 </div>
                 <div className="flex flex-col gap-3 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-                  {deptEmployees.map((e, idx) => (
+                  {deptEmployees.map((e) => (
                     <div 
                       key={e._id} 
                       className="flex items-center gap-4 p-2 bg-white rounded-2xl border-2 border-slate-50 hover:border-red-100 hover:shadow-md transition-all group"
@@ -353,9 +366,32 @@ const EmployeeSummary = () => {
                   ))}
                 </div>
               </div>
-              {/* Birthdays */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[180px] flex flex-col border border-slate-100">
-                {/* ...existing code... */}
+
+              {/* New Employees */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-emerald-100 flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2 mb-5">
+                  <UserPlus size={12} /> Welcome Aboard
+                </span>
+                <div className="flex-grow overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                  {newEmployees.length > 0 ? newEmployees.map(e => (
+                    <div key={e._id} className="flex items-center gap-3 p-2 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                      <img src={getImageUrl(e.profileImage)} className="w-8 h-8 rounded-xl object-cover" alt="" />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase truncate text-emerald-900">{e.name}</span>
+                        <span className="text-[7px] font-bold text-emerald-600 italic">Joined Recently</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="h-full flex flex-col items-center justify-center opacity-20 italic">
+                      <Users size={32} />
+                      <span className="text-[9px] font-black uppercase">No New Joinees</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Birthdays */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="p-1.5 bg-pink-50 rounded-lg">
@@ -369,61 +405,35 @@ const EmployeeSummary = () => {
                 </div>
                 <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-2 custom-scrollbar">
                   {birthdays.today?.map(emp => (
-                    <div 
-                      key={emp._id} 
-                      className="relative overflow-hidden flex items-center gap-4 p-2 bg-gradient-to-br from-pink-500 to-rose-400 rounded-[1.2rem] shadow-[0_10px_20px_-5px_rgba(244,114,182,0.4)] transition-transform active:scale-95"
-                    >
-                      <div className="absolute top-[-10px] right-[-10px] opacity-20 text-white rotate-12">
-                        <Cake size={40} />
-                      </div>
-                      <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2 border-white/50 shadow-sm relative z-10">
-                        <img 
-                          src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} 
-                          className="w-full h-full object-cover" 
-                          alt="" 
-                        />
+                    <div key={emp._id} className="relative overflow-hidden flex items-center gap-4 p-2 bg-gradient-to-br from-pink-500 to-rose-400 rounded-[1.2rem] shadow-[0_10px_20px_-5px_rgba(244,114,182,0.4)]">
+                      <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2 border-white/50 relative z-10">
+                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
                       </div>
                       <div className="flex flex-col relative z-10">
-                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase tracking-tighter leading-none">
-                          {emp.userId?.name || emp.name}
-                        </span>
-                        <span className="text-[7px] font-black text-pink-100 uppercase italic tracking-widest mt-1 drop-shadow-sm">
-                          HBD! Today 🎉
-                        </span>
+                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase tracking-tighter leading-none">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[7px] font-black text-pink-100 uppercase italic mt-1">HBD! Today 🎉</span>
                       </div>
                     </div>
                   ))}
                   {birthdays.upcoming?.map(emp => (
-                    <div 
-                      key={emp._id} 
-                      className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-pink-100 transition-all group"
-                    >
+                    <div key={emp._id} className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-pink-100 transition-all group">
                       <div className="w-7 h-7 rounded-xl overflow-hidden shrink-0 border border-slate-100 grayscale-[0.5] group-hover:grayscale-0 transition-all">
-                        <img 
-                          src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} 
-                          className="w-full h-full object-cover opacity-70 group-hover:opacity-100" 
-                          alt="" 
-                        />
+                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 transition-colors truncate uppercase tracking-tighter leading-none">
-                          {emp.userId?.name || emp.name}
-                        </span>
-                        <span className="text-[7px] font-bold text-pink-400 uppercase mt-0.5 italic">
-                          {formatBday(emp.dob)}
-                        </span>
+                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 transition-colors truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[7px] font-bold text-pink-400 uppercase mt-0.5 italic">{formatBday(emp.dob)}</span>
                       </div>
                     </div>
                   ))}
                   {!birthdays.today?.length && !birthdays.upcoming?.length && (
-                    <div className="flex-grow flex items-center justify-center text-[9px] font-black uppercase text-slate-300 italic">
-                      No Birthdays This Week
-                    </div>
+                    <div className="flex-grow flex items-center justify-center text-[9px] font-black uppercase text-slate-300 italic">No Birthdays This Week</div>
                   )}
                 </div>
               </div>
-              {/* Anniversaries */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[180px] flex flex-col border border-slate-100">
+
+              {/* 3. Anniversaries */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="p-1.5 bg-amber-50 rounded-lg"><Award size={10} className="text-amber-600" /></div>
@@ -438,10 +448,8 @@ const EmployeeSummary = () => {
                         <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
                       </div>
                       <div className="flex flex-col relative z-10">
-                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase tracking-tighter leading-none">{emp.userId?.name || emp.name}</span>
-                        <span className="text-[7px] font-black text-amber-100 uppercase italic tracking-widest mt-1">
-                          {getYearsJoined(emp.joiningDate)} Anniversary! 🥂
-                        </span>
+                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[7px] font-black text-amber-100 uppercase italic mt-1">{getYearsJoined(emp.joiningDate)} Anniversary! 🥂</span>
                       </div>
                     </div>
                   ))}
@@ -451,7 +459,7 @@ const EmployeeSummary = () => {
                         <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 truncate uppercase tracking-tighter leading-none">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
                         <span className="text-[7px] font-bold text-amber-500 uppercase mt-0.5 italic">{formatBday(emp.joiningDate)}</span>
                       </div>
                     </div>
@@ -461,49 +469,46 @@ const EmployeeSummary = () => {
                   )}
                 </div>
               </div>
-            </div>
-            {/* Right Column: Holidays and Leaves */}
-            <div className="md:col-span-8 flex flex-col gap-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                {/* Holidays */}
-                <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
-                  <div className="flex items-center justify-between mb-5 px-1 shrink-0">
-                    <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
-                      <div className="p-1.5 bg-indigo-50 rounded-xl">
-                        <CalendarDays size={10} className="text-indigo-600" />
-                      </div>
-                      Holidays
+              {/* --- BOTTOM ROW: Holidays, Leaves (Left to Right) --- */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] flex flex-col border border-slate-100">
+                <div className="flex items-center justify-between mb-5 px-1 shrink-0">
+                  <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
+                    <div className="p-1.5 bg-indigo-50 rounded-xl">
+                      <CalendarDays size={10} className="text-indigo-600" />
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-3 overflow-y-auto flex-grow pr-2 custom-scrollbar scroll-smooth">
-                    {holidays
-                      .filter((h) => toYMD(h.date) >= toYMD(new Date()))
-                      .map((h) => (
-                        <div
-                          key={h._id}
-                          className="group flex items-stretch min-h-[50px] rounded-[2rem] border-2 border-slate-50 bg-white hover:border-indigo-100 transition-all duration-300 overflow-hidden shrink-0"
-                        >
-                          <div className="flex-1 flex flex-col justify-center py-3 pl-5 min-w-0">
-                            <span className="text-[10px] font-[1000] italic text-slate-800 uppercase tracking-tighter leading-none group-hover:text-indigo-600 truncate">
-                              {h.title}
-                            </span>
-                          </div>
-                          <div className="w-16 flex flex-col items-center justify-center bg-indigo-600 group-hover:bg-indigo-500 transition-colors border-l-2 border-dashed border-white/30">
-                            <span className="text-[16px] font-[1000] text-white italic leading-none">
-                              {new Date(h.date).toLocaleDateString("en-IN", { day: "2-digit" })}
-                            </span>
-                            <span className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter">
-                              {new Date(h.date).toLocaleDateString("en-IN", { month: "short" })}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                    Holidays
                   </div>
                 </div>
-                {/* Leaves */}
+                <div className="flex flex-col gap-3 overflow-y-auto flex-grow pr-2 custom-scrollbar scroll-smooth">
+                  {holidays
+                    .filter((h) => toYMD(h.date) >= toYMD(new Date()))
+                    .map((h) => (
+                      <div
+                        key={h._id}
+                        className="group flex items-stretch min-h-[50px] rounded-[2rem] border-2 border-slate-50 bg-white hover:border-indigo-100 transition-all duration-300 overflow-hidden shrink-0"
+                      >
+                        <div className="flex-1 flex flex-col justify-center py-3 pl-5 min-w-0">
+                          <span className="text-[10px] font-[1000] italic text-slate-800 uppercase tracking-tighter leading-none group-hover:text-indigo-600 truncate">
+                            {h.title}
+                          </span>
+                        </div>
+                        <div className="w-16 flex flex-col items-center justify-center bg-indigo-600 group-hover:bg-indigo-500 transition-colors border-l-2 border-dashed border-white/30">
+                          <span className="text-[16px] font-[1000] text-white italic leading-none">
+                            {new Date(h.date).toLocaleDateString("en-IN", { day: "2-digit" })}
+                          </span>
+                          <span className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter">
+                            {new Date(h.date).toLocaleDateString("en-IN", { month: "short" })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              {/* 5. Leaves (4 out of 12 columns) */}
+              <div>
                 <div 
                   onClick={() => setShowLeaveBreakdown(true)} 
-                  className="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-[280px] transition-all hover:shadow-2xl hover:shadow-red-500/10 active:scale-95 group relative overflow-hidden"
+                  className="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-full transition-all hover:shadow-2xl hover:shadow-red-500/10 active:scale-95 group relative overflow-hidden"
                 >
                   <Umbrella 
                     size={140} 
@@ -511,23 +516,18 @@ const EmployeeSummary = () => {
                   />
                   <div className="flex items-center gap-2 mb-2 z-10">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="text-[8px] font-[1000] uppercase tracking-[0.2em] text-slate-400">
-                      Available Leaves
-                    </span>
+                    <span className="text-[8px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Available Leaves</span>
                   </div>
-                  <div className="relative z-10">
+                  <div className="relative z-10 text-center">
                     <div className="text-[80px] font-[1000] text-red-600 italic leading-none tracking-[-0.07em] drop-shadow-[0_10px_10px_rgba(220,38,38,0.15)] group-hover:scale-105 transition-transform duration-500">
                       {leaveBalance.casual + leaveBalance.sick}
                     </div>
-                    <span className="absolute -bottom-2 -right-6 text-[10px] font-black italic uppercase text-red-400 opacity-60">
-                      Days
-                    </span>
+                    <span className="text-[10px] font-black italic uppercase text-red-400 opacity-60">Days</span>
                   </div>
                   <div className="mt-6 flex items-center gap-3 bg-red-600 text-white px-6 py-2.5 rounded-[1.5rem] text-[8px] font-[1000] uppercase z-10 shadow-[0_10px_20px_-5px_rgba(220,38,38,0.4)] group-hover:bg-red-700 transition-colors">
                     Breakdown 
                     <ArrowRight size={10} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-transparent via-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
               </div>
             </div>

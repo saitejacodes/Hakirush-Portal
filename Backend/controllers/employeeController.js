@@ -338,23 +338,7 @@ const getEmployeesByDepartmentId = async (req, res) => {
   }
 };
 
-/* ================= GET NEW EMPLOYEES ================= */
-const getNewEmployees = async (req, res) => {
-  try {
-    const THIRTY_DAYS_AGO = new Date();
-    THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 30);
-
-    const employees = await Employee.find({
-      dateOfJoining: { $gte: THIRTY_DAYS_AGO },
-    })
-      .sort({ dateOfJoining: -1 })
-      .populate("userId", "name email profileImage");
-
-    res.json({ success: true, employees });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
+// ...existing code...
 
 /* ================= GET LEAVE BALANCE ================= */
 const getLeaveBalance = async (req, res) => {
@@ -427,6 +411,52 @@ const getAllEmployeeAnniversaries = async (req, res) => {
       upcoming: upcomingAnniversaries 
     });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/* ================= GET NEW EMPLOYEES (LAST 30 DAYS) ================= */
+const getNewEmployees = async (req, res) => {
+  try {
+    const today = new Date();
+
+    const THIRTY_DAYS_AGO = new Date();
+    THIRTY_DAYS_AGO.setDate(today.getDate() - 30);
+
+    const employees = await Employee.find({
+      dateOfJoining: { $gte: THIRTY_DAYS_AGO }
+    })
+      .sort({ dateOfJoining: -1 })
+      .populate("userId", "name email profileImage")
+      .populate("department", "dep_name");
+
+    const formattedEmployees = employees.map(emp => {
+
+      const joiningDate = new Date(emp.dateOfJoining);
+
+      const daysAgo = Math.floor(
+        (today - joiningDate) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        _id: emp._id,
+        name: emp.userId?.name,
+        email: emp.userId?.email,
+        profileImage: emp.userId?.profileImage,
+        department: emp.department?.dep_name,
+        dateOfJoining: emp.dateOfJoining,
+        joinedDaysAgo: daysAgo
+      };
+    });
+
+    res.json({
+      success: true,
+      totalNewEmployees: formattedEmployees.length,
+      employees: formattedEmployees
+    });
+
+  } catch (err) {
+    console.error("NEW EMPLOYEES ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };

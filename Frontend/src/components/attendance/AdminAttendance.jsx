@@ -55,6 +55,23 @@ const AdminAttendance = () => {
     }
   };
 
+  // Admin action handler
+  const handleStatusChange = async (employeeId, status) => {
+    try {
+      setLoading(true);
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin-mark`,
+        { employeeId, status },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      await fetchAttendance();
+    } catch (err) {
+      alert("Failed to update attendance status.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { fetchAttendance(); }, []);
 
   const sorted = useMemo(() => {
@@ -172,7 +189,13 @@ const AdminAttendance = () => {
                         </td>
                         <td className="px-8 py-6 last:rounded-r-[2rem] text-right">
                           <div className="scale-100 origin-right transition-transform group-hover:scale-105 group-hover:translate-x-[-4px]">
-                             <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
+                            <AttendanceHelper
+                              employeeId={a.employeeMongoId}
+                              status={a.status}
+                              statusChange={fetchAttendance}
+                              checkIn={a.checkIn}
+                              checkOut={a.checkOut}
+                            />
                           </div>
                         </td>
                       </tr>
@@ -218,9 +241,13 @@ const AdminAttendance = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-slate-50">
-                      <AttendanceHelper employeeId={a.employeeMongoId} status={a.status} statusChange={fetchAttendance} />
-                    </div>
+                    <AttendanceHelper
+                      employeeId={a.employeeMongoId}
+                      status={a.status}
+                      statusChange={fetchAttendance}
+                      checkIn={a.checkIn}
+                      checkOut={a.checkOut}
+                    />
                   </div>
                 )) : (
                   <div className="text-center py-10 text-red-600 font-black uppercase tracking-widest text-xs bg-white rounded-2xl shadow-sm border border-slate-100">

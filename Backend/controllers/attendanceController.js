@@ -35,7 +35,6 @@ const getAttendance = async (req, res) => {
         const holidays = await Holiday.find();
         const holidayMatch = holidays.find(h => formatToLocalYMD(h.date) === todayStr);
 
-        // Define if today is an off-day but DON'T return yet
         let isOffDay = false;
         let reason = "";
 
@@ -47,7 +46,6 @@ const getAttendance = async (req, res) => {
             reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
         }
 
-        // Always fetch employees so the list is never "blank"
         const employees = await Employee.find().populate("userId").populate("department");
         const todayAttendance = await Attendance.find({ date: todayStr }).populate({
             path: "employeeId",
@@ -56,21 +54,19 @@ const getAttendance = async (req, res) => {
 
         const attendance = employees.map((emp) => {
             const record = todayAttendance.find((a) => String(a.employeeId?._id) === String(emp._id));
-            
-            if (record && record.date < todayStr && !record.checkOut) {
-                return { ...record._doc, status: "Absent" };
+            if (record) {
+                return { ...record._doc };
             }
-
-            return record || { 
+            return {
                 _id: null,
                 date: todayStr,
-                status: isOffDay ? "Holiday" : null, // Label as Holiday if it's an off-day
+                status: isOffDay ? "Holiday" : "Absent",
                 workedHours: 0,
                 checkIn: null,
                 checkOut: null,
                 isPaused: false,
                 totalPausedMs: 0,
-                employeeId: emp, 
+                employeeId: emp,
             };
         });
 
@@ -110,7 +106,9 @@ const getAdminTodaySummary = async (req, res) => {
         }
         // --------------------------
 
-        const totalEmployees = await Employee.countDocuments();
+        // ✅ Get all employees (IMPORTANT)
+        const employees = await Employee.find();
+
         const leaves = await Leave.find({
             status: "Approved",
             startDate: { $lte: end }, 
@@ -118,11 +116,19 @@ const getAdminTodaySummary = async (req, res) => {
         });
 
         const attendance = await Attendance.find({ date: todayStr });
-        const presentIds = attendance.filter((a) => a.checkIn).map((a) => String(a.employeeId));
-        const leaveIds = leaves.map((l) => String(l.employeeId));
-        
-        const accountedFor = new Set([...presentIds, ...leaveIds]);
-        const absentToday = Math.max(0, totalEmployees - accountedFor.size);
+
+        const presentIds = attendance
+            .filter(a => a.checkIn)
+            .map(a => String(a.employeeId));
+
+        const leaveIds = leaves.map(l => String(l.employeeId));
+
+        const absentEmployees = employees.filter(emp => {
+            return !presentIds.includes(String(emp._id)) &&
+                !leaveIds.includes(String(emp._id));
+        });
+
+        const absentToday = absentEmployees.length;
 
         return res.json({
             success: true,
@@ -140,42 +146,100 @@ const getAdminTodaySummary = async (req, res) => {
 const attendanceReport = async (req, res) => {
     try {
         const { date, search } = req.query;
-        
-        const filter = date ? { date } : {};
-        const records = await Attendance.find(filter).populate({ 
-            path: "employeeId", 
-            populate: ["userId", "department"] 
+
+        // Get all employees
+        const employees = await Employee.find().populate("userId").populate("department");
+
+        // Determine date range
+        let startDate, endDate;
+        if (date) {
+            startDate = endDate = date;
+        } else {
+            // Find earliest joining date
+            startDate = employees.reduce((min, emp) => {
+                if (!emp.dateOfJoining) return min;
+                const d = formatToLocalYMD(emp.dateOfJoining);
+                return (!min || d < min) ? d : min;
+            }, null);
+            endDate = formatToLocalYMD(new Date());
+        }
+
+        // Build date list
+        function getDateList(start, end) {
+            const arr = [];
+            let dt = new Date(start);
+            const endDt = new Date(end);
+            while (dt <= endDt) {
+                arr.push(formatToLocalYMD(dt));
+                dt.setDate(dt.getDate() + 1);
+            }
+            return arr;
+        }
+        const dateList = getDateList(startDate, endDate);
+
+        // Get all attendance records in range
+        const attendanceRecords = await Attendance.find({ date: { $gte: startDate, $lte: endDate } }).populate({
+            path: "employeeId",
+            populate: ["userId", "department"]
         });
-        
+
+        // Build a map: { date: { employeeId: record } }
+        const attendanceMap = {};
+        attendanceRecords.forEach(r => {
+            if (!attendanceMap[r.date]) attendanceMap[r.date] = {};
+            attendanceMap[r.date][String(r.employeeId?._id)] = r;
+        });
+
+        // Holidays
         const holidays = await Holiday.find();
         const holidayMap = {};
         holidays.forEach(h => holidayMap[formatToLocalYMD(h.date)] = h.title);
 
-        let filtered = records;
+        // Filter employees if search
+        let filteredEmployees = employees;
         if (search) {
             const keyword = search.toLowerCase();
-            filtered = records.filter(r => 
-                r.employeeId?.userId?.name?.toLowerCase().includes(keyword) || 
-                r.employeeId?.employeeId?.toLowerCase().includes(keyword)
+            filteredEmployees = employees.filter(emp =>
+                emp.userId?.name?.toLowerCase().includes(keyword) ||
+                emp.employeeId?.toLowerCase().includes(keyword)
             );
         }
 
+        // Build groupData: { date: [attendance objects] }
         const groupData = {};
-        filtered.forEach(r => {
-            if (!groupData[r.date]) groupData[r.date] = [];
-            let finalStatus = r.status || "Absent";
-            groupData[r.date].push({
-                _id: r._id,
-                employeeId: r.employeeId?.employeeId || "N/A",
-                employeeName: r.employeeId?.userId?.name || "Unknown",
-                departmentName: r.employeeId?.department?.dep_name || "N/A",
-                status: finalStatus,
-                workedHours: r.workedHours,
-                checkIn: r.checkIn,
-                checkOut: r.checkOut,
-            });
-        });
-        
+        for (const d of dateList) {
+            groupData[d] = [];
+            for (const emp of filteredEmployees) {
+                // Only consider dates >= joining date
+                const joinDateStr = formatToLocalYMD(emp.dateOfJoining || new Date());
+                if (d < joinDateStr) continue;
+                const record = attendanceMap[d]?.[String(emp._id)];
+                if (record) {
+                    groupData[d].push({
+                        _id: record._id,
+                        employeeId: emp.employeeId || "N/A",
+                        employeeName: emp.userId?.name || "Unknown",
+                        departmentName: emp.department?.dep_name || "N/A",
+                        status: record.status || "Absent",
+                        workedHours: record.workedHours,
+                        checkIn: record.checkIn,
+                        checkOut: record.checkOut,
+                    });
+                } else {
+                    groupData[d].push({
+                        _id: null,
+                        employeeId: emp.employeeId || "N/A",
+                        employeeName: emp.userId?.name || "Unknown",
+                        departmentName: emp.department?.dep_name || "N/A",
+                        status: "Absent",
+                        workedHours: 0,
+                        checkIn: null,
+                        checkOut: null,
+                    });
+                }
+            }
+        }
+
         return res.json({ success: true, groupData, holidayMap });
     } catch (error) { 
         return res.status(500).json({ success: false, message: error.message }); 
@@ -310,8 +374,50 @@ const getUserMonthlyAttendance = async (req, res) => {
         const start = `${year}-${String(month).padStart(2, "0")}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+        // Get all attendance records for this employee in the month
         const records = await Attendance.find({ employeeId: employee._id, date: { $gte: start, $lte: end } }).sort({ date: 1 });
-        return res.json({ success: true, attendance: records });
+        // Build a map for quick lookup
+        const recordMap = {};
+        records.forEach(r => { recordMap[r.date] = r; });
+        // Build full attendance array for all days in month (from joining date up to today)
+        const attendance = [];
+        const today = new Date();
+        const todayStr = formatToLocalYMD(today);
+        const joinDateStr = formatToLocalYMD(employee.dateOfJoining || new Date());
+        for (let day = 1; day <= lastDay; day++) {
+            const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            // Only include up to today and after joining date
+            if (dateStr > todayStr) break;
+            if (dateStr < joinDateStr) continue;
+            const rec = recordMap[dateStr];
+            if (rec) {
+                // If checked in but not checked out, treat as Absent
+                if (rec.checkIn && !rec.checkOut) {
+                    attendance.push({
+                        ...rec._doc,
+                        status: "Absent",
+                        workedHours: 0,
+                        checkIn: rec.checkIn,
+                        checkOut: null
+                    });
+                } else {
+                    attendance.push(rec);
+                }
+            } else {
+                attendance.push({
+                    _id: null,
+                    employeeId: employee._id,
+                    date: dateStr,
+                    status: "Absent",
+                    workedHours: 0,
+                    checkIn: null,
+                    checkOut: null,
+                    isPaused: false,
+                    totalPausedMs: 0
+                });
+            }
+        }
+        return res.json({ success: true, attendance });
     } catch (error) { return res.status(500).json({ success: false, message: error.message }); }
 };
 
