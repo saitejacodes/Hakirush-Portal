@@ -145,6 +145,32 @@ const Add = () => {
                       <label className={labelCls}>PF Number</label>
                       <input name="pfNumber" placeholder="PF NUMBER" onChange={handleChange} className={manualCaseInput} />
                     </div>
+                    {/* DOB */}
+                    <div>
+                      <label className={labelCls}>Date of Birth</label>
+                      <input name="dob" type="date" required onChange={handleChange} className={manualCaseInput} />
+                    </div>
+                    {/* Gender */}
+                    <div>
+                      <label className={labelCls}>Gender</label>
+                      <select name="gender" required onChange={handleChange} className={manualCaseInput}>
+                        <option value="">SELECT</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    {/* Marital Status */}
+                    <div>
+                      <label className={labelCls}>Marital Status</label>
+                      <select name="maritalStatus" required onChange={handleChange} className={manualCaseInput}>
+                        <option value="">SELECT</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Divorced">Divorced</option>
+                        <option value="Widowed">Widowed</option>
+                      </select>
+                    </div>
                     <div>
                       <label className={labelCls}>Password (Manual Case)</label>
                       <div className="relative">
@@ -199,7 +225,7 @@ const Add = () => {
                       <label className={labelCls}>Blood Group</label>
                       <select name="bloodGroup" required onChange={handleChange} className={punchyInput}>
                         <option value="">SELECT</option>
-                        {["A+", "B+", "O+", "AB+", "A-", "B-"].map(g => <option key={g} value={g}>{g}</option>)}
+                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(g => <option key={g} value={g}>{g}</option>)}
                       </select>
                     </div>
                   </div>

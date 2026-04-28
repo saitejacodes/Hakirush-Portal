@@ -326,7 +326,7 @@ const EmployeeSummary = () => {
             {/* --- TOP ROW: Team Pulse, Birthdays, Anniversaries (Left to Right) --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* 1. Team Pulse */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-5 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="relative flex h-3 w-3">
@@ -368,7 +368,7 @@ const EmployeeSummary = () => {
               </div>
 
               {/* New Employees */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-emerald-100 flex flex-col">
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2 mb-5">
                   <UserPlus size={12} /> Welcome Aboard
                 </span>
@@ -391,7 +391,7 @@ const EmployeeSummary = () => {
               </div>
 
               {/* 2. Birthdays */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="p-1.5 bg-pink-50 rounded-lg">
@@ -433,7 +433,7 @@ const EmployeeSummary = () => {
               </div>
 
               {/* 3. Anniversaries */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] h-[280px] flex flex-col border border-slate-100">
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="p-1.5 bg-amber-50 rounded-lg"><Award size={10} className="text-amber-600" /></div>
@@ -470,7 +470,7 @@ const EmployeeSummary = () => {
                 </div>
               </div>
               {/* --- BOTTOM ROW: Holidays, Leaves (Left to Right) --- */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] flex flex-col border border-slate-100">
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
                 <div className="flex items-center justify-between mb-5 px-1 shrink-0">
                   <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
                     <div className="p-1.5 bg-indigo-50 rounded-xl">

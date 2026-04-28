@@ -261,7 +261,7 @@ const AdminAttendanceReport = () => {
                   <div className="py-16 flex flex-col items-center text-center px-6">
                     <ShieldAlert size={32} className="text-slate-100 mb-4" />
                     <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-800">
-                      {offDayLabel} Registry Idle
+                      {offDayLabel} 
                     </h2>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Registry Inactive for this date</p>
                   </div>

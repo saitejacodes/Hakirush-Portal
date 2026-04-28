@@ -37,16 +37,24 @@ const SEMANTIC_COLORS = {
 
 /* ================= REUSABLE COMPONENTS ================= */
 const StatCard = ({ icon: Icon, label, value, colorClass = "text-red-600" }) => (
-  <div className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100 flex flex-col justify-between h-[180px] transition-all hover:shadow-2xl hover:-translate-y-2 hover:border-red-200 group">
-    <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase text-slate-400 tracking-[0.3em]">
-      <div className={`p-2 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-100 ${colorClass} group-hover:scale-110 transition-transform`}>
-        {Icon && <Icon size={18} className="drop-shadow-sm" />}
-      </div>
-      <span className="group-hover:text-red-600 transition-colors">{label}</span>
-    </div>
+  <div className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100 flex flex-col items-center justify-center h-[180px] transition-all hover:shadow-2xl hover:-translate-y-2 hover:border-red-200 group">
+
+    {/* Number (Centered) */}
     <div className="text-5xl font-black text-slate-900 italic tracking-tighter leading-none group-hover:text-red-600 transition-colors">
       {value ?? 0}
     </div>
+
+    {/* Icon + Label (Below) */}
+    <div className="flex flex-col items-center mt-4 gap-2">
+      <div className={`p-2 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-100 ${colorClass} group-hover:scale-110 transition-transform`}>
+        {Icon && <Icon size={18} className="drop-shadow-sm" />}
+      </div>
+
+      <span className="text-[11px] font-extrabold uppercase text-slate-400 tracking-[0.3em] group-hover:text-red-600 transition-colors text-center">
+        {label}
+      </span>
+    </div>
+
   </div>
 );
 
@@ -331,7 +339,7 @@ const AdminSummary = () => {
                   {upcomingBirthdays.map(emp => (
                     <div key={emp._id} className="flex items-center gap-4 bg-white p-4 rounded-3xl border-2 border-pink-50 hover:border-pink-100 transition-all">
                       <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-100 grayscale-[0.5] hover:grayscale-0 transition-all">
-                        <img src={getProfileImg(emp)} className="w-full h-full object-cover opacity-70 hover:opacity-100" alt="profile" />
+                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 hover:opacity-100" alt="profile" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-base font-black italic text-slate-500 hover:text-slate-800 transition-colors truncate uppercase tracking-tighter leading-none">
