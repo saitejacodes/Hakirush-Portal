@@ -100,8 +100,8 @@ const sponsorSummary = {
     /* ========== BIRTHDAY SUMMARY (IMPROVED) ========== */
 
       const today = new Date();
-      const next7Days = new Date();
-      next7Days.setDate(today.getDate() + 7);
+      const next30Days = new Date();
+      next30Days.setDate(today.getDate() + 30);
 
       // Accurate age calculator
       const calculateAge = (dob) => {
@@ -143,9 +143,13 @@ const sponsorSummary = {
         if (m === (today.getMonth() + 1) && day === today.getDate()) {
           todayBirthdays.push(result);
         } else {
-          // Check if birthday falls within the next 7 days
-          const bdayThisYear = new Date(today.getFullYear(), d.getMonth(), d.getDate());
-          if (bdayThisYear > today && bdayThisYear <= next7Days) {
+          // Check if birthday falls within the next 30 days
+          let bdayThisYear = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+          if (bdayThisYear < today) {
+            // If birthday this year already passed, check next year's birthday
+            bdayThisYear = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate());
+          }
+          if (bdayThisYear > today && bdayThisYear <= next30Days) {
             upcomingBirthdays.push(result);
           }
         }

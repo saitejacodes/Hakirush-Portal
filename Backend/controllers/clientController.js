@@ -157,11 +157,47 @@ const deleteClient = async (req, res) => {
   }
 };
 
+const getClientPerformance = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const performanceData = [
+      { teamName: "Super Teacher", played: 12, won: 10, lost: 2, points: 30 },
+      { teamName: "Delta Strikers", played: 12, won: 5, lost: 7, points: 15 },
+      { teamName: "Titan Shadows", played: 12, won: 8, lost: 4, points: 24 },
+      { teamName: "Omega Blitz", played: 12, won: 3, lost: 9, points: 9 },
+      { teamName: "Apex Predators", played: 12, won: 9, lost: 3, points: 27 },
+    ];
+    res.json({ success: true, performance: performanceData });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/* ================= GET CLIENT IMAGES ================= */
+const getClientImages = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: "userId is required" });
+    }
+    const client = await Client.findOne({ userId });
+    if (!client) {
+      return res.status(404).json({ success: false, error: "Client not found" });
+    }
+    // If images field does not exist, return empty array
+    res.json({ success: true, images: client.images || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 export {
   addClient,
   getClients,
   getClient,
   getMyClient,
   updateClient,
-  deleteClient
+  deleteClient,
+  getClientPerformance,
+  getClientImages,
 }

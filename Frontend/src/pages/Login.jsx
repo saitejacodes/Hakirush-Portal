@@ -67,8 +67,8 @@ const Login = () => {
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
             className="relative z-10 mb-8"
           >
-            <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md shadow-2xl">
-              <img src="/favicon.png" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" alt="Logo" />
+            <div className="p-4 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md shadow-2xl">
+              <img src="/favicon.png" className="w-24 h-24 sm:w-38 sm:h-38 object-contain" alt="Logo" />
             </div>
           </motion.div>
 

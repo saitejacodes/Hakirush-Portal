@@ -415,17 +415,37 @@ const EmployeeSummary = () => {
                       </div>
                     </div>
                   ))}
-                  {birthdays.upcoming?.map(emp => (
-                    <div key={emp._id} className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-pink-100 transition-all group">
-                      <div className="w-7 h-7 rounded-xl overflow-hidden shrink-0 border border-slate-100 grayscale-[0.5] group-hover:grayscale-0 transition-all">
-                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
+                  {birthdays.upcoming?.map(emp => {
+                    // Calculate days left for the birthday
+                    let daysLeft = null;
+                    if (emp.dob) {
+                      const today = new Date();
+                      const dob = new Date(emp.dob);
+                      let nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+                      if (nextBirthday < today) {
+                        nextBirthday.setFullYear(today.getFullYear() + 1);
+                      }
+                      daysLeft = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                    }
+                    return (
+                      <div key={emp._id} className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-pink-100 transition-all group">
+                        <div className="w-7 h-7 rounded-xl overflow-hidden shrink-0 border border-slate-100 grayscale-[0.5] group-hover:grayscale-0 transition-all">
+                          <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 transition-colors truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
+                          <span className="text-[7px] font-bold text-pink-400 uppercase mt-0.5 italic">
+                            {formatBday(emp.dob)}
+                            {daysLeft !== null && (
+                              <span className="ml-2 text-[7px] text-rose-400 font-extrabold">[
+                                {daysLeft === 1 ? 'in 1 day' : `in ${daysLeft} days`}]
+                              </span>
+                            )}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 transition-colors truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
-                        <span className="text-[7px] font-bold text-pink-400 uppercase mt-0.5 italic">{formatBday(emp.dob)}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {!birthdays.today?.length && !birthdays.upcoming?.length && (
                     <div className="flex-grow flex items-center justify-center text-[9px] font-black uppercase text-slate-300 italic">No Birthdays This Week</div>
                   )}

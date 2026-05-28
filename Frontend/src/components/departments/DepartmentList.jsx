@@ -7,25 +7,25 @@ import { DepartmentButtons } from "../../utils/DepartmentHelper";
 /* ================= PREMIUM MOBILE CARD ================= */
 const MobileDepartmentCard = ({ dep, fetchDepartments }) => {
   return (
-    <div className="bg-white rounded-[1.5rem] shadow-lg border border-white p-6 transition-all active:scale-[0.98]">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl flex items-center justify-center text-red-500 shadow-inner shrink-0">
-          <Building2 size={24} strokeWidth={2.5} />
+    <div className="bg-white rounded-2xl shadow-lg border border-white p-4 sm:p-6 transition-all active:scale-[0.98] w-full max-w-[420px] mx-auto">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl flex items-center justify-center text-red-500 shadow-inner shrink-0">
+          <Building2 size={22} strokeWidth={2.5} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-widest text-red-500 mb-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
             DEPT-ID: {String(dep.sno).padStart(2, '0')}
           </p>
-          <p className="font-black text-slate-800 uppercase italic tracking-tighter truncate leading-none text-xl">
+          <p className="font-black text-slate-800 uppercase italic tracking-tighter truncate leading-none text-lg sm:text-xl">
             {dep.dep_name}
           </p>
-          <p className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-300 mt-2">
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-300 mt-2">
             Organizational Unit
           </p>
         </div>
       </div>
-      
-      <div className="mt-6 pt-5 border-t border-slate-50 flex justify-end">
+
+      <div className="mt-5 pt-4 border-t border-slate-50 flex justify-end">
         <DepartmentButtons id={dep._id} onDepartmentDelete={fetchDepartments} />
       </div>
     </div>
@@ -107,12 +107,13 @@ const DepartmentList = () => {
             <div className="flex flex-col lg:flex-row gap-5 items-center">
               
               {/* SEARCH BAR */}
-              <div className="group relative flex-1 w-full flex items-center bg-slate-100/50 border-2 border-transparent rounded-[1.5rem] px-6 focus-within:border-red-500/20 focus-within:bg-white transition-all shadow-inner">
-                <Search className="text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
+
+              <div className="group relative flex-1 w-full flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-4 sm:px-6 focus-within:border-red-500/20 focus-within:bg-white transition-all shadow-inner min-h-[48px]">
+                <Search className="text-slate-300 group-focus-within:text-red-500 transition-colors" size={18} />
                 <input
                   type="text"
                   placeholder="SEARCH BY DEPARTMENT NAME..."
-                  className="w-full py-5 pl-4 outline-none bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
+                  className="w-full py-3 pl-3 outline-none bg-transparent text-[12px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-300"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -121,9 +122,9 @@ const DepartmentList = () => {
               {/* ACTION BUTTON */}
               <Link
                 to="/admin-dashboard/add-department"
-                className="w-full lg:w-auto flex items-center justify-center gap-3 rounded-[1.5rem] bg-gradient-to-br from-slate-900 to-slate-800 px-10 py-5 font-black uppercase text-[10px] tracking-widest text-white shadow-2xl shadow-red-100 transition-all hover:from-red-600 hover:to-rose-500 active:scale-95 whitespace-nowrap"
+                className="w-full lg:w-auto flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-4 font-black uppercase text-[11px] tracking-widest text-white shadow-2xl shadow-red-100 transition-all hover:from-red-600 hover:to-rose-500 active:scale-95 whitespace-nowrap min-h-[48px]"
               >
-                <Plus size={18} strokeWidth={3} />
+                <Plus size={16} strokeWidth={3} />
                 <span>Add New Dept</span>
               </Link>
             </div>
@@ -137,7 +138,7 @@ const DepartmentList = () => {
           ) : (
             <>
               {/* MOBILE VIEW */}
-              <div className="md:hidden p-4 space-y-4">
+              <div className="md:hidden px-2 py-4 space-y-5">
                 {paginatedDepartments.length ? (
                   paginatedDepartments.map((dep) => (
                     <MobileDepartmentCard key={dep._id} dep={dep} fetchDepartments={fetchDepartments} />

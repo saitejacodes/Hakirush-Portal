@@ -17,10 +17,6 @@ const RootRedirect = () => {
     return <Navigate to="/admin-dashboard" replace />;
   }
 
-  if (user.role === "employee") {
-    return <Navigate to="/employee-dashboard" replace />;
-  }
-
   if (user.role === "client") {
     return <Navigate to="/client-dashboard" replace />;
   }
