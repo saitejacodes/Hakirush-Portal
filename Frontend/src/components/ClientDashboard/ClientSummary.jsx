@@ -547,7 +547,7 @@ const PerformanceLeaderboard = ({ teams = [], lastMonthImage, onImageRequestZoom
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </div> 
     </div>
   );
 };
