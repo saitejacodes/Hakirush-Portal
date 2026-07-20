@@ -1,41 +1,58 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, Eye, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Edit2, Trash2, Eye, AlertCircle, Check } from "lucide-react";
 import { useState } from "react";
 
-/* ================= PREMIUM CONFIRM DELETE ================= */
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const CRIMSON = "#9E2B3E";
+const IVORY = "#F6F2EA";
+const SLATE = "#7A756C";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.35)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* ================= CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] animate-in fade-in duration-300" />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95 duration-200">
-        <div className="w-full max-w-md rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />
-          
-          <div className="p-8">
-            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-600 mb-6 mx-auto shadow-inner">
-              <AlertCircle size={32} strokeWidth={2.5} />
+      <div className="fixed inset-0 z-[60] bg-[#1A1A1D]/30 backdrop-blur-md" />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+        <div
+          className="w-full max-w-md overflow-hidden rounded-[1.25rem] border bg-white/95 shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE, ...bodyFont }}
+        >
+          <div className="px-8 pb-8 pt-10">
+            <div
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              style={{ borderColor: "rgba(158,43,62,0.3)", color: CRIMSON }}
+            >
+              <AlertCircle size={26} strokeWidth={1.75} />
             </div>
 
-            <div className="text-center space-y-2 mb-8">
-              <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">
-                Terminate Client<span className="text-red-600">?</span>
+            <div className="mb-8 space-y-2 text-center">
+              <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+                Remove Client Record?
               </h3>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                This record will be permanently purged from the system core.
+              <p className="text-xs leading-relaxed" style={{ color: SLATE }}>
+                This will permanently delete the record from the registry.
               </p>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={onCancel}
-                className="w-1/2 py-4 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                className="w-1/2 cursor-pointer rounded-full border py-3.5 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+                style={{ borderColor: HAIRLINE, color: SLATE }}
               >
-                Abort
+                Cancel
               </button>
               <button
                 onClick={onConfirm}
-                className="w-1/2 py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 shadow-lg shadow-slate-200 hover:shadow-red-200 transition-all active:scale-95 cursor-pointer"
+                className="w-1/2 cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: CRIMSON }}
               >
                 Confirm Delete
               </button>
@@ -47,25 +64,32 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   );
 };
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
+/* ================= SUCCESS ================= */
 const DeleteSuccessAlert = ({ onClose }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] animate-in fade-in" />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95">
-        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden p-8 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mb-6 mx-auto">
-            <CheckCircle2 size={32} strokeWidth={2.5} />
+      <div className="fixed inset-0 z-[60] bg-[#1A1A1D]/20 backdrop-blur-sm" />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+        <div
+          className="w-full max-w-sm overflow-hidden rounded-[1.25rem] border bg-white/95 p-8 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE, ...bodyFont }}
+        >
+          <div
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+          >
+            <Check size={26} strokeWidth={1.75} />
           </div>
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic mb-2">
-            Record Purged<span className="text-green-500">.</span>
+          <h3 className="mb-2 text-xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+            Record Removed
           </h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
-            The database has been updated.
+          <p className="mb-6 text-xs" style={{ color: SLATE }}>
+            The registry has been updated.
           </p>
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200 transition-all active:scale-95"
+            className="w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: CHARCOAL }}
           >
             Acknowledge
           </button>
@@ -95,11 +119,10 @@ export const ClientButtons = ({ id, refresh }) => {
       if (response.data.success) {
         setShowConfirm(false);
         setShowSuccess(true);
-        
-        // Brief delay for the success animation before refreshing the list
+
         setTimeout(() => {
           setShowSuccess(false);
-          if (refresh) refresh(); 
+          if (refresh) refresh();
         }, 1200);
       }
     } catch (err) {
@@ -121,39 +144,48 @@ export const ClientButtons = ({ id, refresh }) => {
         <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="flex gap-2 justify-end items-center">
-        {/* View Action */}
+      <div className="flex items-center justify-end gap-2">
+        {/* View */}
         <button
           onClick={() => navigate(`/admin-dashboard/clients/${id}`)}
-          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
+          className="cursor-pointer rounded-full border p-2.5 transition-colors"
+          style={{ borderColor: HAIRLINE, color: SLATE }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = GOLD; e.currentTarget.style.borderColor = GOLD_HAIRLINE; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = SLATE; e.currentTarget.style.borderColor = HAIRLINE; }}
           title="View Profile"
         >
-          <Eye size={16} strokeWidth={2.5} />
+          <Eye size={15} strokeWidth={1.75} />
         </button>
 
-        {/* Edit Action */}
+        {/* Edit */}
         <button
           onClick={() => navigate(`/admin-dashboard/clients/edit/${id}`)}
-          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
-          title="Modify Record"
+          className="cursor-pointer rounded-full border p-2.5 transition-colors"
+          style={{ borderColor: HAIRLINE, color: SLATE }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = CHARCOAL; e.currentTarget.style.borderColor = "rgba(26,26,29,0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = SLATE; e.currentTarget.style.borderColor = HAIRLINE; }}
+          title="Edit Record"
         >
-          <Edit2 size={16} strokeWidth={2.5} />
+          <Edit2 size={15} strokeWidth={1.75} />
         </button>
 
-        {/* Delete Action */}
+        {/* Delete */}
         <button
           onClick={() => setShowConfirm(true)}
-          className="group p-2.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
-          title="Delete Permanent"
+          className="cursor-pointer rounded-full p-2.5 transition-colors"
+          style={{ backgroundColor: IVORY, color: SLATE }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = CRIMSON; e.currentTarget.style.color = "#fff"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = IVORY; e.currentTarget.style.color = SLATE; }}
+          title="Delete Record"
         >
-          <Trash2 size={16} strokeWidth={2.5} />
+          <Trash2 size={15} strokeWidth={1.75} />
         </button>
       </div>
     </>
   );
 };
 
-/* ✅ API Helper */
+/* API Helper — unchanged */
 export const fetchClients = async () => {
   try {
     const res = await axios.get(

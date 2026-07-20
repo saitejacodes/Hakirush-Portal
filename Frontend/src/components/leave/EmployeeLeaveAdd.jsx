@@ -2,29 +2,51 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { 
-  Calendar, FileText, ArrowRight, CheckCircle2, 
-  AlertTriangle, Clock, Briefcase, ShieldCheck, TrendingUp 
+import {
+  Calendar, FileText, ArrowRight, Check,
+  AlertTriangle, Clock, Briefcase, ShieldCheck, TrendingUp
 } from "lucide-react";
 
-/* --- PREMIUM SUCCESS MODAL --- */
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-50";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const IVORY = "#F6F2EA";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* ================= CONFIRMATION DIALOG ================= */
 const SuccessAlert = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] animate-in fade-in duration-300" />
-    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] border border-white overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="pt-12 pb-8 flex flex-col items-center text-center px-8">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-emerald-500 blur-2xl opacity-20 animate-pulse"></div>
-            <div className="relative w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-              <CheckCircle2 size={40} />
-            </div>
+    <div className="fixed inset-0 z-50 bg-[#1A1A1D]/30 backdrop-blur-md" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+      <div
+        className="w-full max-w-sm overflow-hidden rounded-[1.25rem] border bg-white/95 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+        style={{ borderColor: HAIRLINE }}
+      >
+        <div className="px-10 pb-10 pt-12">
+          <div
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+          >
+            <Check size={26} strokeWidth={1.75} />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter">Application Logged</h3>
-          <p className="text-sm font-medium text-slate-400 mt-2 leading-relaxed">Your request has been synchronized with the central database.</p>
-        </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-100">
-          <button onClick={onClose} className="w-full py-5 rounded-[2rem] bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all active:scale-95 shadow-xl cursor-pointer">
+          <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+            Application Logged
+          </h3>
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
+            Your request has been synchronized with the leave register.
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-8 w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+            style={{ backgroundColor: CHARCOAL }}
+          >
             Got it, thanks
           </button>
         </div>
@@ -57,20 +79,20 @@ const EmployeeLeaveAdd = () => {
     let count = 0;
     let cur = new Date(start);
     const stop = new Date(end);
-    
+
     // Normalize to midnight local time
     cur.setHours(0,0,0,0);
     stop.setHours(0,0,0,0);
-    
+
     // Memoize holiday strings for faster lookup
-    const holidayStrings = new Set(holidayList.map(h => 
+    const holidayStrings = new Set(holidayList.map(h =>
       typeof h === 'string' ? h : toLocalYMD(h.date || h)
     ));
 
     while (cur <= stop) {
       const dayOfWeek = cur.getDay(); // 0 = Sunday, 6 = Saturday
       const dateStr = toLocalYMD(cur);
-      
+
       if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.has(dateStr)) {
         count++;
       }
@@ -90,12 +112,12 @@ const EmployeeLeaveAdd = () => {
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers })
         ]);
-        
+
         const hData = holidayRes?.data?.holidays || [];
         setHolidays(hData);
 
         const approvedLeaves = leaveHistoryRes?.data?.leaves || [];
-        
+
         const casualUsed = approvedLeaves
           .filter(l => l.status === "Approved" && l.leaveType === "Casual Leave")
           .reduce((total, l) => total + calculateWorkingDays(l.startDate, l.endDate, hData), 0);
@@ -104,12 +126,12 @@ const EmployeeLeaveAdd = () => {
           .filter(l => l.status === "Approved" && l.leaveType === "Sick Leave")
           .reduce((total, l) => total + calculateWorkingDays(l.startDate, l.endDate, hData), 0);
 
-        setBalance({ 
-          casual: Math.max(0, 12 - casualUsed), 
-          sick: Math.max(0, 12 - sickUsed) 
+        setBalance({
+          casual: Math.max(0, 12 - casualUsed),
+          sick: Math.max(0, 12 - sickUsed)
         });
-      } catch (e) { 
-        console.error("Data Fetch Error:", e); 
+      } catch (e) {
+        console.error("Data Fetch Error:", e);
       } finally {
         setFetchingData(false);
       }
@@ -129,7 +151,7 @@ const EmployeeLeaveAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const currentBalance = leave.leaveType === "Sick Leave" ? balance.sick : balance.casual;
     if (daysCount > currentBalance) {
       alert("Insufficient leave balance.");
@@ -146,175 +168,225 @@ const EmployeeLeaveAdd = () => {
         days: daysCount,
         userId: user._id
       };
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/leave/add`, 
-        payload, 
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/leave/add`,
+        payload,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       if (res.data?.success) {
         setShowAlert(true);
         setTimeout(() => navigate(`/employee-dashboard/leaves/${user._id}`), 2000);
       }
-    } catch (err) { 
-      alert(err?.response?.data?.error || "Submission failed. Please try again."); 
-    } finally { 
-      setLoading(false); 
+    } catch (err) {
+      alert(err?.response?.data?.error || "Submission failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const isInsufficient = (leave.leaveType === "Sick Leave" && daysCount > balance.sick) || 
+  const isInsufficient = (leave.leaveType === "Sick Leave" && daysCount > balance.sick) ||
                          (leave.leaveType === "Casual Leave" && daysCount > balance.casual);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-white via-slate-50 to-rose-50 flex items-center p-4 sm:p-10 selection:bg-rose-200">
+    <div className={`min-h-screen w-full ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-12`} style={bodyFont}>
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
 
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* LEFT PANEL: STATS */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-red-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
-            <div className="relative z-10">
-              <ShieldCheck className="text-emerald-400 mb-4" size={20} />
-              <h2 className="text-xl font-black uppercase italic tracking-tighter">Registry Terminal</h2>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Active Session: {user?.name || "Verified"}</p>
-            </div>
-            <div className="absolute -right-8 -bottom-8 opacity-20">
-              <TrendingUp size={150} className="text-white" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {/* Casual Leave Card */}
-            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all duration-500 ${leave.leaveType === "Casual Leave" ? "border-rose-500 shadow-rose-100" : "border-transparent shadow-xl"}`}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Casual Balance</span>
-                <div className={`w-2 h-2 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.casual > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-              </div>
-              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">
-                {fetchingData ? "..." : balance.casual}
-              </div>
-              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Working Days Available</p>
-            </div>
-
-            {/* Sick Leave Card */}
-            <div className={`bg-white p-6 rounded-[2rem] border-2 transition-all duration-500 ${leave.leaveType === "Sick Leave" ? "border-blue-500 shadow-blue-100" : "border-transparent shadow-xl"}`}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sick Balance</span>
-                <div className={`w-2 h-2 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.sick > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-              </div>
-              <div className="text-3xl font-black text-slate-900 italic tracking-tighter">
-                {fetchingData ? "..." : balance.sick}
-              </div>
-              <p className="text-[7px] font-bold text-slate-300 uppercase mt-1">Medical Credit Available</p>
-            </div>
-          </div>
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-10 px-2">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>Registry</p>
+          <h1 className="mt-2 text-4xl leading-none" style={{ ...displayFont, fontWeight: 500 }}>
+            New Leave <span className="italic" style={{ color: GARNET }}>Application</span>
+          </h1>
         </div>
 
-        {/* RIGHT PANEL: FORM */}
-        <div className="lg:col-span-8 bg-white rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-          <div className="p-8 sm:p-12">
-            <div className="flex justify-between items-end mb-10">
-              <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter">New Application</h3>
-              <div className="text-right">
-                <p className="text-[6px] font-black text-slate-400 uppercase tracking-widest">Total Working Days</p>
-                <p className={`text-xl font-black leading-none transition-colors ${isInsufficient ? 'text-red-600' : 'text-emerald-600'}`}>
-                  {daysCount} Days
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+
+          {/* LEFT PANEL: STATS */}
+          <div className="space-y-6 lg:col-span-4">
+            <div
+              className="relative overflow-hidden rounded-[1.25rem] border p-7 text-white"
+              style={{ backgroundColor: CHARCOAL, borderColor: HAIRLINE }}
+            >
+              <div className="relative z-10">
+                <ShieldCheck style={{ color: GOLD }} className="mb-4" size={20} strokeWidth={1.5} />
+                <h2 className="text-xl leading-none" style={{ ...displayFont, fontWeight: 500 }}>Registry Terminal</h2>
+                <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.28em]" style={{ color: "rgba(246,242,234,0.5)" }}>
+                  Active session · {user?.name || "Verified"}
                 </p>
               </div>
+              <TrendingUp size={140} className="absolute -bottom-8 -right-8 opacity-10" style={{ color: GOLD }} />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Category Select */}
-              <div className="relative">
-                <label className="absolute -top-3 left-1 bg-white px-2 text-[8px] font-black uppercase text-rose-600 tracking-widest z-10">Leave Category</label>
-                <select 
-                  name="leaveType" 
-                  value={leave.leaveType} 
-                  onChange={(e) => setLeave(p => ({...p, leaveType: e.target.value}))} 
-                  required 
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-4 rounded-2xl font-bold text-slate-700 outline-none transition-all appearance-none cursor-pointer"
-                >
-                  <option value="">Select Category</option>
-                  <option value="Sick Leave">Sick Leave</option>
-                  <option value="Casual Leave">Casual Leave</option>
-                </select>
-                <Briefcase size={18} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="relative">
-                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Start Date</label>
-                  <input 
-                    type="date" 
-                    min={toLocalYMD(new Date())}
-                    value={leave.startDate} 
-                    onChange={(e) => setLeave(p => ({...p, startDate: e.target.value}))} 
-                    required 
-                    className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-5 rounded-2xl font-bold text-slate-700 outline-none transition-all" 
-                  />
-                </div>
-                <div className="relative">
-                  <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">End Date</label>
-                  <input 
-                    type="date" 
-                    min={leave.startDate || toLocalYMD(new Date())}
-                    value={leave.endDate} 
-                    onChange={(e) => setLeave(p => ({...p, endDate: e.target.value}))} 
-                    required 
-                    className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-5 rounded-2xl font-bold text-slate-700 outline-none transition-all" 
-                  />
-                </div>
-              </div>
-
-              {/* Reason */}
-              <div className="relative">
-                <label className="absolute -top-2.5 left-5 bg-white px-2 text-[9px] font-black uppercase text-slate-400 tracking-widest z-10">Justification</label>
-                <textarea 
-                  rows="3" 
-                  value={leave.reason} 
-                  onChange={(e) => setLeave(p => ({...p, reason: e.target.value}))} 
-                  required
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-100 focus:bg-white p-5 rounded-2xl font-medium text-slate-600 outline-none transition-all resize-none placeholder:text-slate-200" 
-                  placeholder="Provide context for your leave request..." 
-                />
-              </div>
-
-              {/* Conditional Alerts */}
-              {leave.startDate && leave.endDate && (
-                <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                  {daysCount === 0 && (
-                    <div className="bg-amber-50 p-4 rounded-2xl flex items-center gap-3 border border-amber-100">
-                      <AlertTriangle className="text-amber-500" size={18} />
-                      <p className="text-[10px] font-black uppercase text-amber-700 tracking-tight">Range only contains non-working days.</p>
-                    </div>
-                  )}
-                  {isInsufficient && (
-                    <div className="bg-red-50 p-4 rounded-2xl flex items-center gap-3 border border-red-100">
-                      <AlertTriangle className="text-red-500" size={18} />
-                      <p className="text-[10px] font-black uppercase text-red-700 tracking-tight">Requested days exceed available balance.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                disabled={loading || daysCount <= 0 || isInsufficient || !leave.leaveType} 
-                className="w-full flex items-center justify-center gap-4 py-4 rounded-[2rem] bg-slate-900 hover:bg-rose-600 text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer group"
+            <div className="grid grid-cols-1 gap-4">
+              {/* Casual Leave Card */}
+              <div
+                className="rounded-[1.25rem] border bg-white/85 p-6 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_20px_45px_-24px_rgba(26,26,29,0.28)] backdrop-blur-md transition-all duration-300"
+                style={{ borderColor: leave.leaveType === "Casual Leave" ? GOLD_HAIRLINE : HAIRLINE }}
               >
-                <span className="relative z-10 flex items-center justify-center gap-4">
-                  {loading ? "Transmitting..." : "Submit Application"}
-                  <ArrowRight size={20} className="group-hover:translate-x-3 transition-transform" />
-                </span>
-              </button>
-            </form>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>Casual Balance</span>
+                  <div className={`h-1.5 w-1.5 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.casual > 0 ? '' : 'bg-rose-400'}`} style={!fetchingData && balance.casual > 0 ? { backgroundColor: GOLD } : {}} />
+                </div>
+                <div className="text-3xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+                  {fetchingData ? "…" : balance.casual}
+                </div>
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wide" style={{ color: SLATE }}>Working days available</p>
+              </div>
+
+              {/* Sick Leave Card */}
+              <div
+                className="rounded-[1.25rem] border bg-white/85 p-6 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_20px_45px_-24px_rgba(26,26,29,0.28)] backdrop-blur-md transition-all duration-300"
+                style={{ borderColor: leave.leaveType === "Sick Leave" ? GOLD_HAIRLINE : HAIRLINE }}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>Sick Balance</span>
+                  <div className={`h-1.5 w-1.5 rounded-full ${fetchingData ? 'animate-pulse bg-slate-200' : balance.sick > 0 ? '' : 'bg-rose-400'}`} style={!fetchingData && balance.sick > 0 ? { backgroundColor: GOLD } : {}} />
+                </div>
+                <div className="text-3xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+                  {fetchingData ? "…" : balance.sick}
+                </div>
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wide" style={{ color: SLATE }}>Medical credit available</p>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL: FORM */}
+          <div
+            className="rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.24)] backdrop-blur-md lg:col-span-8"
+            style={{ borderColor: HAIRLINE }}
+          >
+            <div className="p-8 sm:p-12">
+              <div className="mb-10 flex items-end justify-between">
+                <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500 }}>Application Details</h3>
+                <div className="text-right">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>Total Working Days</p>
+                  <p
+                    className="text-xl leading-none"
+                    style={{ ...displayFont, fontWeight: 500, color: isInsufficient ? "#B4443B" : GOLD }}
+                  >
+                    {daysCount} Days
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Category Select */}
+                <div>
+                  <FieldLabel icon={<Briefcase size={13} strokeWidth={1.5} />} label="Leave Category" />
+                  <select
+                    name="leaveType"
+                    value={leave.leaveType}
+                    onChange={(e) => setLeave(p => ({...p, leaveType: e.target.value}))}
+                    required
+                    className="mt-2 w-full cursor-pointer border-b bg-transparent pb-2 text-base outline-none transition-colors"
+                    style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                    onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+                  >
+                    <option value="">Select category</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Casual Leave">Casual Leave</option>
+                  </select>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel icon={<Calendar size={13} strokeWidth={1.5} />} label="Start Date" />
+                    <input
+                      type="date"
+                      min={toLocalYMD(new Date())}
+                      value={leave.startDate}
+                      onChange={(e) => setLeave(p => ({...p, startDate: e.target.value}))}
+                      required
+                      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+                      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel icon={<Calendar size={13} strokeWidth={1.5} />} label="End Date" />
+                    <input
+                      type="date"
+                      min={leave.startDate || toLocalYMD(new Date())}
+                      value={leave.endDate}
+                      onChange={(e) => setLeave(p => ({...p, endDate: e.target.value}))}
+                      required
+                      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+                      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+                    />
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <FieldLabel icon={<FileText size={13} strokeWidth={1.5} />} label="Justification" />
+                  <textarea
+                    rows="3"
+                    value={leave.reason}
+                    onChange={(e) => setLeave(p => ({...p, reason: e.target.value}))}
+                    required
+                    className="mt-2 w-full resize-none border-b bg-transparent pb-2 text-sm outline-none transition-colors placeholder:italic"
+                    style={{ borderColor: HAIRLINE, color: CHARCOAL }}
+                    placeholder="Provide context for your leave request…"
+                    onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+                  />
+                </div>
+
+                {/* Conditional Alerts */}
+                {leave.startDate && leave.endDate && (
+                  <div className="space-y-3">
+                    {daysCount === 0 && (
+                      <div
+                        className="flex items-center gap-3 rounded-xl border p-4"
+                        style={{ borderColor: GOLD_HAIRLINE, backgroundColor: IVORY }}
+                      >
+                        <AlertTriangle size={16} strokeWidth={1.75} style={{ color: GOLD }} />
+                        <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#8A6A2E" }}>
+                          Range only contains non-working days.
+                        </p>
+                      </div>
+                    )}
+                    {isInsufficient && (
+                      <div className="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50 p-4">
+                        <AlertTriangle size={16} strokeWidth={1.75} className="text-rose-500" />
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+                          Requested days exceed available balance.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading || daysCount <= 0 || isInsufficient || !leave.leaveType}
+                  className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full py-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: CHARCOAL }}
+                >
+                  {loading ? "Transmitting…" : "Submit Application"}
+                  <ArrowRight size={16} strokeWidth={1.75} />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+/* ===== SUPPORTING COMPONENTS ===== */
+
+const FieldLabel = ({ icon, label }) => (
+  <div className="flex items-center gap-2" style={{ color: GOLD }}>
+    {icon}
+    <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
+  </div>
+);
 
 export default EmployeeLeaveAdd;

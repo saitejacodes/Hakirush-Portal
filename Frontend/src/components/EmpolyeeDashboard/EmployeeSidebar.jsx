@@ -3,16 +3,24 @@ import Logo from "/favicon.png";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Building,
   CalendarCheck,
   Settings,
   X,
   FileText,
-  ChevronRight,
-  UserCircle
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/authContext";
 import { useSidebar } from "../../context/sidebarContext";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const IVORY = "#F6F2EA";
+const SLATE = "#7A756C";
+const HAIRLINE = "rgba(26,26,29,0.10)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.35)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 const EmployeeSidebar = () => {
   const { user } = useAuth();
@@ -31,7 +39,7 @@ const EmployeeSidebar = () => {
       {/* MOBILE OVERLAY */}
       {open && (
         <div
-          className="fixed inset-0 bg-red-950/40 backdrop-blur-md z-40 md:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 z-40 bg-[#1A1A1D]/30 backdrop-blur-md duration-300 animate-in fade-in md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -39,53 +47,48 @@ const EmployeeSidebar = () => {
       <aside
         className={`
           fixed md:sticky top-0 left-0 z-50 h-screen
-          bg-white/80 backdrop-blur-2xl
-          border-r border-red-100/60
-          shadow-[20px_0_60px_rgba(153,27,27,0.08)]
+          bg-white/85 backdrop-blur-2xl
+          border-r
+          shadow-[20px_0_60px_rgba(26,26,29,0.06)]
           transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
           ${open ? "translate-x-0 w-72" : "-translate-x-full w-72"}
           md:translate-x-0 md:w-24 md:hover:w-72
           overflow-hidden group/sidebar
         `}
+        style={{ borderColor: HAIRLINE, ...bodyFont }}
       >
-        {/* HEADER / LOGO SECTION */}
-        <div className="h-16 flex items-center gap-4 px-5 mb-4 relative overflow-hidden rounded-b-3xl shadow-[0_4px_24px_rgba(153,27,27,0.10)]">
-          {/* Decorative Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-700 to-red-600" />
-          
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="p-1.5 bg-white/30 backdrop-blur-md rounded-2xl shadow-inner border border-white/30">
-              <img
-                src={Logo}
-                className="w-9 h-9 rounded-xl object-contain shadow-lg"
-                alt="Logo"
-              />
-            </div>
+        {/* ============ WORDMARK ============ */}
+        <div className="relative flex h-16 items-center gap-4 px-5" style={{ backgroundColor: CHARCOAL }}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
+            <img src={Logo} className="h-6 w-6 rounded-full object-contain" alt="Logo" />
+          </div>
 
-            <div className="flex flex-col md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity duration-300">
-              <span className="text-white text-[13px] font-black uppercase tracking-[0.2em] italic leading-none">
-                Hakirush
-              </span>
-              <span className="text-red-200 text-[9px] font-bold uppercase tracking-widest mt-1">
-                Employee Hub
-              </span>
-            </div>
+          <div className="flex flex-col opacity-0 transition-opacity duration-300 md:group-hover/sidebar:opacity-100">
+            <span className="text-lg leading-none text-white" style={{ ...displayFont, fontWeight: 500 }}>
+              Hakirush
+            </span>
+            <span className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.28em]" style={{ color: GOLD }}>
+              Employee Hub
+            </span>
           </div>
 
           <button
-            className="relative z-10 ml-auto md:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all"
+            className="relative z-10 ml-auto rounded-full p-2 text-white/70 transition-colors hover:text-white md:hidden"
             onClick={() => setOpen(false)}
           >
-            <X size={20} />
+            <X size={18} strokeWidth={1.75} />
           </button>
         </div>
 
-        {/* NAVIGATION SYSTEM */}
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto no-scrollbar pb-10">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-4 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity">
+        {/* ============ NAVIGATION ============ */}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4 pb-10 pt-6 no-scrollbar">
+          <p
+            className="mb-4 ml-3 text-[9px] font-semibold uppercase tracking-[0.28em] opacity-0 transition-opacity md:group-hover/sidebar:opacity-100"
+            style={{ color: SLATE }}
+          >
             Personal Ledger
           </p>
-          
+
           {sidebarLinks.map((item, i) => (
             <NavLink
               key={i}
@@ -98,51 +101,37 @@ const EmployeeSidebar = () => {
             >
               {({ isActive }) => (
                 <div
-                  className={`
-                    relative flex items-center gap-4 p-3.5 rounded-2xl
-                    text-[11px] font-black uppercase tracking-widest
-                    transition-all duration-300 group/item
-                    ${
-                      isActive
-                        ? "bg-gradient-to-br from-red-950 to-red-600 text-white shadow-[0_10px_20px_rgba(153,27,27,0.3)] scale-[1.02]"
-                        : "text-slate-500 hover:bg-red-50 hover:text-red-700"
-                    }
-                  `}
+                  className="group/item relative flex items-center gap-4 rounded-xl py-3 pl-3 pr-4 text-[11px] font-semibold uppercase tracking-widest transition-colors duration-300"
+                  style={{
+                    color: isActive ? CHARCOAL : SLATE,
+                    backgroundColor: isActive ? IVORY : "transparent",
+                  }}
                 >
-                  {/* ICON CONTAINER */}
-                  <div className="w-10 flex justify-center shrink-0">
-                    <item.icon 
-                      size={22} 
-                      strokeWidth={isActive ? 2.5 : 2} 
-                      className="group-hover/item:rotate-12 transition-transform duration-300" 
-                    />
+                  {/* active rule */}
+                  <span
+                    className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full transition-opacity"
+                    style={{ backgroundColor: GOLD, opacity: isActive ? 1 : 0 }}
+                  />
+
+                  <div className="flex w-7 shrink-0 justify-center">
+                    <item.icon size={19} strokeWidth={isActive ? 2 : 1.5} />
                   </div>
 
-                  {/* LABEL */}
-                  <span className="whitespace-nowrap opacity-100 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-all duration-300 translate-x-0 md:-translate-x-4 md:group-hover/sidebar:translate-x-0">
+                  <span className="translate-x-0 whitespace-nowrap opacity-100 transition-all duration-300 md:-translate-x-3 md:opacity-0 md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100">
                     {item.title}
                   </span>
-
-                  {/* ACTIVE INDICATOR ARROW */}
-                  <ChevronRight 
-                    size={14} 
-                    className={`ml-auto transition-all duration-300 
-                      ${isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0"} 
-                      md:hidden lg:block
-                    `} 
-                  />
                 </div>
               )}
             </NavLink>
           ))}
         </nav>
 
-        {/* FOOTER DECORATION */}
-        <div className="absolute bottom-4 left-0 w-full px-8 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-all duration-500">
-          <div className="h-[1px] bg-gradient-to-r from-transparent via-red-100 to-transparent w-full mb-4" />
-          <div className="flex items-center gap-3 text-slate-400">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em]">Node Online</span>
+        {/* ============ FOOTER ============ */}
+        <div className="absolute bottom-4 left-0 w-full px-7 opacity-0 transition-all duration-500 md:group-hover/sidebar:opacity-100">
+          <div className="mb-4 h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
+          <div className="flex items-center gap-2.5" style={{ color: SLATE }}>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: GOLD }} />
+            <span className="text-[8.5px] font-semibold uppercase tracking-[0.22em]">Node Online</span>
           </div>
         </div>
       </aside>

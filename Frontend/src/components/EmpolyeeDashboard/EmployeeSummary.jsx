@@ -49,9 +49,9 @@ const EmployeeSummary = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "Ongoing": return "bg-amber-100 text-amber-600 border-amber-200";
-      case "Completed": return "bg-green-100 text-green-600 border-green-200";
-      default: return "bg-blue-100 text-blue-600 border-blue-200";
+      case "Ongoing": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Completed": return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      default: return "bg-sky-50 text-sky-700 border-sky-200";
     }
   };
 
@@ -224,48 +224,72 @@ const EmployeeSummary = () => {
     fetchData();
   };
 
+  // Small reusable section label used across premium cards
+  const SectionLabel = ({ icon, tone, children, live }) => (
+    <div className="flex items-center justify-between mb-5 px-1">
+      <div className="flex items-center gap-2.5 text-[11px] font-semibold uppercase text-slate-400 tracking-[0.16em]">
+        <div className={`p-1.5 rounded-lg ${tone}`}>{icon}</div>
+        {children}
+      </div>
+      {live && <span className="flex h-1.5 w-1.5 rounded-full bg-current animate-pulse" style={{ color: live }} />}
+    </div>
+  );
+
   if (loading || !user) return (
-    <div className="h-screen flex items-center justify-center font-black italic text-slate-400 uppercase tracking-tighter text-4xl">
-      LOADING...
+    <div className="h-screen flex items-center justify-center text-slate-400 uppercase tracking-[0.3em] text-sm font-semibold">
+      Loading your workspace…
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 pb-12">
-      <div className="max-w-[1200px] mx-auto p-4 sm:p-8 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 pb-16">
+      <div className="max-w-[1240px] mx-auto p-5 sm:p-10 space-y-8">
         
         {/* Header */}
         <header className="flex justify-between items-center pt-2 relative">
-          <h1 className="text-2xl font-black text-red-700 uppercase tracking-tighter sm:text-4xl leading-none italic">Dashboard</h1>
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-400">Overview</span>
+            <h1 className="text-3xl sm:text-[2.6rem] font-semibold text-slate-900 tracking-tight leading-none mt-1">
+              Good to see you<span className="text-rose-500">.</span>
+            </h1>
+          </div>
           <div className="relative">
-            <button onClick={() => setShowBellMenu(!showBellMenu)} className={`p-3 rounded-3xl transition-all border shadow-xl cursor-pointer ${showBellMenu ? 'bg-red-600 text-white' : 'bg-white text-slate-600 border-slate-100'}`}>
-              <Bell size={20} className={hasUnseenNotices ? "animate-bounce text-red-500" : ""} />
+            <button
+              onClick={() => setShowBellMenu(!showBellMenu)}
+              className={`relative p-3.5 rounded-full transition-all duration-300 border shadow-[0_8px_24px_-8px_rgba(15,23,42,0.15)] cursor-pointer ${
+                showBellMenu ? "bg-rose-600 text-white border-rose-600" : "bg-white text-slate-500 border-slate-100 hover:border-rose-200 hover:text-rose-500"
+              }`}
+            >
+              <Bell size={18} strokeWidth={2} />
+              {hasUnseenNotices && (
+                <span className="absolute top-2.5 right-3 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+              )}
             </button>
             {showBellMenu && (
-              <div className="absolute right-0 mt-4 w-[320px] sm:w-[400px] bg-white rounded-[3rem] shadow-2xl border z-[100] overflow-hidden animate-pop">
-                <div className="p-6 bg-slate-50 border-b">
+              <div className="absolute right-0 mt-4 w-[320px] sm:w-[400px] bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] border border-slate-100 z-[100] overflow-hidden animate-pop">
+                <div className="p-6 bg-slate-50/70 border-b border-slate-100">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Notices & Leave Updates</span>
-                    <X size={15} className="cursor-pointer text-slate-300 hover:text-red-500" onClick={()=>setShowBellMenu(false)}/>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Notices &amp; Leave Updates</span>
+                    <X size={15} className="cursor-pointer text-slate-300 hover:text-rose-500 transition-colors" onClick={()=>setShowBellMenu(false)}/>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                      <div className="text-xs font-black text-amber-500">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                      <div className="text-sm font-semibold text-amber-500">
                         {announcements.filter(a => a.status?.toLowerCase() === "ongoing").length}
                       </div>
-                      <div className="text-[7px] font-black uppercase text-slate-400">Ongoing</div>
+                      <div className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Ongoing</div>
                     </div>
-                    <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                      <div className="text-xs font-black text-green-500">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                      <div className="text-sm font-semibold text-emerald-500">
                         {announcements.filter(a => a.status?.toLowerCase() === "completed" || a.status?.toLowerCase() === "done").length}
                       </div>
-                      <div className="text-[7px] font-black uppercase text-slate-400">Done</div>
+                      <div className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Done</div>
                     </div>
-                    <div className="bg-white p-3 rounded-2xl border border-slate-100 text-center">
-                      <div className="text-xs font-black text-blue-500">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                      <div className="text-sm font-semibold text-sky-500">
                         {announcements.filter(a => a.status?.toLowerCase() === "coming").length}
                       </div>
-                      <div className="text-[7px] font-black uppercase text-slate-400">Coming</div>
+                      <div className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Coming</div>
                     </div>
                   </div>
                 </div>
@@ -275,23 +299,23 @@ const EmployeeSummary = () => {
                     const isRead = a.seenBy?.map(id => id.toString()).includes(user?._id?.toString());
                     return (
                       <div key={a._id} onClick={() => { setActiveAnnouncement(a); setShowBellMenu(false); if(!isRead) markAsSeenOnServer(a._id); }} 
-                        className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between ${isRead ? 'opacity-30' : 'bg-slate-50 border-red-50 shadow-sm'}`}>
+                        className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between ${isRead ? 'opacity-40 border-transparent' : 'bg-slate-50 border-rose-100 shadow-sm hover:bg-rose-50/40'}`}>
                         <div className="flex flex-col">
-                          <h4 className="text-[11px] font-black uppercase">{a.title}</h4>
-                          <span className="text-[8px] font-black text-slate-400 uppercase">{a.type}</span>
+                          <h4 className="text-[12px] font-semibold text-slate-800">{a.title}</h4>
+                          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{a.type}</span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase border ${getStatusBadge(a.status)}`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold uppercase border ${getStatusBadge(a.status)}`}>
                           {a.status}
                         </span>
                       </div>
                     )
                   })}
                   {/* Leave Status Notifications */}
-                  {notifications.length > 0 && <div className="mt-2 mb-1 text-[9px] font-black uppercase text-slate-400">Leave Updates</div>}
+                  {notifications.length > 0 && <div className="mt-2 mb-1 text-[10px] font-semibold uppercase text-slate-400 tracking-wide">Leave Updates</div>}
                   {notifications.map(n => (
                     <div
                       key={n._id}
-                      className={`p-4 rounded-2xl border flex flex-col gap-1 cursor-pointer ${n.seen ? 'opacity-50' : 'bg-amber-50 border-amber-100 shadow-sm'}`}
+                      className={`p-4 rounded-2xl border flex flex-col gap-1 cursor-pointer transition-all ${n.seen ? 'opacity-50' : 'bg-amber-50/70 border-amber-100 shadow-sm hover:bg-amber-50'}`}
                       onClick={async () => {
                         if (!n.seen) {
                           try {
@@ -304,8 +328,8 @@ const EmployeeSummary = () => {
                         }
                       }}
                     >
-                      <span className="text-[11px] font-black text-amber-700">{n.message}</span>
-                      <span className="text-[8px] font-bold text-slate-400">{new Date(n.createdAt).toLocaleString()}</span>
+                      <span className="text-[12px] font-medium text-amber-800">{n.message}</span>
+                      <span className="text-[10px] font-medium text-slate-400">{new Date(n.createdAt).toLocaleString()}</span>
                     </div>
                   ))}
                   {announcements.length === 0 && notifications.length === 0 && (
@@ -319,296 +343,266 @@ const EmployeeSummary = () => {
 
         <EmployeePunch onSuccess={handleAttendanceSuccess} />
 
-        {/* Stats Grid - Improved Layout */}
+        {/* Stats Grid */}
         <section className="w-full">
-          <div className="flex flex-col gap-8">
-            
-            {/* --- TOP ROW: Team Pulse, Birthdays, Anniversaries (Left to Right) --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* 1. Team Pulse */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
-                <div className="flex items-center justify-between mb-5 px-1">
-                  <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
-                    <div className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <Activity size={10} className="relative text-red-500" />
-                    </div>
-                    Team Pulse
-                  </div>
-                  <span className="text-[6px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase">Live</span>
-                </div>
-                <div className="flex flex-col gap-3 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-                  {deptEmployees.map((e) => (
-                    <div 
-                      key={e._id} 
-                      className="flex items-center gap-4 p-2 bg-white rounded-2xl border-2 border-slate-50 hover:border-red-100 hover:shadow-md transition-all group"
-                    >
-                      <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2 border-white shadow-sm flex items-center justify-center bg-slate-100 relative group-hover:scale-110 transition-transform">
-                        <img 
-                          src={getImageUrl(e.userId?.profileImage || e.profileImage)} 
-                          className="w-full h-full object-cover" 
-                          alt="" 
-                          onError={(e) => {e.target.style.display = 'none'}} 
-                        />
-                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-400 -z-10 uppercase">
-                          {(e.userId?.name || e.name).charAt(0)}
-                        </span>
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-[10px] font-black italic uppercase truncate">
-                          {e.userId?.name || e.name || "Unknown"}
-                        </span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase">
-                          {typeof e.employeeId === 'object' ? e.userId?.employeeId : e.employeeId}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-              {/* New Employees */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
-                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2 mb-5">
-                  <UserPlus size={12} /> Welcome Aboard
-                </span>
-                <div className="flex-grow overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                  {newEmployees.length > 0 ? newEmployees.map(e => (
-                    <div key={e._id} className="flex items-center gap-3 p-2 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-                      <img src={getImageUrl(e.profileImage)} className="w-8 h-8 rounded-xl object-cover" alt="" />
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase truncate text-emerald-900">{e.name}</span>
-                        <span className="text-[7px] font-bold text-emerald-600 italic">Joined Recently</span>
-                      </div>
+            {/* 1. Team Pulse */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
+              <SectionLabel icon={<Activity size={13} className="text-rose-500" />} tone="bg-rose-50" live="#f43f5e">
+                Team Pulse
+              </SectionLabel>
+              <div className="flex flex-col gap-2.5 overflow-y-auto flex-grow pr-2 custom-scrollbar">
+                {deptEmployees.map((e) => (
+                  <div 
+                    key={e._id} 
+                    className="flex items-center gap-3.5 p-2 rounded-2xl border border-transparent hover:border-rose-100 hover:bg-rose-50/30 transition-all group"
+                  >
+                    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-slate-100 shadow-sm flex items-center justify-center bg-slate-100 relative">
+                      <img 
+                        src={getImageUrl(e.userId?.profileImage || e.profileImage)} 
+                        className="w-full h-full object-cover" 
+                        alt="" 
+                        onError={(e) => {e.target.style.display = 'none'}} 
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-400 -z-10 uppercase">
+                        {(e.userId?.name || e.name).charAt(0)}
+                      </span>
                     </div>
-                  )) : (
-                    <div className="h-full flex flex-col items-center justify-center opacity-20 italic">
-                      <Users size={32} />
-                      <span className="text-[9px] font-black uppercase">No New Joinees</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[12.5px] font-medium text-slate-800 truncate">
+                        {e.userId?.name || e.name || "Unknown"}
+                      </span>
+                      <span className="text-[10px] font-medium text-slate-400 tracking-wide">
+                        {typeof e.employeeId === 'object' ? e.userId?.employeeId : e.employeeId}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Birthdays */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
-                    <div className="p-1.5 bg-pink-50 rounded-lg">
-                      <Cake size={10} className="text-pink-500" />
-                    </div>
-                    Birthdays
                   </div>
-                  {birthdays.today?.length > 0 && (
-                    <span className="flex h-2 w-2 rounded-full bg-pink-500 animate-pulse"></span>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-                  {birthdays.today?.map(emp => (
-                    <div key={emp._id} className="relative overflow-hidden flex items-center gap-4 p-2 bg-gradient-to-br from-pink-500 to-rose-400 rounded-[1.2rem] shadow-[0_10px_20px_-5px_rgba(244,114,182,0.4)]">
-                      <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2 border-white/50 relative z-10">
-                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
-                      </div>
-                      <div className="flex flex-col relative z-10">
-                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase tracking-tighter leading-none">{emp.userId?.name || emp.name}</span>
-                        <span className="text-[7px] font-black text-pink-100 uppercase italic mt-1">HBD! Today 🎉</span>
-                      </div>
+                ))}
+              </div>
+            </div>
+
+            {/* New Employees */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
+              <SectionLabel icon={<UserPlus size={13} className="text-emerald-500" />} tone="bg-emerald-50">
+                Welcome Aboard
+              </SectionLabel>
+              <div className="flex-grow overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
+                {newEmployees.length > 0 ? newEmployees.map(e => (
+                  <div key={e._id} className="flex items-center gap-3 p-2.5 bg-emerald-50/50 rounded-2xl border border-emerald-100/70">
+                    <img src={getImageUrl(e.profileImage)} className="w-9 h-9 rounded-full object-cover border border-white shadow-sm" alt="" />
+                    <div className="flex flex-col">
+                      <span className="text-[12.5px] font-medium text-emerald-900 truncate">{e.name}</span>
+                      <span className="text-[10px] font-medium text-emerald-500">Joined recently</span>
                     </div>
-                  ))}
-                  {birthdays.upcoming?.map(emp => {
-                    // Calculate days left for the birthday
-                    let daysLeft = null;
-                    if (emp.dob) {
-                      const today = new Date();
-                      const dob = new Date(emp.dob);
-                      let nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
-                      if (nextBirthday < today) {
-                        nextBirthday.setFullYear(today.getFullYear() + 1);
-                      }
-                      daysLeft = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                  </div>
+                )) : (
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-slate-300">
+                    <Users size={30} strokeWidth={1.5} />
+                    <span className="text-[11px] font-medium uppercase tracking-wide">No new joinees</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Birthdays */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
+              <SectionLabel icon={<Cake size={13} className="text-pink-500" />} tone="bg-pink-50" live={birthdays.today?.length ? "#ec4899" : null}>
+                Birthdays
+              </SectionLabel>
+              <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-2 custom-scrollbar">
+                {birthdays.today?.map(emp => (
+                  <div key={emp._id} className="relative overflow-hidden flex items-center gap-3.5 p-2.5 bg-gradient-to-br from-pink-500 to-rose-400 rounded-2xl shadow-[0_12px_24px_-8px_rgba(244,114,182,0.5)]">
+                    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-white/60 relative z-10">
+                      <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
+                    </div>
+                    <div className="flex flex-col relative z-10">
+                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                      <span className="text-[10px] font-medium text-pink-100 mt-0.5">Happy birthday, today 🎉</span>
+                    </div>
+                  </div>
+                ))}
+                {birthdays.upcoming?.map(emp => {
+                  let daysLeft = null;
+                  if (emp.dob) {
+                    const today = new Date();
+                    const dob = new Date(emp.dob);
+                    let nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+                    if (nextBirthday < today) {
+                      nextBirthday.setFullYear(today.getFullYear() + 1);
                     }
-                    return (
-                      <div key={emp._id} className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-pink-100 transition-all group">
-                        <div className="w-7 h-7 rounded-xl overflow-hidden shrink-0 border border-slate-100 grayscale-[0.5] group-hover:grayscale-0 transition-all">
-                          <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 transition-colors truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
-                          <span className="text-[7px] font-bold text-pink-400 uppercase mt-0.5 italic">
-                            {formatBday(emp.dob)}
-                            {daysLeft !== null && (
-                              <span className="ml-2 text-[7px] text-rose-400 font-extrabold">[
-                                {daysLeft === 1 ? 'in 1 day' : `in ${daysLeft} days`}]
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {!birthdays.today?.length && !birthdays.upcoming?.length && (
-                    <div className="flex-grow flex items-center justify-center text-[9px] font-black uppercase text-slate-300 italic">No Birthdays This Week</div>
-                  )}
-                </div>
-              </div>
-
-              {/* 3. Anniversaries */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
-                    <div className="p-1.5 bg-amber-50 rounded-lg"><Award size={10} className="text-amber-600" /></div>
-                    Anniversaries
-                  </div>
-                  {anniversaries.today?.length > 0 && <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>}
-                </div>
-                <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-                  {anniversaries.today?.map(emp => (
-                    <div key={emp._id} className="relative overflow-hidden flex items-center gap-4 p-2 bg-gradient-to-br from-amber-500 to-orange-400 rounded-[1.2rem] shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)]">
-                      <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2 border-white/50 relative z-10">
-                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
-                      </div>
-                      <div className="flex flex-col relative z-10">
-                        <span className="text-[10px] font-[1000] italic text-white truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
-                        <span className="text-[7px] font-black text-amber-100 uppercase italic mt-1">{getYearsJoined(emp.joiningDate)} Anniversary! 🥂</span>
-                      </div>
-                    </div>
-                  ))}
-                  {anniversaries.upcoming?.map(emp => (
-                    <div key={emp._id} className="flex items-center gap-4 p-1.5 bg-white rounded-2xl border-2 border-slate-50 hover:border-amber-100 transition-all group">
-                      <div className="w-7 h-7 rounded-xl overflow-hidden shrink-0 border border-slate-100 grayscale-[0.5] group-hover:grayscale-0 transition-all">
-                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" alt="" />
+                    daysLeft = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                  }
+                  return (
+                    <div key={emp._id} className="flex items-center gap-3.5 p-2 rounded-2xl border border-transparent hover:border-pink-100 hover:bg-pink-50/30 transition-all group">
+                      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-100 grayscale-[0.4] group-hover:grayscale-0 transition-all">
+                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" alt="" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-[1000] italic text-slate-500 group-hover:text-slate-800 truncate uppercase leading-none">{emp.userId?.name || emp.name}</span>
-                        <span className="text-[7px] font-bold text-amber-500 uppercase mt-0.5 italic">{formatBday(emp.joiningDate)}</span>
+                        <span className="text-[12.5px] font-medium text-slate-700 truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[10px] font-medium text-pink-400 mt-0.5">
+                          {formatBday(emp.dob)}
+                          {daysLeft !== null && (
+                            <span className="ml-1.5 text-slate-400">· {daysLeft === 1 ? 'in 1 day' : `in ${daysLeft} days`}</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!birthdays.today?.length && !birthdays.upcoming?.length && (
+                  <div className="flex-grow flex items-center justify-center text-[12px] font-medium text-slate-300">No birthdays this week</div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Anniversaries */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
+              <SectionLabel icon={<Award size={13} className="text-amber-600" />} tone="bg-amber-50" live={anniversaries.today?.length ? "#f59e0b" : null}>
+                Anniversaries
+              </SectionLabel>
+              <div className="flex flex-col gap-2 overflow-y-auto flex-grow pr-2 custom-scrollbar">
+                {anniversaries.today?.map(emp => (
+                  <div key={emp._id} className="relative overflow-hidden flex items-center gap-3.5 p-2.5 bg-gradient-to-br from-amber-500 to-orange-400 rounded-2xl shadow-[0_12px_24px_-8px_rgba(245,158,11,0.5)]">
+                    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-white/60 relative z-10">
+                      <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
+                    </div>
+                    <div className="flex flex-col relative z-10">
+                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                      <span className="text-[10px] font-medium text-amber-100 mt-0.5">{getYearsJoined(emp.joiningDate)}-year anniversary 🥂</span>
+                    </div>
+                  </div>
+                ))}
+                {anniversaries.upcoming?.map(emp => (
+                  <div key={emp._id} className="flex items-center gap-3.5 p-2 rounded-2xl border border-transparent hover:border-amber-100 hover:bg-amber-50/30 transition-all group">
+                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-100 grayscale-[0.4] group-hover:grayscale-0 transition-all">
+                      <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" alt="" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[12.5px] font-medium text-slate-700 truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                      <span className="text-[10px] font-medium text-amber-500 mt-0.5">{formatBday(emp.joiningDate)}</span>
+                    </div>
+                  </div>
+                ))}
+                {!anniversaries.today?.length && !anniversaries.upcoming?.length && (
+                  <div className="flex-grow flex items-center justify-center text-[12px] font-medium text-slate-300">No milestones soon</div>
+                )}
+              </div>
+            </div>
+
+            {/* 4. Holidays */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
+              <SectionLabel icon={<CalendarDays size={13} className="text-indigo-600" />} tone="bg-indigo-50">
+                Holidays
+              </SectionLabel>
+              <div className="flex flex-col gap-2.5 overflow-y-auto flex-grow pr-2 custom-scrollbar scroll-smooth">
+                {holidays
+                  .filter((h) => toYMD(h.date) >= toYMD(new Date()))
+                  .map((h) => (
+                    <div
+                      key={h._id}
+                      className="group flex items-stretch min-h-[52px] rounded-2xl border border-slate-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 transition-all duration-300 overflow-hidden shrink-0"
+                    >
+                      <div className="flex-1 flex flex-col justify-center py-3 pl-5 min-w-0">
+                        <span className="text-[12.5px] font-medium text-slate-700 group-hover:text-indigo-700 truncate">
+                          {h.title}
+                        </span>
+                      </div>
+                      <div className="w-16 flex flex-col items-center justify-center bg-indigo-600 group-hover:bg-indigo-500 transition-colors">
+                        <span className="text-[16px] font-semibold text-white leading-none">
+                          {new Date(h.date).toLocaleDateString("en-IN", { day: "2-digit" })}
+                        </span>
+                        <span className="text-[9px] font-medium text-indigo-200 uppercase tracking-wide">
+                          {new Date(h.date).toLocaleDateString("en-IN", { month: "short" })}
+                        </span>
                       </div>
                     </div>
                   ))}
-                  {!anniversaries.today?.length && !anniversaries.upcoming?.length && (
-                    <div className="flex-grow flex items-center justify-center text-[9px] font-black uppercase text-slate-300 italic">No Milestones Soon</div>
-                  )}
-                </div>
               </div>
-              {/* --- BOTTOM ROW: Holidays, Leaves (Left to Right) --- */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-premium h-[280px] flex flex-col border border-slate-100">
-                <div className="flex items-center justify-between mb-5 px-1 shrink-0">
-                  <div className="flex items-center gap-2 text-[8px] font-[1000] uppercase text-slate-400 tracking-[0.2em]">
-                    <div className="p-1.5 bg-indigo-50 rounded-xl">
-                      <CalendarDays size={10} className="text-indigo-600" />
-                    </div>
-                    Holidays
-                  </div>
+            </div>
+
+            {/* 5. Leaves */}
+            <div 
+              onClick={() => setShowLeaveBreakdown(true)} 
+              className="bg-white p-8 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-[280px] transition-all duration-300 hover:shadow-[0_25px_50px_-15px_rgba(244,63,94,0.18)] hover:border-rose-100 active:scale-[0.98] group relative overflow-hidden"
+            >
+              <Umbrella 
+                size={130} 
+                className="absolute -top-6 -right-6 opacity-[0.04] group-hover:opacity-[0.08] group-hover:scale-105 group-hover:-rotate-6 transition-all duration-500 text-rose-600" 
+              />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 z-10">Available Leaves</span>
+              <div className="relative z-10 text-center mt-2">
+                <div className="text-[68px] font-semibold text-rose-600 leading-none tracking-tight group-hover:scale-105 transition-transform duration-500">
+                  {leaveBalance.casual + leaveBalance.sick}
                 </div>
-                <div className="flex flex-col gap-3 overflow-y-auto flex-grow pr-2 custom-scrollbar scroll-smooth">
-                  {holidays
-                    .filter((h) => toYMD(h.date) >= toYMD(new Date()))
-                    .map((h) => (
-                      <div
-                        key={h._id}
-                        className="group flex items-stretch min-h-[50px] rounded-[2rem] border-2 border-slate-50 bg-white hover:border-indigo-100 transition-all duration-300 overflow-hidden shrink-0"
-                      >
-                        <div className="flex-1 flex flex-col justify-center py-3 pl-5 min-w-0">
-                          <span className="text-[10px] font-[1000] italic text-slate-800 uppercase tracking-tighter leading-none group-hover:text-indigo-600 truncate">
-                            {h.title}
-                          </span>
-                        </div>
-                        <div className="w-16 flex flex-col items-center justify-center bg-indigo-600 group-hover:bg-indigo-500 transition-colors border-l-2 border-dashed border-white/30">
-                          <span className="text-[16px] font-[1000] text-white italic leading-none">
-                            {new Date(h.date).toLocaleDateString("en-IN", { day: "2-digit" })}
-                          </span>
-                          <span className="text-[8px] font-black text-indigo-200 uppercase tracking-tighter">
-                            {new Date(h.date).toLocaleDateString("en-IN", { month: "short" })}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
+                <span className="text-[11px] font-medium text-slate-400">days remaining</span>
               </div>
-              {/* 5. Leaves (4 out of 12 columns) */}
-              <div>
-                <div 
-                  onClick={() => setShowLeaveBreakdown(true)} 
-                  className="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-full transition-all hover:shadow-2xl hover:shadow-red-500/10 active:scale-95 group relative overflow-hidden"
-                >
-                  <Umbrella 
-                    size={140} 
-                    className="absolute -top-4 -right-4 opacity-[0.03] group-hover:opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-500 text-red-600" 
-                  />
-                  <div className="flex items-center gap-2 mb-2 z-10">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="text-[8px] font-[1000] uppercase tracking-[0.2em] text-slate-400">Available Leaves</span>
-                  </div>
-                  <div className="relative z-10 text-center">
-                    <div className="text-[80px] font-[1000] text-red-600 italic leading-none tracking-[-0.07em] drop-shadow-[0_10px_10px_rgba(220,38,38,0.15)] group-hover:scale-105 transition-transform duration-500">
-                      {leaveBalance.casual + leaveBalance.sick}
-                    </div>
-                    <span className="text-[10px] font-black italic uppercase text-red-400 opacity-60">Days</span>
-                  </div>
-                  <div className="mt-6 flex items-center gap-3 bg-red-600 text-white px-6 py-2.5 rounded-[1.5rem] text-[8px] font-[1000] uppercase z-10 shadow-[0_10px_20px_-5px_rgba(220,38,38,0.4)] group-hover:bg-red-700 transition-colors">
-                    Breakdown 
-                    <ArrowRight size={10} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
+              <div className="mt-6 flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-[11px] font-medium z-10 shadow-[0_10px_20px_-5px_rgba(15,23,42,0.35)] group-hover:bg-rose-600 transition-colors">
+                View breakdown
+                <ArrowRight size={13} strokeWidth={2.2} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
           </div>
         </section>
 
         {/* Calendar Section */}
-        <section className="bg-white/80 backdrop-blur-2xl p-6 sm:p-12 rounded-[3.5rem] shadow-[0_12px_48px_0_rgba(220,38,38,0.10)] border border-white/40 transition-all duration-300">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10">
-            <h3 className="text-2xl sm:text-3xl text-red-600 font-black uppercase italic tracking-tighter drop-shadow-sm bg-white/60 px-6 py-2 rounded-2xl shadow-[0_2px_8px_rgba(220,38,38,0.04)]">Attendance History</h3>
-            <div className="flex items-center gap-3 bg-white/70 backdrop-blur px-4 py-2 rounded-2xl w-full sm:w-auto justify-between shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-slate-100">
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-2 bg-white/90 rounded-xl shadow hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer border border-white/60"><ChevronLeft/></button>
-              <span className="text-base font-black uppercase w-44 text-center tracking-widest text-slate-700">
+        <section className="bg-white/70 backdrop-blur-2xl p-6 sm:p-10 rounded-[2.5rem] shadow-[0_25px_55px_-20px_rgba(15,23,42,0.14)] border border-white/60">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-400">Calendar</span>
+              <h3 className="text-2xl sm:text-3xl text-slate-900 font-semibold tracking-tight mt-1">Attendance history</h3>
+            </div>
+            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full w-full sm:w-auto justify-between shadow-sm border border-slate-100">
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()-1, 1))} className="p-2 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-all cursor-pointer text-slate-400"><ChevronLeft size={18}/></button>
+              <span className="text-sm font-medium w-40 text-center text-slate-700">
                 {calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </span>
-              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-2 bg-white/90 rounded-xl shadow hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer border border-white/60"><ChevronRight/></button>
+              <button onClick={() => setCalendarMonth(p => new Date(p.getFullYear(), p.getMonth()+1, 1))} className="p-2 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-all cursor-pointer text-slate-400"><ChevronRight size={18}/></button>
             </div>
           </div>
 
-          <div className="hidden sm:grid grid-cols-7 gap-4 bg-white/60 rounded-2xl p-4 shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-white/40">
+          <div className="hidden sm:grid grid-cols-7 gap-3 bg-white/60 rounded-2xl p-5 border border-white/60">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase pb-4 tracking-[0.2em]">{d}</div>
+                <div key={d} className="text-center text-[11px] font-semibold text-slate-400 uppercase pb-3 tracking-[0.15em]">{d}</div>
             ))}
             {generateCalendar().map((day, i) => {
               const { status, title } = getDayInfo(day);
               const styles = {
-                present: "bg-green-500 text-white border-green-200 shadow-lg shadow-green-100", 
-                halfday: "bg-blue-500 text-white border-blue-200 shadow-lg shadow-blue-100",
-                absent: "bg-red-500 text-white border-red-200 shadow-lg shadow-red-100", 
-                leave: "bg-amber-400 text-white border-amber-200",
-                holiday: "bg-indigo-600 text-white border-indigo-200", 
+                present: "bg-emerald-500 text-white border-emerald-500 shadow-[0_10px_20px_-8px_rgba(16,185,129,0.5)]", 
+                halfday: "bg-sky-500 text-white border-sky-500 shadow-[0_10px_20px_-8px_rgba(14,165,233,0.5)]",
+                absent: "bg-rose-500 text-white border-rose-500 shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]", 
+                leave: "bg-amber-400 text-white border-amber-400",
+                holiday: "bg-indigo-600 text-white border-indigo-600", 
                 weekend: "bg-slate-50 text-slate-300 border-slate-100", 
-                none: "bg-white/80 text-slate-900 border-slate-50 shadow-sm"
+                none: "bg-white text-slate-800 border-slate-100 shadow-sm"
               };
               return (
-                <div key={i} className={`min-h-[90px] rounded-[2.7rem] border-2 flex flex-col items-center justify-center p-4 transition-all hover:scale-110 hover:shadow-xl ${day ? styles[status] : "opacity-0 pointer-events-none"}`}>
-                  <span className="text-2xl font-black italic drop-shadow-sm">{day}</span>
-                  {day && title && <span className="text-[8px] font-black uppercase text-center mt-2 tracking-tighter px-2 leading-tight text-slate-500">{title}</span>}
+                <div key={i} className={`min-h-[86px] rounded-2xl border flex flex-col items-center justify-center p-3 transition-all duration-300 hover:scale-[1.04] hover:shadow-lg ${day ? styles[status] : "opacity-0 pointer-events-none"}`}>
+                  <span className="text-xl font-semibold leading-none">{day}</span>
+                  {day && title && <span className="text-[9px] font-medium text-center mt-2 leading-tight opacity-90">{title}</span>}
                 </div>
               );
             })}
           </div>
 
-          <div className="sm:hidden w-full px-2 py-4">
-            <div className="grid grid-cols-7 mb-2 bg-white/60 rounded-xl p-2 shadow-[0_2px_8px_rgba(220,38,38,0.04)] border border-white/40">
+          <div className="sm:hidden w-full px-1 py-3">
+            <div className="grid grid-cols-7 mb-2 bg-white/60 rounded-xl p-2 border border-white/60">
               {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
-                <span key={d} className="text-[10px] font-black text-slate-400 text-center tracking-widest">{d}</span>
+                <span key={d} className="text-[9px] font-semibold text-slate-400 text-center tracking-widest">{d}</span>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-2 bg-white/70 backdrop-blur rounded-2xl p-2 shadow-[0_4px_16px_rgba(220,38,38,0.08)] border border-white/40">
+            <div className="grid grid-cols-7 gap-1.5 bg-white/70 backdrop-blur rounded-2xl p-2 border border-white/60">
               {generateCalendar().map((day, i) => {
                 const { status, title } = day ? getDayInfo(day) : { status: 'none', title: '' };
                 const statusStyles = {
-                  present: "bg-green-500 text-white border-green-200 shadow-lg shadow-green-100", 
-                  halfday: "bg-blue-500 text-white border-blue-200 shadow-lg shadow-blue-100",
-                  absent: "bg-red-500 text-white border-red-200 shadow-lg shadow-red-100", 
-                  leave: "bg-amber-400 text-white border-amber-200",
-                  holiday: "bg-indigo-600 text-white border-indigo-200", 
+                  present: "bg-emerald-500 text-white border-emerald-500", 
+                  halfday: "bg-sky-500 text-white border-sky-500",
+                  absent: "bg-rose-500 text-white border-rose-500", 
+                  leave: "bg-amber-400 text-white border-amber-400",
+                  holiday: "bg-indigo-600 text-white border-indigo-600", 
                   weekend: "bg-slate-50 text-slate-300 border-slate-100", 
-                  none: "bg-white/90 text-slate-900 border-slate-50 shadow-sm"
+                  none: "bg-white text-slate-800 border-slate-100 shadow-sm"
                 };
 
                 const currentStyle = statusStyles[status] || statusStyles.none;
@@ -616,15 +610,14 @@ const EmployeeSummary = () => {
                 return (
                   <div
                     key={i}
-                    className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-1 transition-all hover:scale-110 hover:shadow-xl active:scale-95 ${!day ? "opacity-0 pointer-events-none" : currentStyle}`}
-                    style={{backdropFilter:'blur(8px)'}}
+                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center p-1 transition-all active:scale-95 ${!day ? "opacity-0 pointer-events-none" : currentStyle}`}
                   >
-                    <span className="text-lg font-black italic drop-shadow-sm">
+                    <span className="text-base font-semibold leading-none">
                       {day}
                     </span>
                     
                     {day && title && (
-                      <span className="text-[5px] font-[1000] uppercase mt-0.5 tracking-tighter opacity-90 text-center leading-[1.2]">
+                      <span className="text-[6px] font-medium mt-0.5 opacity-90 text-center leading-[1.2]">
                         {title}
                       </span>
                     )}
@@ -638,20 +631,20 @@ const EmployeeSummary = () => {
 
       {/* ANNOUNCEMENT MODAL */}
       {activeAnnouncement && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-           <div className="bg-white w-full max-w-2xl rounded-[3.5rem] shadow-2xl overflow-hidden relative animate-pop">
-              <button onClick={() => setActiveAnnouncement(null)} className="absolute top-6 right-6 p-3 bg-white/20 text-white rounded-full z-20 backdrop-blur-md border border-white/30"><X size={24}/></button>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xl animate-fade-in">
+           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden relative animate-pop">
+              <button onClick={() => setActiveAnnouncement(null)} className="absolute top-6 right-6 p-2.5 bg-white/20 text-white rounded-full z-20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-colors"><X size={20}/></button>
               <div className="relative h-64 sm:h-80 bg-slate-900 overflow-hidden">
-                 {activeAnnouncement.image ? <img src={getImageUrl(activeAnnouncement.image)} className="w-full h-full object-cover opacity-80" /> : <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-600 to-indigo-900 opacity-80"><Megaphone size={80} className="text-white opacity-20" /></div>}
+                 {activeAnnouncement.image ? <img src={getImageUrl(activeAnnouncement.image)} className="w-full h-full object-cover opacity-85" /> : <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-600 to-indigo-900"><Megaphone size={72} className="text-white opacity-25" /></div>}
                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent z-10"></div>
                  <div className="absolute bottom-8 left-10 right-10 z-10">
-                    <div className={`inline-block px-4 py-1 rounded-full text-[9px] font-black uppercase border mb-4 ${getStatusBadge(activeAnnouncement.status)}`}>{activeAnnouncement.status}</div>
-                    <h2 className="text-3xl sm:text-5xl font-black text-slate-900 leading-none tracking-tighter uppercase italic">{activeAnnouncement.title}</h2>
+                    <div className={`inline-block px-3.5 py-1 rounded-full text-[10px] font-semibold uppercase border mb-3 ${getStatusBadge(activeAnnouncement.status)}`}>{activeAnnouncement.status}</div>
+                    <h2 className="text-3xl sm:text-4xl font-semibold text-slate-900 leading-tight tracking-tight">{activeAnnouncement.title}</h2>
                  </div>
               </div>
               <div className="p-10">
-                 <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 max-h-[250px] overflow-y-auto">
-                    <p className="text-slate-600 text-lg font-medium leading-relaxed italic uppercase">{activeAnnouncement.description}</p>
+                 <div className="bg-slate-50 p-8 rounded-[1.75rem] border border-slate-100 max-h-[250px] overflow-y-auto">
+                    <p className="text-slate-600 text-base leading-relaxed">{activeAnnouncement.description}</p>
                  </div>
               </div>
            </div>
@@ -660,28 +653,28 @@ const EmployeeSummary = () => {
 
       {/* LEAVE MODAL */}
       {showLeaveBreakdown && (
-        <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-xl transition-all">
-          <div className="bg-white/90 backdrop-blur-2xl w-full max-w-md rounded-t-[4rem] sm:rounded-[3.5rem] p-10 pt-12 animate-in fade-in slide-in-from-bottom-10 duration-500 relative shadow-[0_32px_64px_-15px_rgba(220,38,38,0.15)] border border-white/40">
+        <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xl transition-all">
+          <div className="bg-white/95 backdrop-blur-2xl w-full max-w-md rounded-t-[3rem] sm:rounded-[2.5rem] p-10 pt-12 animate-in fade-in slide-in-from-bottom-10 duration-500 relative shadow-[0_32px_64px_-15px_rgba(15,23,42,0.25)] border border-white/60">
             
             <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-100 rounded-full sm:hidden" />
 
             <button 
               onClick={() => setShowLeaveBreakdown(false)} 
-              className="absolute top-10 right-10 p-2 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90 cursor-pointer"
+              className="absolute top-10 right-10 p-2 rounded-full bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90 cursor-pointer"
             >
-              <X size={24} strokeWidth={3} />
+              <X size={20} strokeWidth={2.2} />
             </button>
 
             <div className="text-center">
               <div className="flex flex-col items-center mb-8">
-                <span className="text-[11px] font-[1000] uppercase tracking-[0.25em] text-slate-400 mb-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 mb-3">
                   Total Credits Left
                 </span>
                 <div className="relative">
-                  <div className="text-[8rem] font-[1000] italic leading-none tracking-[-0.05em] text-slate-900 drop-shadow-sm">
+                  <div className="text-[6.5rem] font-semibold leading-none tracking-tight text-slate-900">
                     {leaveBalance.casual + leaveBalance.sick}
                   </div>
-                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-black italic uppercase text-slate-300 tracking-widest">
+                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-medium text-slate-300 tracking-wide">
                     Total Days
                   </span>
                 </div>
@@ -690,24 +683,24 @@ const EmployeeSummary = () => {
               {/* Breakdown Section */}
               <div className="grid grid-cols-2 gap-4 mt-12">
                 {/* Casual Leave Box */}
-                <div className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-50 shadow-sm flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase text-red-500 mb-1 italic">Casual</span>
-                  <div className="text-4xl font-[1000] text-slate-800 italic">{leaveBalance.casual}</div>
-                  <div className="w-8 h-1 bg-red-100 rounded-full mt-2" />
-                  <span className="text-[8px] font-bold text-slate-300 mt-2 uppercase">of {TOTAL_ANNUAL_CASUAL} Days</span>
+                <div className="bg-white p-6 rounded-[1.75rem] border border-slate-100 shadow-sm flex flex-col items-center">
+                  <span className="text-[11px] font-semibold uppercase text-rose-500 mb-1 tracking-wide">Casual</span>
+                  <div className="text-4xl font-semibold text-slate-800">{leaveBalance.casual}</div>
+                  <div className="w-8 h-1 bg-rose-100 rounded-full mt-3" />
+                  <span className="text-[10px] font-medium text-slate-300 mt-2">of {TOTAL_ANNUAL_CASUAL} days</span>
                 </div>
 
                 {/* Sick Leave Box */}
-                <div className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-50 shadow-sm flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase text-indigo-500 mb-1 italic">Sick</span>
-                  <div className="text-4xl font-[1000] text-slate-800 italic">{leaveBalance.sick}</div>
-                  <div className="w-8 h-1 bg-indigo-100 rounded-full mt-2" />
-                  <span className="text-[8px] font-bold text-slate-300 mt-2 uppercase">of {TOTAL_ANNUAL_SICK} Days</span>
+                <div className="bg-white p-6 rounded-[1.75rem] border border-slate-100 shadow-sm flex flex-col items-center">
+                  <span className="text-[11px] font-semibold uppercase text-indigo-500 mb-1 tracking-wide">Sick</span>
+                  <div className="text-4xl font-semibold text-slate-800">{leaveBalance.sick}</div>
+                  <div className="w-8 h-1 bg-indigo-100 rounded-full mt-3" />
+                  <span className="text-[10px] font-medium text-slate-300 mt-2">of {TOTAL_ANNUAL_SICK} days</span>
                 </div>
               </div>
 
-              <p className="mt-8 text-[9px] font-bold text-slate-400 uppercase tracking-tight italic">
-                * Approved leaves are automatically deducted from your annual quota
+              <p className="mt-8 text-[11px] font-medium text-slate-400">
+                Approved leaves are automatically deducted from your annual quota.
               </p>
             </div>
           </div>

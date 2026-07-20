@@ -2,35 +2,53 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
-import { 
-  User, Calendar, CreditCard, DollarSign,
-  Heart, Fingerprint, Droplets, Briefcase, 
-  Camera, CheckCircle2, X
+import {
+  User, Briefcase, Heart, IndianRupee,
+  Fingerprint, Camera, Check, X
 } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
-const SuccessAlert = ({ onClose }) => (
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-50";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* ================= CONFIRMATION DIALOG ================= */
+const ConfirmDialog = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-50 animate-in fade-in duration-300" />
+    <div className="fixed inset-0 z-50 bg-[#1A1A1D]/30 backdrop-blur-md" />
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-10 text-center">
-          <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <CheckCircle2 size={40} />
+      <div
+        className="w-full max-w-sm overflow-hidden rounded-[1.25rem] border bg-white/95 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+        style={{ borderColor: HAIRLINE }}
+      >
+        <div className="px-10 pb-10 pt-12">
+          <div
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+          >
+            <Check size={26} strokeWidth={1.75} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-            Update Verified
+          <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+            Record Updated
           </h3>
-          <p className="text-sm text-slate-500 mt-3 font-medium leading-relaxed">
-            The personnel database has been synchronized with your new records.
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
+            The personnel record has been saved and synchronized.
           </p>
           <button
             onClick={onClose}
-            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+            className="mt-8 w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+            style={{ backgroundColor: CHARCOAL }}
           >
-            Continue to Dashboard
+            Return to Directory
           </button>
         </div>
       </div>
@@ -58,7 +76,6 @@ const EmployeeEdit = () => {
   const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
 
-  /* ================= FETCH DATA ================= */
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -93,7 +110,6 @@ const EmployeeEdit = () => {
     loadData();
   }, [id]);
 
-  /* ================= HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEmployee((prev) => ({ ...prev, [name]: value }));
@@ -133,162 +149,174 @@ const EmployeeEdit = () => {
   if (loading) return <LoadingPulse />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-12">
+    <div className={`min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-12`} style={bodyFont}>
       {showAlert && (
-        <SuccessAlert onClose={() => navigate("/admin-dashboard/employees")} />
+        <ConfirmDialog onClose={() => navigate("/admin-dashboard/employees")} />
       )}
 
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-10 px-4">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 flex items-center justify-between px-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Administration</p>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Modify <span className="not-italic text-red-600">Personnel</span></h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>Administration</p>
+            <h1 className="mt-2 text-4xl font-extrabold leading-none" style={{ ...displayFont, fontWeight: 500 }}>
+              Edit <span className="italic" style={{ color: GARNET }}>Personnel Record</span>
+            </h1>
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
+            className="flex cursor-pointer items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
+            style={{ color: SLATE }}
           >
-            <X size={16} className="group-hover:rotate-90 transition-transform" /> Discard
+            <X size={14} strokeWidth={1.75} /> Discard
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* --- LEFT: AVATAR --- */}
-          <div className="lg:col-span-4">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-48 h-48 rounded-[4rem] overflow-hidden ring-8 ring-slate-50 p-1 shadow-inner">
-                  <img
-                    src={preview}
-                    alt="preview"
-                    className="w-full h-full object-cover rounded-[3.5rem]"
-                  />
+        <form onSubmit={handleSubmit}>
+          <div
+            className="rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.24)] backdrop-blur-md"
+            style={{ borderColor: HAIRLINE }}
+          >
+            {/* ============ PORTRAIT + IDENTITY ============ */}
+            <div className="flex flex-col items-center gap-6 px-8 pb-10 pt-12 text-center sm:px-14">
+              <div className="relative">
+                <div className="h-28 w-28 overflow-hidden rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
+                  <img src={preview} alt="preview" className="h-full w-full object-cover" />
                 </div>
-                <label className="absolute bottom-2 right-2 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-600 transition-all active:scale-90">
-                  <Camera size={24} />
+                <label
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_8px_20px_-6px_rgba(26,26,29,0.6)]"
+                  style={{ backgroundColor: CHARCOAL }}
+                >
+                  <Camera size={15} strokeWidth={1.75} />
                   <input type="file" hidden accept="image/*" onChange={handleImageChange} />
                 </label>
               </div>
 
-              <div className="mt-8 w-full">
-                <InputItem
-                  label="Full Legal Name"
-                  icon={<User size={14}/>}
+              <div className="w-full max-w-sm">
+                <FieldLabel icon={<User size={13} strokeWidth={1.5} />} label="Full Legal Name" />
+                <input
                   name="name"
                   value={employee.name}
                   onChange={handleChange}
                   placeholder="Enter full name"
                   required
+                  className="mt-2 w-full border-b bg-transparent pb-2 text-center text-lg outline-none transition-colors focus:border-current"
+                  style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                  onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                  onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
                 />
               </div>
 
-              <div className="mt-6 p-6 bg-slate-50 rounded-[2rem] w-full border border-slate-100">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">System Identity</p>
-                <p className="text-sm font-bold text-slate-800 text-center mt-1 italic tracking-tight">{employee.employeeId}</p>
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: SLATE }}>
+                Employee ID &nbsp;·&nbsp; <span style={{ color: CHARCOAL, fontWeight: 600 }}>{employee.employeeId}</span>
+              </p>
+            </div>
+
+            <GoldRule />
+
+            {/* ============ REGISTRY FIELDS ============ */}
+            <div className="grid grid-cols-1 gap-x-10 gap-y-8 px-8 py-10 sm:grid-cols-2 sm:px-14">
+              <EditField
+                icon={<Briefcase size={13} strokeWidth={1.5} />}
+                label="Designation Title"
+                name="designation"
+                value={employee.designation}
+                onChange={handleChange}
+              />
+
+              <EditSelect
+                icon={<Fingerprint size={13} strokeWidth={1.5} />}
+                label="Department"
+                name="department"
+                value={employee.department}
+                onChange={handleChange}
+                required
+                options={departments.map((d) => ({ label: d.dep_name, value: d._id }))}
+              />
+
+              <EditField
+                icon={<IndianRupee size={13} strokeWidth={1.5} />}
+                label="Annual Salary"
+                type="number"
+                name="salary"
+                value={employee.salary}
+                onChange={handleChange}
+              />
+
+              <EditSelect
+                icon={<Heart size={13} strokeWidth={1.5} />}
+                label="Marital Status"
+                name="maritalStatus"
+                value={employee.maritalStatus}
+                onChange={handleChange}
+                options={[
+                  { label: "Single", value: "Single" },
+                  { label: "Married", value: "Married" },
+                  { label: "Divorced", value: "Divorced" },
+                ]}
+              />
             </div>
           </div>
 
-          {/* --- RIGHT: FORM DATA --- */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
-                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Briefcase size={14}/></div>
-                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Personnel Registry</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputItem
-                  label="Designation Title"
-                  icon={<Briefcase size={14}/>}
-                  name="designation"
-                  value={employee.designation}
-                  onChange={handleChange}
-                />
-
-                <SelectItem
-                  label="Department Wing"
-                  icon={<Fingerprint size={14}/>}
-                  name="department"
-                  value={employee.department}
-                  onChange={handleChange}
-                  required
-                  options={departments.map(d => ({ label: d.dep_name.toUpperCase(), value: d._id }))}
-                />
-                
-                <InputItem
-                  label="Salary (LPA)"
-                  icon={<DollarSign size={14}/>}
-                  type="number"
-                  name="salary"
-                  value={employee.salary}
-                  onChange={handleChange}
-                />
-
-                <SelectItem
-                  label="Marital Registry"
-                  icon={<Heart size={14}/>}
-                  name="maritalStatus"
-                  value={employee.maritalStatus}
-                  onChange={handleChange}
-                  options={[
-                    { label: "SINGLE", value: "Single" },
-                    { label: "MARRIED", value: "Married" },
-                    { label: "DIVORCED", value: "Divorced" }
-                  ]}
-                />
-              </div>
-            </div>
-
-            {/* ACTION FOOTER */}
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-slate-200 hover:from-red-600 hover:to-rose-500 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {saving ? "Synchronizing..." : "Authorize & Commmit Changes"}
-              </button>
-            </div>
-          </div>
-
+          {/* ============ ACTIONS ============ */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-6 w-full cursor-pointer rounded-full py-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: CHARCOAL }}
+          >
+            {saving ? "Synchronizing…" : "Save Changes"}
+          </button>
         </form>
       </div>
     </div>
   );
 };
 
-/* ===== PREMIUM FORM COMPONENTS ===== */
+/* ===== SUPPORTING COMPONENTS ===== */
 
-const InputItem = ({ label, icon, ...props }) => (
-  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
-        {label}
-      </p>
+const GoldRule = () => (
+  <div className="px-8 sm:px-14">
+    <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
+  </div>
+);
+
+const FieldLabel = ({ icon, label }) => (
+  <div className="flex items-center justify-center gap-2" style={{ color: GOLD }}>
+    {icon}
+    <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
+  </div>
+);
+
+const EditField = ({ icon, label, ...props }) => (
+  <div className="group">
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
     </div>
     <input
       {...props}
-      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 placeholder:text-slate-200 uppercase italic"
+      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: "#1A1A1D" }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
     />
   </div>
 );
 
-const SelectItem = ({ label, icon, options, ...props }) => (
-  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
-        {label}
-      </p>
+const EditSelect = ({ icon, label, options, ...props }) => (
+  <div className="group">
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
     </div>
     <select
       {...props}
-      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 cursor-pointer uppercase italic"
+      className="mt-2 w-full cursor-pointer border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: "#1A1A1D" }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
     >
-      <option value="">Choose Variant</option>
+      <option value="">Select</option>
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
@@ -297,9 +325,9 @@ const SelectItem = ({ label, icon, options, ...props }) => (
 );
 
 const LoadingPulse = () => (
-  <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-6">
-    <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
-    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Establishing Secure Session</p>
+  <div className={`flex min-h-screen flex-col items-center justify-center gap-4 ${PAGE_BG}`}>
+    <div className="h-9 w-9 animate-spin rounded-full border border-[#1A1A1D]/10 border-t-[#AD8A56]"></div>
+    <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-[#1A1A1D]/50">Opening Record</p>
   </div>
 );
 

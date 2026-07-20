@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo, useLayoutEffect } from "react";
 // Confirmation popup for check-in
 const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-slate-100">
-      <h2 className="text-lg font-black mb-4 text-slate-900">Confirm Check-In</h2>
-      <p className="text-xs text-slate-500 mb-6">Are you sure you want to check in now? This will start your attendance timer.</p>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
+    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-slate-100">
+      <h2 className="text-lg font-semibold mb-3 text-slate-900 tracking-tight">Confirm check-in</h2>
+      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Are you sure you want to check in now? This will start your attendance timer.</p>
       <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition cursor-pointer">Cancel</button>
-        <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition cursor-pointer">Check In</button>
+        <button onClick={onCancel} className="flex-1 py-2.5 rounded-full bg-slate-50 text-slate-500 font-medium text-sm hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
+        <button onClick={onConfirm} className="flex-1 py-2.5 rounded-full bg-emerald-500 text-white font-medium text-sm hover:bg-emerald-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(16,185,129,0.5)]">Check in</button>
       </div>
     </div>
   </div>
@@ -15,13 +15,13 @@ const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
 
 // Confirmation popup for check-out
 const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-slate-100">
-      <h2 className="text-lg font-black mb-4 text-slate-900">Confirm Check-Out</h2>
-      <p className="text-xs text-slate-500 mb-6">Are you sure you want to check out now? This will end your attendance for today.</p>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
+    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-slate-100">
+      <h2 className="text-lg font-semibold mb-3 text-slate-900 tracking-tight">Confirm check-out</h2>
+      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Are you sure you want to check out now? This will end your attendance for today.</p>
       <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition cursor-pointer">Cancel</button>
-        <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition cursor-pointer">Check Out</button>
+        <button onClick={onCancel} className="flex-1 py-2.5 rounded-full bg-slate-50 text-slate-500 font-medium text-sm hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
+        <button onClick={onConfirm} className="flex-1 py-2.5 rounded-full bg-rose-500 text-white font-medium text-sm hover:bg-rose-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]">Check out</button>
       </div>
     </div>
   </div>
@@ -29,11 +29,11 @@ const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
 
 // Holiday/weekend popup
 const HolidayPopup = ({ holidayName, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-red-100">
-      <h2 className="text-lg font-black mb-4 text-red-700">No Check-In Allowed</h2>
-      <p className="text-xs text-slate-500 mb-6">Check-in is not allowed on <span className="font-black text-red-600">{holidayName}</span>.</p>
-      <button onClick={onClose} className="w-full py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition cursor-pointer">OK</button>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
+    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-rose-100">
+      <h2 className="text-lg font-semibold mb-3 text-rose-600 tracking-tight">No check-in allowed</h2>
+      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Check-in isn't available on <span className="font-semibold text-rose-500">{holidayName}</span>.</p>
+      <button onClick={onClose} className="w-full py-2.5 rounded-full bg-rose-500 text-white font-medium text-sm hover:bg-rose-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]">Got it</button>
     </div>
   </div>
 );
@@ -209,33 +209,33 @@ const EmployeePunch = ({ onSuccess }) => {
   if (attendance?.checkOut && statusConfig[finalStatus]) {
     statusColor = `${statusConfig[finalStatus].color} text-white`;
   } else if (attendance?.isPaused) {
-    statusColor = `bg-amber-400 text-white shadow-lg shadow-amber-100`;
+    statusColor = `bg-amber-400 text-white shadow-[0_10px_20px_-8px_rgba(245,158,11,0.5)]`;
   } else if (attendance?.checkIn) {
     statusColor = `${statusConfig.Present.color} text-white`;
   }
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/80 backdrop-blur-2xl rounded-[3.5rem] shadow-[0_12px_48px_0_rgba(16,209,75,0.10)] border border-white/40 p-7 sm:p-8 text-center relative overflow-hidden transition-all duration-300">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_25px_55px_-20px_rgba(15,23,42,0.14)] border border-white/60 p-8 sm:p-9 text-center relative overflow-hidden transition-all duration-300">
         {/* Status Badge */}
-        <div className="flex justify-center mb-6">
-          <span className={`px-4 py-1.5 rounded-full text-[9px] font-[1000] uppercase tracking-[0.2em] shadow-md transition-all border border-white/40 ${statusColor}`}>
+        <div className="flex justify-center mb-7">
+          <span className={`px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.18em] shadow-sm transition-all border border-white/40 ${statusColor}`}>
             {statusLabel}
           </span>
         </div>
 
         {/* Timer Display */}
         <div className="relative inline-block mb-2">
-          <div className="text-6xl font-black italic tabular-nums tracking-[-0.07em] text-slate-900 leading-none">
+          <div className="text-6xl font-semibold tabular-nums tracking-tight text-slate-900 leading-none">
             {timer}
           </div>
           {attendance?.checkIn && !attendance?.checkOut && !attendance.isPaused && (
-             <div className="absolute inset-0 bg-emerald-400/20 blur-3xl -z-10 animate-pulse rounded-[2.5rem]" />
+             <div className="absolute inset-0 bg-emerald-400/15 blur-3xl -z-10 animate-pulse rounded-[2.5rem]" />
           )}
         </div>
 
-        <p className="text-[10px] font-[1000] text-slate-400 uppercase tracking-[0.25em] mt-4 mb-10 italic">
-          Total Worked Hours
+        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-[0.2em] mt-4 mb-10">
+          Total worked hours
         </p>
 
         {/* Action Buttons */}
@@ -245,9 +245,9 @@ const EmployeePunch = ({ onSuccess }) => {
             <>
               <button
                 onClick={handleCheckInClick}
-                className="col-span-2 flex items-center justify-center gap-3 px-10 py-4 rounded-[2.5rem] font-[1000] text-xl uppercase italic tracking-tighter text-white bg-emerald-500 shadow-lg hover:bg-emerald-600 active:scale-95 transition-all cursor-pointer"
+                className="col-span-2 flex items-center justify-center gap-3 px-10 py-4 rounded-full font-semibold text-base text-white bg-emerald-500 shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] hover:bg-emerald-600 active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Play fill="currentColor" size={24} /> Check In
+                <Play fill="currentColor" size={18} /> Check in
               </button>
               {/* Show popup overlays only after user clicks check-in */}
             </>
@@ -256,28 +256,28 @@ const EmployeePunch = ({ onSuccess }) => {
               {/* Pause / Resume Button */}
               <button
                 onClick={() => handleAction(attendance.isPaused ? "resume" : "pause")}
-                className={`flex flex-col items-center justify-center gap-1 py-4 rounded-4xl font-[1000] uppercase italic text-[10px] transition-all active:scale-95 cursor-pointer border-2 ${
+                className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-[1.75rem] font-medium text-[11px] transition-all active:scale-[0.98] cursor-pointer border ${
                   attendance.isPaused 
                   ? `bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100` 
                   : `bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100`
                 }`}
               >
-                {attendance.isPaused ? <RotateCcw size={22} className="animate-spin-slow" /> : <Coffee size={22} />}
+                {attendance.isPaused ? <RotateCcw size={19} className="animate-spin-slow" /> : <Coffee size={19} />}
                 {attendance.isPaused ? "Resume" : "Break"}
               </button>
 
               {/* Check Out Button */}
               <button
                 onClick={handleCheckOutClick}
-                className="flex flex-col items-center justify-center gap-1 py-4 rounded-4xl font-[1000] uppercase italic text-[10px] bg-red-500 text-white shadow-lg hover:bg-red-700 active:scale-95 transition-all cursor-pointer border-2 border-red-100"
+                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[1.75rem] font-medium text-[11px] bg-rose-500 text-white shadow-[0_15px_30px_-10px_rgba(244,63,94,0.5)] hover:bg-rose-600 active:scale-[0.98] transition-all cursor-pointer border border-rose-500"
               >
-                <Square fill="currentColor" size={20} />
-                Check Out
+                <Square fill="currentColor" size={16} />
+                Check out
               </button>
             </>
           ) : (
-            <div className="col-span-2 p-6 rounded-4xl bg-slate-50/80 border-2 border-dashed border-slate-200">
-               <span className="text-[13px] font-[1000] uppercase text-slate-400 italic">Shift Completed</span>
+            <div className="col-span-2 p-6 rounded-[1.75rem] bg-slate-50/80 border border-dashed border-slate-200">
+               <span className="text-[13px] font-medium text-slate-400">Shift completed</span>
             </div>
           )}
         </div>

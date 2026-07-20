@@ -2,28 +2,48 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
 import { useNavigate } from "react-router-dom";
-import { 
-  UserPlus, 
-  Camera, 
-  CheckCircle2, 
-  Eye, 
-  EyeOff, 
-  ChevronLeft 
-} from "lucide-react";
+import { UserPlus, Camera, Check, Eye, EyeOff } from "lucide-react";
+
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+/* ================= CONFIRMATION DIALOG ================= */
 const SuccessAlert = ({ onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" />
-    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
-      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto mb-6">
-        <CheckCircle2 size={40} strokeWidth={2.5} />
+    <div className="absolute inset-0 bg-[#1A1A1D]/30 backdrop-blur-md" />
+    <div
+      className="relative w-full max-w-sm rounded-[1.25rem] border bg-white/95 p-10 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+      style={{ borderColor: HAIRLINE, ...bodyFont }}
+    >
+      <div
+        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+        style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+      >
+        <Check size={26} strokeWidth={1.75} />
       </div>
-      <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">Onboarded!</h3>
-      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-8">Employee record has been initialized.</p>
-      <button onClick={onClose} className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95 shadow-lg">
-        Back to List
+      <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+        Onboarded
+      </h3>
+      <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
+        The employee record has been initialized in the registry.
+      </p>
+      <button
+        onClick={onClose}
+        className="mt-8 w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+        style={{ backgroundColor: CHARCOAL }}
+      >
+        Back to Directory
       </button>
     </div>
   </div>
@@ -45,7 +65,7 @@ const Add = () => {
         setLoadingDept(true);
         const data = await fetchDepartments();
         setDepartments(Array.isArray(data) ? data : []);
-      } catch (error) { console.error(error); } 
+      } catch (error) { console.error(error); }
       finally { setLoadingDept(false); }
     };
     loadDepartments();
@@ -56,194 +76,177 @@ const Add = () => {
     if (name === "profileImage") {
       const file = files[0];
       if (!file || file.size > MAX_FILE_SIZE) return;
-      setFormData(p => ({ ...p, profileImage: file }));
+      setFormData((p) => ({ ...p, profileImage: file }));
       setPreview(URL.createObjectURL(file));
       return;
     }
-    setFormData(p => ({ ...p, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData();
-    Object.keys(formData).forEach(key => fd.append(key, formData[key]));
+    Object.keys(formData).forEach((key) => fd.append(key, formData[key]));
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/employee/add`, fd, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data.success) {
         setShowAlert(true);
         setTimeout(() => navigate("/admin-dashboard/employees"), 1800);
       }
-    } catch (error) { alert(error.response?.data?.error || "Submission error"); } 
+    } catch (error) { alert(error.response?.data?.error || "Submission error"); }
     finally { setLoading(false); }
   };
 
-  const inputBase = "w-full bg-slate-50 border border-slate-100 focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/5 rounded-2xl px-5 py-3.5 outline-none transition-all placeholder:text-slate-300";
-  
-  const punchyInput = `${inputBase} text-xs font-black uppercase italic tracking-tight`;
-  
-  const manualCaseInput = `${inputBase} text-sm font-bold normal-case not-italic`;
-  
-  const labelCls = "text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block ml-1";
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 p-4 lg:p-10">
+    <div className={`relative min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-10`} style={bodyFont}>
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
-      
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <div
+          className="overflow-hidden rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.24)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12">
-            
-            {/* PHOTO SIDEBAR */}
-            <div className="lg:col-span-4 bg-slate-50/50 p-10 border-r border-slate-100 flex flex-col items-center justify-center text-center">
-              <div className="relative group mb-6">
-                <div className="w-40 h-40 rounded-[3rem] bg-white p-2 shadow-2xl transition-transform group-hover:rotate-2">
-                  <img src={preview || "/default-avatar.png"} alt="preview" className="w-full h-full object-cover rounded-[2.5rem]" />
+
+            {/* ============ PORTRAIT SIDEBAR ============ */}
+            <div
+              className="flex flex-col items-center justify-center border-b p-10 text-center lg:col-span-4 lg:border-b-0 lg:border-r"
+              style={{ borderColor: HAIRLINE }}
+            >
+              <div className="relative mb-6">
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
+                  <img src={preview || "/default-avatar.png"} alt="preview" className="h-full w-full object-cover" />
                 </div>
-                <label className="absolute -bottom-2 -right-2 w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white cursor-pointer shadow-xl hover:bg-red-600 transition-all hover:scale-110">
-                  <Camera size={20} />
+                <label
+                  className="absolute -bottom-1 -right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_8px_20px_-6px_rgba(26,26,29,0.6)]"
+                  style={{ backgroundColor: CHARCOAL }}
+                >
+                  <Camera size={16} strokeWidth={1.75} />
                   <input type="file" name="profileImage" accept="image/*" className="hidden" onChange={handleChange} />
                 </label>
               </div>
-              <h2 className="text-2xl font-black uppercase italic tracking-tighter">New <span className="text-red-600">Personnel</span></h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">Initialize Registry Entry</p>
+              <h2
+                className="mt-3 text-4xl leading-none tracking-tight text-[#1C1A17]"
+                style={{ ...displayFont, fontWeight: 700 }}
+              >
+                New <span className="italic" style={{ color: GARNET }}>Employee</span>
+              </h2>
+              <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.28em]" style={{ color: GOLD }}>
+                Initialize Registry Entry
+              </p>
             </div>
 
-            {/* FORM AREA */}
-            <div className="lg:col-span-8 p-8 lg:p-12">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                
-                {/* IDENTIFICATION SECTION */}
+            {/* ============ FORM AREA ============ */}
+            <div className="p-8 lg:col-span-8 lg:p-12">
+              <form onSubmit={handleSubmit} className="space-y-10">
+
+                {/* PRIMARY IDENTIFICATION */}
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-6 flex items-center gap-2">
-                    <UserPlus size={14}/> Primary Identification
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <SectionHeading icon={<UserPlus size={13} strokeWidth={1.5} />} label="Primary Identification" />
+                  <div className="grid grid-cols-1 gap-x-8 gap-y-7 md:grid-cols-2">
+                    <EditField label="Full Name" name="name" placeholder="Full name" required onChange={handleChange} />
+                    <EditField label="Email Address" name="email" type="email" placeholder="email address" required onChange={handleChange} />
+                    <EditField label="Identity No." name="employeeId" placeholder="Identity no." required onChange={handleChange} />
+                    <EditField label="Aadhar Card" name="aadharcard" placeholder="Aadhar number" onChange={handleChange} />
+                    <EditField label="PAN Card" name="pancard" placeholder="PAN number" onChange={handleChange} />
+                    <EditField label="PF Number" name="pfNumber" placeholder="PF number" onChange={handleChange} />
+                    <EditField label="Date of Birth" name="dob" type="date" required onChange={handleChange} />
+                    <EditSelect
+                      label="Gender"
+                      name="gender"
+                      required
+                      onChange={handleChange}
+                      options={[{ label: "Male", value: "Male" }, { label: "Female", value: "Female" }, { label: "Other", value: "Other" }]}
+                    />
+                    <EditSelect
+                      label="Marital Status"
+                      name="maritalStatus"
+                      required
+                      onChange={handleChange}
+                      options={["Single", "Married", "Divorced", "Widowed"].map((v) => ({ label: v, value: v }))}
+                    />
                     <div>
-                      <label className={labelCls}>Full Name</label>
-                      <input name="name" placeholder="FULL NAME" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Email Address (Manual Case)</label>
-                      <input name="email" type="email" placeholder="email address" required onChange={handleChange} className={manualCaseInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Identity No.</label>
-                      <input name="employeeId" placeholder="IDENTITY NO." required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Aadhar Card</label>
-                      <input name="aadharcard" placeholder="AADHAR NUMBER" onChange={handleChange} className={manualCaseInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>PAN Card</label>
-                      <input name="pancard" placeholder="PAN NUMBER" onChange={handleChange} className={manualCaseInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>PF Number</label>
-                      <input name="pfNumber" placeholder="PF NUMBER" onChange={handleChange} className={manualCaseInput} />
-                    </div>
-                    {/* DOB */}
-                    <div>
-                      <label className={labelCls}>Date of Birth</label>
-                      <input name="dob" type="date" required onChange={handleChange} className={manualCaseInput} />
-                    </div>
-                    {/* Gender */}
-                    <div>
-                      <label className={labelCls}>Gender</label>
-                      <select name="gender" required onChange={handleChange} className={manualCaseInput}>
-                        <option value="">SELECT</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    {/* Marital Status */}
-                    <div>
-                      <label className={labelCls}>Marital Status</label>
-                      <select name="maritalStatus" required onChange={handleChange} className={manualCaseInput}>
-                        <option value="">SELECT</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Divorced">Divorced</option>
-                        <option value="Widowed">Widowed</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Password (Manual Case)</label>
+                      <FieldLabel label="Password" />
                       <div className="relative">
-                        <input 
-                          type={showPassword ? "text" : "password"} 
-                          name="password" 
-                          placeholder="Password" 
-                          required 
-                          onChange={handleChange} 
-                          className={manualCaseInput} 
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          placeholder="Password"
+                          required
+                          onChange={handleChange}
+                          className="mt-2 w-full border-b bg-transparent pb-2 pr-8 text-base outline-none transition-colors"
+                          style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                          onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                          onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
                         />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors">
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute bottom-2 right-0 transition-colors"
+                          style={{ color: SLATE }}
+                        >
+                          {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
                         </button>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* EMPLOYMENT SECTION */}
+                <GoldRule />
+
+                {/* WORK DETAILS */}
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Work Details</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-                    <div>
-                      <label className={labelCls}>Department</label>
-                      <select name="department" required onChange={handleChange} className={punchyInput}>
-                        <option value="">{loadingDept ? "SYNCING..." : "DEPARTMENT"}</option>
-                        {departments.map((d) => <option key={d._id} value={d._id}>{d.dep_name.toUpperCase()}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelCls}>System Role</label>
-                      <select name="role" required onChange={handleChange} className={punchyInput}>
-                        <option value="">ROLE</option>
-                        <option value="admin">ADMIN</option>
-                        <option value="employee">EMPLOYEE</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Designation</label>
-                      <input name="designation" placeholder="DESIGNATION" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Exp (Years)</label>
-                      <input type="number" name="experience" placeholder="EXP" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Salary (LPA)</label>
-                      <input type="number" name="salary" placeholder="SALARY" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Blood Group</label>
-                      <select name="bloodGroup" required onChange={handleChange} className={punchyInput}>
-                        <option value="">SELECT</option>
-                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(g => <option key={g} value={g}>{g}</option>)}
-                      </select>
-                    </div>
+                  <SectionHeading label="Work Details" muted />
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-7 md:grid-cols-3">
+                    <EditSelect
+                      label="Department"
+                      name="department"
+                      required
+                      onChange={handleChange}
+                      options={departments.map((d) => ({ label: d.dep_name, value: d._id }))}
+                      placeholder={loadingDept ? "Syncing…" : "Select"}
+                    />
+                    <EditSelect
+                      label="System Role"
+                      name="role"
+                      required
+                      onChange={handleChange}
+                      options={[{ label: "Admin", value: "admin" }, { label: "Employee", value: "employee" }]}
+                    />
+                    <EditField label="Designation" name="designation" placeholder="Designation" required onChange={handleChange} />
+                    <EditField label="Experience (Yrs)" name="experience" type="number" placeholder="Years" required onChange={handleChange} />
+                    <EditField label="Annual Salary" name="salary" type="number" placeholder="Salary" required onChange={handleChange} />
+                    <EditSelect
+                      label="Blood Group"
+                      name="bloodGroup"
+                      required
+                      onChange={handleChange}
+                      options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => ({ label: g, value: g }))}
+                    />
                   </div>
                 </section>
 
-                {/* ACTION BUTTONS */}
-                <div className="flex items-center gap-4 pt-4">
-                  <button type="button" onClick={() => navigate(-1)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer">
+                {/* ACTIONS */}
+                <div className="flex items-center gap-6 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="cursor-pointer text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
+                    style={{ color: SLATE }}
+                  >
                     Discard
                   </button>
-                  <button 
-                    disabled={loading} 
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  <button
+                    disabled={loading}
+                    className="flex-1 cursor-pointer rounded-full py-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: CHARCOAL }}
                   >
-                    {loading ? "INITIALIZING..." : "EXECUTE ONBOARDING"}
+                    {loading ? "Initializing…" : "Complete Onboarding"}
                   </button>
                 </div>
-
               </form>
             </div>
           </div>
@@ -252,5 +255,54 @@ const Add = () => {
     </div>
   );
 };
+
+/* ===== SUPPORTING COMPONENTS ===== */
+
+const GoldRule = () => <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />;
+
+const SectionHeading = ({ icon, label, muted }) => (
+  <h3
+    className="mb-6 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.3em]"
+    style={{ color: muted ? SLATE : GOLD }}
+  >
+    {icon}
+    {label}
+  </h3>
+);
+
+const FieldLabel = ({ label }) => (
+  <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>{label}</span>
+);
+
+const EditField = ({ label, ...props }) => (
+  <div>
+    <FieldLabel label={label} />
+    <input
+      {...props}
+      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+    />
+  </div>
+);
+
+const EditSelect = ({ label, options, placeholder = "Select", ...props }) => (
+  <div>
+    <FieldLabel label={label} />
+    <select
+      {...props}
+      className="mt-2 w-full cursor-pointer border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  </div>
+);
 
 export default Add;

@@ -1,33 +1,51 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  User, Calendar, CreditCard, ChevronLeft, 
-  Heart, Fingerprint, Droplets, Briefcase, 
-  Camera, CheckCircle2, X
+import {
+  User, Calendar, Briefcase, Heart, Droplets,
+  Fingerprint, CreditCard, PiggyBank, Camera, Check, X
 } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-/* ================= PREMIUM SUCCESS ALERT ================= */
-const SuccessAlert = ({ onClose }) => (
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-50";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* ================= CONFIRMATION DIALOG ================= */
+const ConfirmDialog = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-50 animate-in fade-in duration-300" />
+    <div className="fixed inset-0 z-50 bg-[#1A1A1D]/30 backdrop-blur-md" />
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-10 text-center">
-          <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <CheckCircle2 size={40} />
+      <div
+        className="w-full max-w-sm overflow-hidden rounded-[1.25rem] border bg-white/95 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+        style={{ borderColor: HAIRLINE }}
+      >
+        <div className="px-10 pb-10 pt-12">
+          <div
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+          >
+            <Check size={26} strokeWidth={1.75} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-            Update Verified
+          <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+            Record Updated
           </h3>
-          <p className="text-sm text-slate-500 mt-3 font-medium leading-relaxed">
-            The personnel database has been synchronized with your new records.
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
+            Your profile has been saved and synchronized.
           </p>
           <button
             onClick={onClose}
-            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+            className="mt-8 w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+            style={{ backgroundColor: CHARCOAL }}
           >
             Return to Profile
           </button>
@@ -72,9 +90,9 @@ const EditEmployeeProfile = () => {
         setDob(emp?.dob ? emp.dob.split("T")[0] : "");
         setBloodGroup(emp?.bloodGroup || "");
         setMaritalStatus(emp?.maritalStatus || "");
-          setAadharcard(emp?.aadharcard || "");
-          setPancard(emp?.pancard || "");
-          setPfNumber(emp?.pfNumber || "");
+        setAadharcard(emp?.aadharcard || "");
+        setPancard(emp?.pancard || "");
+        setPfNumber(emp?.pfNumber || "");
 
         const profileImg = emp?.userId?.profileImage;
         if (profileImg) {
@@ -105,7 +123,8 @@ const EditEmployeeProfile = () => {
     setPreview(URL.createObjectURL(file));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault();
     try {
       setSaving(true);
       const fd = new FormData();
@@ -114,9 +133,9 @@ const EditEmployeeProfile = () => {
       fd.append("dob", dob);
       fd.append("bloodGroup", bloodGroup);
       fd.append("maritalStatus", maritalStatus);
-        fd.append("aadharcard", aadharcard);
-        fd.append("pancard", pancard);
-        fd.append("pfNumber", pfNumber);
+      fd.append("aadharcard", aadharcard);
+      fd.append("pancard", pancard);
+      fd.append("pfNumber", pfNumber);
       if (image) fd.append("profileImage", image);
 
       await axios.put(
@@ -136,195 +155,220 @@ const EditEmployeeProfile = () => {
   if (loading) return <LoadingPulse />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-12">
+    <div className={`min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-12`} style={bodyFont}>
       {showAlert && (
-        <SuccessAlert
-          onClose={() => navigate(`/employee-dashboard/profile/${employee._id}`)}
-        />
+        <ConfirmDialog onClose={() => navigate(`/employee-dashboard/profile/${employee._id}`)} />
       )}
 
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-10 px-4">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 flex items-center justify-between px-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Configuration</p>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Modify <span className="not-italic text-slate-400">Record</span></h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>Configuration</p>
+            <h1 className="mt-2 text-4xl font-extrabold leading-none" style={{ ...displayFont, fontWeight: 500 }}>
+              Edit <span className="italic" style={{ color: GARNET }}>My Record</span>
+            </h1>
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
+            className="flex cursor-pointer items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
+            style={{ color: SLATE }}
           >
-            <X size={16} className="group-hover:rotate-90 transition-transform" /> Cancel
+            <X size={14} strokeWidth={1.75} /> Discard
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-4">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-48 h-48 rounded-[4rem] overflow-hidden ring-8 ring-slate-50 p-1 shadow-inner">
-                  <img
-                    src={preview}
-                    alt="preview"
-                    className="w-full h-full object-cover rounded-[3.5rem]"
-                  />
+        <form onSubmit={handleSave}>
+          <div
+            className="rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.24)] backdrop-blur-md"
+            style={{ borderColor: HAIRLINE }}
+          >
+            {/* ============ PORTRAIT + IDENTITY ============ */}
+            <div className="flex flex-col items-center gap-6 px-8 pb-10 pt-12 text-center sm:px-14">
+              <div className="relative">
+                <div className="h-28 w-28 overflow-hidden rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
+                  <img src={preview} alt="preview" className="h-full w-full object-cover" />
                 </div>
-                <label className="absolute bottom-2 right-2 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-600 transition-all active:scale-90">
-                  <Camera size={24} />
+                <label
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_8px_20px_-6px_rgba(26,26,29,0.6)]"
+                  style={{ backgroundColor: CHARCOAL }}
+                >
+                  <Camera size={15} strokeWidth={1.75} />
                   <input type="file" hidden accept="image/*" onChange={handleImageChange} />
                 </label>
               </div>
 
-              <div className="mt-8 w-full">
-                <InputItem
-                  label="Display Name"
-                  icon={<User size={14}/>}
+              <div className="w-full max-w-sm">
+                <FieldLabel icon={<User size={13} strokeWidth={1.5} />} label="Display Name" />
+                <input
+                  name="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter full name"
+                  required
+                  className="mt-2 w-full border-b bg-transparent pb-2 text-center text-lg outline-none transition-colors focus:border-current"
+                  style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                  onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                  onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
                 />
               </div>
 
-              <div className="mt-6 p-6 bg-slate-50 rounded-[2rem] w-full border border-slate-100">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Current Role</p>
-                <p className="text-sm font-bold text-slate-800 text-center mt-1">{employee?.designation}</p>
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: SLATE }}>
+                {employee?.designation || "Executive Member"} &nbsp;·&nbsp; Employee ID{" "}
+                <span style={{ color: CHARCOAL, fontWeight: 600 }}>{employee?.employeeId}</span>
+              </p>
+            </div>
+
+            <GoldRule />
+
+            {/* ============ REGISTRY FIELDS ============ */}
+            <div className="grid grid-cols-1 gap-x-10 gap-y-8 px-8 py-10 sm:grid-cols-2 sm:px-14">
+              <StaticField icon={<Fingerprint size={13} strokeWidth={1.5} />} label="Employee ID" value={employee?.employeeId} />
+              <StaticField icon={<CreditCard size={13} strokeWidth={1.5} />} label="Department" value={employee?.department?.dep_name} />
+
+              <EditField
+                icon={<Calendar size={13} strokeWidth={1.5} />}
+                label="Date of Birth"
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+              />
+              <EditField
+                icon={<Briefcase size={13} strokeWidth={1.5} />}
+                label="Experience (Years)"
+                type="number"
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+              />
+
+              <EditField
+                icon={<CreditCard size={13} strokeWidth={1.5} />}
+                label="Aadhar Card"
+                value={aadharcard}
+                onChange={(e) => setAadharcard(e.target.value)}
+                placeholder="Aadhar number"
+              />
+              <EditField
+                icon={<CreditCard size={13} strokeWidth={1.5} />}
+                label="PAN Card"
+                value={pancard}
+                onChange={(e) => setPancard(e.target.value)}
+                placeholder="PAN number"
+              />
+              <EditField
+                icon={<PiggyBank size={13} strokeWidth={1.5} />}
+                label="PF Number"
+                value={pfNumber}
+                onChange={(e) => setPfNumber(e.target.value)}
+                placeholder="PF number"
+              />
+
+              <EditSelect
+                icon={<Heart size={13} strokeWidth={1.5} />}
+                label="Marital Status"
+                value={maritalStatus}
+                onChange={(e) => setMaritalStatus(e.target.value)}
+                options={[
+                  { label: "Single", value: "Single" },
+                  { label: "Married", value: "Married" },
+                  { label: "Divorced", value: "Divorced" },
+                ]}
+              />
+              <EditSelect
+                icon={<Droplets size={13} strokeWidth={1.5} />}
+                label="Blood Group"
+                value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+                options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => ({ label: g, value: g }))}
+              />
             </div>
           </div>
 
-          <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
-                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Briefcase size={14}/></div>
-                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Personnel Data</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <StaticItem label="Official Employee ID" value={employee.employeeId} icon={<Fingerprint size={16}/>} />
-                <StaticItem label="Primary Department" value={employee.department?.dep_name} icon={<CreditCard size={16}/>} />
-
-                <InputItem
-                  label="Birth Registry"
-                  type="date"
-                  icon={<Calendar size={14}/>}
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                />
-                <InputItem
-                  label="Experience Years"
-                  type="number"
-                  icon={<Briefcase size={14}/>}
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                />
-
-                <InputItem
-                  label="Aadhar Card"
-                  icon={<CreditCard size={16} />}
-                  value={aadharcard}
-                  onChange={e => setAadharcard(e.target.value)}
-                  placeholder="Aadhar Number"
-                />
-                <InputItem
-                  label="PAN Card"
-                  icon={<CreditCard size={16} />}
-                  value={pancard}
-                  onChange={e => setPancard(e.target.value)}
-                  placeholder="PAN Number"
-                />
-                <InputItem
-                  label="PF Number"
-                  icon={<CreditCard size={16} />}
-                  value={pfNumber}
-                  onChange={e => setPfNumber(e.target.value)}
-                  placeholder="PF Number"
-                />
-
-                <SelectItem
-                  label="Marital Registry"
-                  icon={<Heart size={14}/>}
-                  value={maritalStatus}
-                  onChange={(e) => setMaritalStatus(e.target.value)}
-                  options={["Single", "Married", "Divorced"]}
-                />
-                <SelectItem
-                  label="Biological Variant"
-                  icon={<Droplets size={14}/>}
-                  value={bloodGroup}
-                  onChange={(e) => setBloodGroup(e.target.value)}
-                  options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]}
-                />
-              </div>
-            </div>
-
-            {/* ACTION FOOTER */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-4 py-4 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 hover:from-red-600 hover:to-rose-500 text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl shadow-red-200 transition-all hover:scale-[1.02] hover:shadow-red-300 active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer overflow-hidden relative group"
-              >
-                {saving ? "Synchronizing..." : "Authorize & Save Changes"}
-              </button>
-            </div>
-          </div>
-
-        </div>
+          {/* ============ ACTIONS ============ */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-6 w-full cursor-pointer rounded-full py-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: CHARCOAL }}
+          >
+            {saving ? "Synchronizing…" : "Save Changes"}
+          </button>
+        </form>
       </div>
     </div>
   );
 };
 
-/* ===== PREMIUM FORM COMPONENTS ===== */
+/* ===== SUPPORTING COMPONENTS ===== */
 
-const StaticItem = ({ label, value, icon }) => (
-  <div className="p-4 rounded-[2rem] bg-slate-50/50 border border-slate-100 flex items-start gap-4">
-    <div className="text-slate-300 mt-1">{icon}</div>
-    <div>
-      <p className="text-[6px] font-black uppercase tracking-widest text-slate-400 mb-1">{label}</p>
-      <p className="text-xs font-bold text-slate-500">{value || "—"}</p>
-    </div>
+const GoldRule = () => (
+  <div className="px-8 sm:px-14">
+    <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
   </div>
 );
 
-const InputItem = ({ label, icon, ...props }) => (
-  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[6px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
-        {label}
-      </p>
+const FieldLabel = ({ icon, label }) => (
+  <div className="flex items-center justify-center gap-2" style={{ color: GOLD }}>
+    {icon}
+    <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
+  </div>
+);
+
+const StaticField = ({ icon, label, value }) => (
+  <div>
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
+    </div>
+    <p
+      className="mt-2 truncate border-b pb-2 text-base"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: SLATE }}
+    >
+      {value || "—"}
+    </p>
+  </div>
+);
+
+const EditField = ({ icon, label, ...props }) => (
+  <div className="group">
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
     </div>
     <input
       {...props}
-      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 placeholder:text-slate-300"
+      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: "#1A1A1D" }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
     />
   </div>
 );
 
-const SelectItem = ({ label, icon, options, ...props }) => (
-  <div className="group p-6 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
-        {label}
-      </p>
+const EditSelect = ({ icon, label, options, ...props }) => (
+  <div className="group">
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
     </div>
     <select
       {...props}
-      className="w-full bg-transparent outline-none text-sm font-bold text-slate-800 cursor-pointer"
+      className="mt-2 w-full cursor-pointer border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: "#1A1A1D" }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
     >
-      <option value="">Choose Variant</option>
+      <option value="">Select</option>
       {options.map((opt) => (
-        <option key={opt} value={opt}>{opt}</option>
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>
   </div>
 );
 
 const LoadingPulse = () => (
-  <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-6">
-    <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
-    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Establishing Secure Session</p>
+  <div className={`flex min-h-screen flex-col items-center justify-center gap-4 ${PAGE_BG}`}>
+    <div className="h-9 w-9 animate-spin rounded-full border border-[#1A1A1D]/10 border-t-[#AD8A56]"></div>
+    <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-[#1A1A1D]/50">Opening Record</p>
   </div>
 );
 

@@ -1,20 +1,47 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Camera, UserPlus, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Camera, UserPlus, CheckCircle2 } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const HAIRLINE = "#E7DFD2";
+
+const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+const GRAIN_URI =
+  "data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.5'/%3E%3C/svg%3E";
+
+/* ================= SUCCESS ALERT ================= */
 const SuccessAlert = ({ onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" />
-    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
-      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto mb-6">
-        <CheckCircle2 size={40} strokeWidth={2.5} />
+    <div className="absolute inset-0 bg-[#1C1A17]/40 backdrop-blur-sm animate-in fade-in duration-300" />
+    <div
+      className="relative w-full max-w-sm overflow-hidden rounded-[1.75rem] border bg-white p-8 text-center shadow-[0_30px_60px_-24px_rgba(28,26,23,0.35)] animate-in zoom-in-95 duration-300"
+      style={{ borderColor: HAIRLINE }}
+    >
+      <div className="h-[3px] w-full -mt-8 mb-6" style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }} />
+      <div
+        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+        style={{ borderColor: GOLD, color: "#3F5B54" }}
+      >
+        <CheckCircle2 size={28} strokeWidth={1.5} />
       </div>
-      <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">Onboarded!</h3>
-      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-8">Sponsor record has been initialized.</p>
-      <button onClick={onClose} className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95 shadow-lg">
+      <h3 className="text-2xl leading-none tracking-tight text-[#1C1A17]" style={{ ...displayFont, fontWeight: 700 }}>
+        Onboarded.
+      </h3>
+      <p className="mb-8 mt-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378]">
+        The sponsor record has been initialized.
+      </p>
+      <button
+        onClick={onClose}
+        className="w-full cursor-pointer rounded-2xl py-4 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all active:scale-95"
+        style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+      >
         Back to List
       </button>
     </div>
@@ -26,7 +53,6 @@ const SponsorAdd = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -72,48 +98,95 @@ const SponsorAdd = () => {
     }
   };
 
-  const inputBase = "w-full bg-slate-50 border border-slate-100 focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/5 rounded-2xl px-5 py-3.5 outline-none transition-all placeholder:text-slate-300";
-  const punchyInput = `${inputBase} text-xs font-black uppercase italic tracking-tight`;
-  const manualCaseInput = `${inputBase} text-sm font-bold normal-case not-italic`;
-  const labelCls = "text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block ml-1";
+  const labelCls = "mb-2 ml-1 block text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8A8378]";
+  const inputCls =
+    "w-full rounded-2xl border bg-[#FBF8F3] px-5 py-3.5 text-sm outline-none transition-all placeholder:text-[#B4ADA0] focus:border-[#C6A15B]/50 focus:bg-white";
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] text-slate-900 p-4 lg:p-10">
+    <div
+      className="relative min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-100 p-4 text-[#1C1A17] lg:p-10"
+      style={bodyFont}
+    >
+      {/* faint paper grain */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.035] mix-blend-multiply"
+        style={{ backgroundImage: `url("${GRAIN_URI}")` }}
+      />
+      {/* masthead rule */}
+      <div
+        className="relative z-10 -m-4 mb-8 h-[3px] w-[calc(100%+2rem)] lg:-m-10 lg:mb-10 lg:w-[calc(100%+5rem)]"
+        style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }}
+      />
+
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <div
+          className="overflow-hidden rounded-[2rem] border bg-white/80 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_30px_60px_-24px_rgba(28,26,23,0.16)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12">
+
             {/* PHOTO SIDEBAR */}
-            <div className="lg:col-span-4 bg-slate-50/50 p-10 border-r border-slate-100 flex flex-col items-center justify-center text-center">
-              <div className="relative group mb-6">
-                <div className="w-40 h-40 rounded-[3rem] bg-white p-2 shadow-2xl transition-transform group-hover:rotate-2">
-                  <img src={preview || "/default-avatar.png"} alt="preview" className="w-full h-full object-cover rounded-[2.5rem]" />
+            <div
+              className="flex flex-col items-center justify-center border-b p-10 text-center lg:col-span-4 lg:border-b-0 lg:border-r"
+              style={{ borderColor: HAIRLINE, backgroundColor: "#FBF8F3" }}
+            >
+              <div className="group relative mb-6">
+                <div
+                  className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 bg-white p-1 shadow-md"
+                  style={{ borderColor: HAIRLINE }}
+                >
+                  <img
+                    src={preview || "/default-avatar.png"}
+                    alt="preview"
+                    className="h-full w-full rounded-full object-cover"
+                  />
                 </div>
-                <label className="absolute -bottom-2 -right-2 w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white cursor-pointer shadow-xl hover:bg-red-600 transition-all hover:scale-110">
-                  <Camera size={20} />
+                <label
+                  className="absolute -bottom-1 -right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-white shadow-md transition-transform hover:scale-105"
+                  style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+                >
+                  <Camera size={16} strokeWidth={1.75} />
                   <input type="file" name="logo" accept="image/*" className="hidden" onChange={handleChange} />
                 </label>
               </div>
-              <h2 className="text-2xl font-black uppercase italic tracking-tighter">New <span className="text-red-600">Sponsor</span></h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">Initialize Registry Entry</p>
+
+              <div className="flex items-center gap-2">
+                <div className="h-px w-6" style={{ backgroundColor: GOLD }} />
+                <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
+                  Registry Entry
+                </p>
+              </div>
+              <h2
+                className="mt-3 text-3xl leading-none tracking-tight text-[#1C1A17]"
+                style={{ ...displayFont, fontWeight: 700 }}
+              >
+                New <span className="italic" style={{ color: GARNET }}>Sponsor</span>
+              </h2>
             </div>
+
             {/* FORM AREA */}
-            <div className="lg:col-span-8 p-8 lg:p-12">
-              <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="p-8 lg:col-span-8 lg:p-12">
+              <form onSubmit={handleSubmit} className="space-y-9">
+
                 {/* IDENTIFICATION SECTION */}
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-6 flex items-center gap-2">
-                    <UserPlus size={14}/> Primary Identification
+                  <h3
+                    className="mb-6 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.3em]"
+                    style={{ color: GARNET }}
+                  >
+                    <UserPlus size={13} strokeWidth={1.75} /> Primary Identification
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div>
                       <label className={labelCls}>Sponsor Name</label>
-                      <input name="name" placeholder="SPONSOR NAME" required onChange={handleChange} className={punchyInput} />
+                      <input name="name" placeholder="Sponsor name" required onChange={handleChange} className={inputCls} />
                     </div>
                     <div>
                       <label className={labelCls}>Collaboration Type</label>
-                      <select name="collaboration" required onChange={handleChange} className={punchyInput}>
-                        <option value="">SELECT PARTNERSHIP LEVEL</option>
+                      <select name="collaboration" required onChange={handleChange} className={`${inputCls} cursor-pointer`}>
+                        <option value="">Select partnership level</option>
                         <option value="Title Sponsor">Title Sponsor</option>
                         <option value="Associate Sponsor">Associate Sponsor</option>
                         <option value="Event Sponsor">Event Sponsor</option>
@@ -122,34 +195,42 @@ const SponsorAdd = () => {
                     </div>
                     <div>
                       <label className={labelCls}>Events Sponsored</label>
-                      <input type="number" name="eventsSponsored" placeholder="TOTAL EVENTS LOGGED" min="0" onChange={handleChange} className={punchyInput} />
+                      <input type="number" name="eventsSponsored" placeholder="Total events logged" min="0" onChange={handleChange} className={inputCls} />
                     </div>
                     <div>
                       <label className={labelCls}>Market Reach</label>
-                      <input name="reach" placeholder="E.G. 2.5M IMPRESSIONS" onChange={handleChange} className={punchyInput} />
+                      <input name="reach" placeholder="e.g. 2.5M impressions" onChange={handleChange} className={inputCls} />
                     </div>
                   </div>
                 </section>
-                {/* BUSINESS SECTION */}
+
+                {/* PIPELINE SECTION */}
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Future Pipeline</h3>
-                  <div className="grid grid-cols-1 gap-5">
-                    <div>
-                      <label className={labelCls}>Upcoming Events</label>
-                      <input name="upcomingEvents" placeholder="DESCRIBE UPCOMING COLLABORATIONS..." onChange={handleChange} className={punchyInput} />
-                    </div>
+                  <h3 className="mb-6 text-[9px] font-semibold uppercase tracking-[0.3em]" style={{ color: "#8A8378" }}>
+                    Future Pipeline
+                  </h3>
+                  <div>
+                    <label className={labelCls}>Upcoming Events</label>
+                    <input name="upcomingEvents" placeholder="Describe upcoming collaborations…" onChange={handleChange} className={inputCls} />
                   </div>
                 </section>
+
                 {/* ACTION BUTTONS */}
-                <div className="flex items-center gap-4 pt-4">
-                  <button type="button" onClick={() => navigate(-1)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer">
+                <div className="flex items-center gap-4 border-t pt-8" style={{ borderColor: HAIRLINE }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="cursor-pointer rounded-2xl px-8 py-4 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+                    style={{ color: "#8A8378" }}
+                  >
                     Discard
                   </button>
-                  <button 
-                    disabled={loading} 
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  <button
+                    disabled={loading}
+                    className="flex-1 cursor-pointer rounded-2xl py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
                   >
-                    {loading ? "INITIALIZING..." : "EXECUTE ONBOARDING"}
+                    {loading ? "Initializing…" : "Execute Onboarding"}
                   </button>
                 </div>
               </form>

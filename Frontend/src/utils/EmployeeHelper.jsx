@@ -3,38 +3,61 @@ import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
+/* ================= CONFIGURATION =================
+   Same editorial system as the rest of the admin area —
+   deep garnet + antique gold on warm paper.
+*/
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const HAIRLINE = "#E7DFD2";
+
+const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
 /* ================= PREMIUM CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] animate-in fade-in duration-300" />
+      <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/40 backdrop-blur-md duration-300" />
       <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-200">
-          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />
-          
+        <div
+          className="w-full max-w-sm animate-in zoom-in-95 overflow-hidden rounded-[2.25rem] border border-[#E7DFD2] bg-white shadow-[0_35px_70px_-15px_rgba(28,26,23,0.35)] duration-200"
+          style={bodyFont}
+        >
+          <div className="h-[3px]" style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }} />
+
           <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 mx-auto mb-6 shadow-inner">
-              <AlertTriangle size={32} strokeWidth={2.5} />
-            </div>
-            
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
-              Terminate Record<span className="text-red-600">?</span>
+            <span
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              style={{ borderColor: `${GARNET}40`, color: GARNET, backgroundColor: `${GARNET}0A` }}
+            >
+              <AlertTriangle size={30} strokeWidth={1.5} />
+            </span>
+
+            <h3
+              className="text-2xl leading-none tracking-tight text-[#1C1A17]"
+              style={{ ...displayFont, fontWeight: 700 }}
+            >
+              Terminate Record<span className="italic text-[#7A2233]">?</span>
             </h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 leading-relaxed">
-              This action is permanent and <br/> cannot be reversed.
+            <p className="mt-2 text-[10.5px] font-semibold uppercase leading-relaxed tracking-widest text-[#B4ADA0]">
+              This action is permanent and <br /> cannot be reversed.
             </p>
           </div>
 
           <div className="flex gap-3 px-8 pb-8">
             <button
               onClick={onCancel}
-              className="w-1/2 py-4 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-200 active:scale-95 cursor-pointer"
+              className="w-1/2 cursor-pointer rounded-2xl border py-3.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378] transition-all duration-300 hover:border-[#D9C79A] hover:text-[#1C1A17] active:scale-95"
+              style={{ borderColor: HAIRLINE, backgroundColor: "#FBF8F3" }}
             >
               Abort
             </button>
             <button
               onClick={onConfirm}
-              className="w-1/2 py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-slate-200 cursor-pointer"
+              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(122,34,51,0.45)] transition-all duration-300 hover:opacity-90 active:scale-95"
+              style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
             >
               Confirm
             </button>
@@ -49,22 +72,32 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
 const DeleteSuccessAlert = ({ onClose }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[100] animate-in fade-in" />
+      <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/20 backdrop-blur-sm" />
       <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 p-8 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mx-auto mb-6 shadow-inner">
-            <CheckCircle2 size={32} strokeWidth={2.5} />
-          </div>
-          
-          <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">
-            Removed<span className="text-green-500">!</span>
+        <div
+          className="w-full max-w-sm animate-in zoom-in-95 overflow-hidden rounded-[2.25rem] border border-[#E7DFD2] bg-white p-8 text-center shadow-[0_35px_70px_-15px_rgba(28,26,23,0.35)]"
+          style={bodyFont}
+        >
+          <span
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: "#3F5B5440", color: "#3F5B54", backgroundColor: "#3F5B540A" }}
+          >
+            <CheckCircle2 size={30} strokeWidth={1.5} />
+          </span>
+
+          <h3
+            className="text-2xl leading-none tracking-tight text-[#1C1A17]"
+            style={{ ...displayFont, fontWeight: 700 }}
+          >
+            <span className="italic text-[#7A2233]">Removed!</span>
           </h3>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-6">
+          <p className="mt-2 mb-6 text-[10.5px] font-semibold uppercase tracking-widest text-[#B4ADA0]">
             Personnel database updated.
           </p>
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95 shadow-xl shadow-slate-200 cursor-pointer"
+            className="w-full cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(28,26,23,0.35)] transition-all duration-300 active:scale-95"
+            style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
           >
             Acknowledged
           </button>
@@ -109,7 +142,9 @@ export const EmployeeButtons = ({ id, refresh }) => {
     }
   };
 
-  const btnStyle = "p-2 rounded-full border border-slate-100 text-slate-400 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200 hover:shadow-md transition-all active:scale-90 bg-white shadow-sm cursor-pointer";
+  const btnStyle =
+    "p-2 rounded-full border text-[#B4ADA0] transition-all duration-300 active:scale-90 bg-white shadow-sm cursor-pointer hover:border-[#D9C79A] hover:text-[#7A2233] hover:shadow-[0_10px_20px_-8px_rgba(198,161,91,0.35)]";
+  const btnBorder = { borderColor: HAIRLINE };
 
   return (
     <>
@@ -124,14 +159,15 @@ export const EmployeeButtons = ({ id, refresh }) => {
         <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="flex gap-2 justify-end items-center">
+      <div className="flex items-center justify-end gap-2">
         {/* VIEW PROFILE */}
         <button
           title="View Profile"
           onClick={() => navigate(`/admin-dashboard/employees/${id}`)}
           className={btnStyle}
+          style={btnBorder}
         >
-          <Eye size={16} strokeWidth={2.5} />
+          <Eye size={16} strokeWidth={1.75} />
         </button>
 
         {/* EDIT DETAILS */}
@@ -139,8 +175,9 @@ export const EmployeeButtons = ({ id, refresh }) => {
           title="Edit Details"
           onClick={() => navigate(`/admin-dashboard/employees/edit/${id}`)}
           className={btnStyle}
+          style={btnBorder}
         >
-          <Edit2 size={15} strokeWidth={2.5} />
+          <Edit2 size={15} strokeWidth={1.75} />
         </button>
 
         {/* LEAVE MANAGEMENT */}
@@ -148,8 +185,9 @@ export const EmployeeButtons = ({ id, refresh }) => {
           title="Leaves"
           onClick={() => navigate(`/admin-dashboard/employees/leaves/${id}`)}
           className={btnStyle}
+          style={btnBorder}
         >
-          <Plane size={15} strokeWidth={2.5} />
+          <Plane size={15} strokeWidth={1.75} />
         </button>
 
         {/* PAYROLL/PAYSLIP */}
@@ -157,17 +195,29 @@ export const EmployeeButtons = ({ id, refresh }) => {
           title="Payslip"
           onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
           className={btnStyle}
+          style={btnBorder}
         >
-          <Receipt size={15} strokeWidth={2.5} />
+          <Receipt size={15} strokeWidth={1.75} />
         </button>
 
         {/* DANGER: TERMINATE */}
         <button
           title="Delete Personnel"
           onClick={() => setShowConfirm(true)}
-          className="group p-2.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer shadow-sm hover:shadow-red-200"
-        > 
-          <Trash2 size={15} strokeWidth={2.5} />
+          className="group cursor-pointer rounded-full p-2.5 text-[#C9C2B4] shadow-sm transition-all duration-300 active:scale-90"
+          style={{ backgroundColor: "#FBF8F3" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = GARNET;
+            e.currentTarget.style.color = "white";
+            e.currentTarget.style.boxShadow = "0 10px 20px -8px rgba(122,34,51,0.45)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#FBF8F3";
+            e.currentTarget.style.color = "#C9C2B4";
+            e.currentTarget.style.boxShadow = "";
+          }}
+        >
+          <Trash2 size={15} strokeWidth={1.75} />
         </button>
       </div>
     </>

@@ -1,12 +1,22 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  Building2, Calendar, CreditCard, ChevronLeft, 
-  ShieldCheck, ArrowUpRight, DollarSign,
-  Phone, Mail,
-  Edit, FileText
+import {
+  Calendar, ChevronLeft, Building2, Mail,
+  CreditCard, DollarSign, ShieldCheck, Edit,
+  Fingerprint, ArrowUpRight
 } from "lucide-react";
+
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const HAIRLINE = "rgba(26,26,29,0.10)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.35)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 const ViewClient = () => {
   const { id } = useParams();
@@ -25,17 +35,13 @@ const ViewClient = () => {
             },
           }
         );
-
-        if (res.data?.success) {
-          setClient(res.data.client);
-        }
-      } catch (error) {
-        console.error("Profile Retrieval Error:", error);
+        if (res.data?.success) setClient(res.data.client);
+      } catch {
+        console.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
     };
-
     fetchClient();
   }, [id]);
 
@@ -45,164 +51,147 @@ const ViewClient = () => {
     return `${import.meta.env.VITE_BACKEND_URL}/${imagePath.replace(/^\/+/, "")}`;
   };
 
+  const initials = React.useMemo(() => {
+    const name = client?.userId?.name || "";
+    return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  }, [client]);
+
   if (loading) return <LoadingPulse />;
   if (!client) return <ErrorView />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* --- LEFT COLUMN: IDENTITY CARD --- */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-10 bg-white border border-slate-200 rounded-[3rem] p-8 shadow-sm">
-            <div className="flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-35 h-35 rounded-[3.5rem] overflow-hidden ring-4 ring-slate-50 p-1 transition-transform duration-500 group-hover:scale-105">
-                  <img
-                    src={getImageUrl(client?.companyLogo)}
-                    className="w-full h-full object-cover rounded-[3.2rem]"
-                    alt="Company Logo"
-                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${client?.userId?.name || 'Client'}&background=f1f5f9&color=64748b`)}
-                  />
-                </div>
-              </div>
+    <div className={`relative min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-10`} style={bodyFont}>
+      <div className="relative z-10 mx-auto max-w-3xl">
 
-              {/* Client Name Mapping */}
-              <h1 className="mt-6 text-2xl font-black tracking-tight text-slate-800 text-center uppercase italic">
-                {client?.userId?.name || "N/A"}
-              </h1>
-              
-              <p className="text-red-600 font-black text-[8px] uppercase tracking-[0.3em] mt-2 bg-red-50 px-4 py-1 rounded-full">
-                {client?.planType || "Unassigned Plan"}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-8 flex cursor-pointer items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-colors hover:text-[#1A1A1D]"
+          style={{ color: SLATE }}
+        >
+          <ChevronLeft size={14} strokeWidth={1.75} /> Back
+        </button>
+
+        <div
+          className="rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.28)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
+          {/* ============ NAMEPLATE ============ */}
+          <div className="flex flex-col items-center px-8 pb-10 pt-12 text-center sm:px-14">
+            <div
+              className="flex h-20 w-20 items-center justify-center rounded-full border"
+              style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+            >
+              {client?.companyLogo ? (
+                <img
+                  src={getImageUrl(client.companyLogo)}
+                  className="h-full w-full rounded-full object-cover"
+                  alt="Company Logo"
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              ) : (
+                <span className="text-lg" style={{ ...displayFont, fontWeight: 500 }}>{initials}</span>
+              )}
+            </div>
+
+            <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
+              HAKIRUSH · Partner Since {client.dateOfJoining ? new Date(client.dateOfJoining).getFullYear() : "—"}
+            </p>
+            <h1 className="mt-3 text-4xl leading-none sm:text-5xl" style={{ ...displayFont, fontWeight: 500 }}>
+              {client?.userId?.name || "N/A"}
+            </h1>
+            <p className="mt-3 text-xs uppercase tracking-[0.18em]" style={{ color: SLATE }}>
+              {client?.planType || "Unassigned Plan"} &nbsp;·&nbsp; Client Account
+            </p>
+          </div>
+
+          <GoldRule />
+
+          {/* ============ DOSSIER ============ */}
+          <div className="grid grid-cols-1 gap-x-10 gap-y-8 px-8 py-10 sm:grid-cols-2 sm:px-14">
+            <Field icon={<Fingerprint size={14} strokeWidth={1.5} />} label="Client ID" value={client._id} />
+            <Field icon={<Mail size={14} strokeWidth={1.5} />} label="Contact Email" value={client.userId?.email} />
+            <Field icon={<Building2 size={14} strokeWidth={1.5} />} label="Company Name" value={client.userId?.name} />
+            <Field icon={<CreditCard size={14} strokeWidth={1.5} />} label="Billing Tier" value={client.planType} />
+            <Field
+              icon={<Calendar size={14} strokeWidth={1.5} />}
+              label="Partner Since"
+              value={client.dateOfJoining ? new Date(client.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "—"}
+            />
+            <Field icon={<ShieldCheck size={14} strokeWidth={1.5} />} label="Account Status" value="Authorized" />
+          </div>
+
+          <GoldRule />
+
+          {/* ============ CONTRACT VALUE ============ */}
+          <div className="flex flex-col items-center justify-between gap-6 px-8 py-10 sm:flex-row sm:px-14">
+            <div className="text-center sm:text-left">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
+                Annual Contract Value
               </p>
-
-              <div className="flex gap-3 mt-8 w-full">
-                <button 
-                  onClick={() => navigate(-1)}
-                  className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600 cursor-pointer"
-                >
-                  <ChevronLeft size={16} /> Back
-                </button>
-                <button 
-                  onClick={() => navigate(`/admin-dashboard/clients/edit/${client._id}`)}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-white cursor-pointer"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-10 space-y-5 border-t border-slate-100 pt-8">
-              <SidebarItem icon={<Building2 size={18}/>} label="Company Name" value={client?.userId?.name || "N/A"} />
-              <SidebarItem icon={<Calendar size={18}/>} label="Partner Since" value={client.dateOfJoining ? new Date(client.dateOfJoining).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "N/A"} />
-            </div>
-          </div>
-        </div>
-
-        {/* --- RIGHT COLUMN: BENTO CONTENT --- */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <BentoCard title="General Protocol" icon={<FileText size={15} className="text-blue-500"/>}>
-              {/* User Email Mapping */}
-              <DataRow icon={<Mail size={16} className="text-blue-400"/>} label="Contact Email" value={client.userId?.email} isEmail />
-              <DataRow icon={<Building2 size={16} className="text-blue-400"/>} label="Company Name" value={client?.userId?.name} />
-            </BentoCard>
-
-            <BentoCard title="Financial Snapshot" icon={<DollarSign size={15} className="text-emerald-500"/>}>
-              <DataRow icon={<CreditCard size={16} className="text-emerald-400"/>} label="Billing Tier" value={client.planType} />
-              <DataRow icon={<DollarSign size={16} className="text-emerald-400"/>} label="Contract Value" value={`₹ ${Number(client.budget || 0).toLocaleString('en-IN')}`} />
-            </BentoCard>
-          </div>
-
-          {/* FINANCIAL STRIP (LARGE) */}
-          <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Total Contract Value</p>
-              <h2 className="text-4xl font-black text-red-600 tracking-tighter italic">
+              <h2 className="mt-2 text-3xl leading-none" style={{ ...displayFont, fontWeight: 500 }}>
                 ₹{Number(client.budget || 0).toLocaleString('en-IN')}
-                <span className="text-sm text-slate-400 font-medium ml-2">/year</span>
               </h2>
             </div>
-            <div className="p-5 bg-red-50 rounded-[2rem] text-red-600 shadow-inner">
-              <DollarSign size={24} />
-            </div>
-          </div>
-
-          {/* STATUS HIGHLIGHTS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatusTile icon={<ShieldCheck size={20} />} label="Security" value="Authorized" color="text-emerald-600" bgColor="bg-emerald-50" />
-            <StatusTile icon={<ArrowUpRight size={20} />} label="Protocol" value="Active" color="text-blue-600" bgColor="bg-blue-50" />
-            <StatusTile icon={<Phone size={20} />} label="Support" value="Priority" color="text-purple-600" bgColor="bg-purple-50" />
+            <button
+              onClick={() => navigate(`/admin-dashboard/clients/edit/${client._id}`)}
+              className="flex cursor-pointer items-center gap-2 rounded-full border px-7 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors hover:text-white"
+              style={{ borderColor: CHARCOAL, color: CHARCOAL }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = CHARCOAL)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <Edit size={13} strokeWidth={1.75} /> Edit Profile
+            </button>
           </div>
         </div>
 
+        <p className="mt-6 text-center text-[9px] uppercase tracking-[0.28em]" style={{ color: SLATE }}>
+          Verified &nbsp;·&nbsp; Active &nbsp;·&nbsp; Priority Support
+        </p>
       </div>
     </div>
   );
 };
 
-// --- SHARED COMPONENTS ---
+// --- SUPPORTING COMPONENTS ---
 
-const BentoCard = ({ title, icon, children }) => (
-  <div className="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-all duration-300">
-    <div className="flex items-center gap-3 mb-8">
-      <div className="p-2.5 bg-slate-50 rounded-xl">{icon}</div>
-      <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">{title}</h3>
-    </div>
-    <div className="space-y-6">
-      {children}
-    </div>
+const GoldRule = () => (
+  <div className="px-8 sm:px-14">
+    <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
   </div>
 );
 
-const DataRow = ({ label, icon, value, isEmail }) => (
-  <div className="flex items-center gap-4">
-    <div className="p-2 bg-slate-50 rounded-lg shrink-0">
+const Field = ({ icon, label, value }) => (
+  <div>
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
       {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: "#7A756C" }}>{label}</span>
     </div>
-    <div className="overflow-hidden">
-      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{label}</p>
-      <p className={`text-sm font-black text-slate-800 mt-0.5 truncate italic ${isEmail ? 'lowercase' : 'uppercase'}`}>
-        {value || "—"}
-      </p>
-    </div>
-  </div>
-);
-
-const SidebarItem = ({ icon, label, value }) => (
-  <div className="flex items-center gap-4 group cursor-default">
-    <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-red-50 group-hover:text-red-600 transition-all text-slate-400">
-      {icon}
-    </div>
-    <div>
-      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-      <p className="text-sm font-black text-slate-700 italic uppercase">{value || "—"}</p>
-    </div>
-  </div>
-);
-
-const StatusTile = ({ icon, label, value, color, bgColor }) => (
-  <div className={`${bgColor} border border-white p-6 rounded-[2.5rem] flex flex-col gap-3 shadow-sm`}>
-    <div className={`${color}`}>{icon}</div>
-    <div>
-      <p className="text-[9px] font-black uppercase tracking-tighter text-slate-500 opacity-70">{label}</p>
-      <p className={`text-sm font-black uppercase italic ${color}`}>{value}</p>
-    </div>
+    <p className="mt-1.5 truncate text-base" style={{ ...displayFont, fontWeight: 500 }}>
+      {value || "—"}
+    </p>
   </div>
 );
 
 const LoadingPulse = () => (
-  <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-    <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin"></div>
-    <p className="text-slate-300 font-black uppercase tracking-[0.3em] text-[10px]">Syncing Records</p>
+  <div className={`flex min-h-screen flex-col items-center justify-center gap-4 ${PAGE_BG}`}>
+    <div className="h-9 w-9 animate-spin rounded-full border border-[#1A1A1D]/10 border-t-[#AD8A56]"></div>
+    <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-[#1A1A1D]/50">Preparing Dossier</p>
   </div>
 );
 
 const ErrorView = () => (
-  <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
-    <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-red-50">
-      <h2 className="text-2xl font-black text-slate-800 italic uppercase">Not Found</h2>
-      <button onClick={() => window.history.back()} className="mt-6 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest">Go Back</button>
+  <div className={`flex min-h-screen items-center justify-center p-6 text-center ${PAGE_BG}`}>
+    <div className="rounded-[1.25rem] border border-[#1A1A1D]/10 bg-white/85 px-12 py-14 shadow-[0_40px_90px_-32px_rgba(26,26,29,0.28)] backdrop-blur-md">
+      <h2 className="text-3xl leading-none" style={{ ...displayFont, fontWeight: 500 }}>
+        Not Found
+      </h2>
+      <button
+        onClick={() => window.history.back()}
+        className="mt-6 cursor-pointer rounded-full px-8 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white"
+        style={{ backgroundColor: "#1A1A1D" }}
+      >
+        Go Back
+      </button>
     </div>
   </div>
 );

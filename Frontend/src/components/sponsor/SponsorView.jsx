@@ -1,11 +1,21 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  Building2, Calendar, ChevronLeft, 
-  ShieldCheck, ArrowUpRight, Zap,
-  Globe, Users, Trophy, Activity, Edit
+import {
+  Building2, Calendar, ChevronLeft, ShieldCheck,
+  Globe, Users, Trophy, Activity, Edit, Fingerprint
 } from "lucide-react";
+
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const HAIRLINE = "#E7DFD2";
+
+const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+const GRAIN_URI =
+  "data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.5'/%3E%3C/svg%3E";
 
 const SponsorView = () => {
   const { id } = useParams();
@@ -26,7 +36,7 @@ const SponsorView = () => {
         );
         if (res.data?.success) setSponsor(res.data.sponsor);
       } catch (error) {
-        console.error("Critical failure in asset retrieval.", error);
+        console.error("Failed to load sponsor record.", error);
       } finally {
         setLoading(false);
       }
@@ -40,162 +50,165 @@ const SponsorView = () => {
     return `${import.meta.env.VITE_BACKEND_URL}/${url.replace(/^\/+/, "")}`;
   };
 
+  const initials = React.useMemo(() => {
+    const name = sponsor?.name || "";
+    return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  }, [sponsor]);
+
   if (loading) return <LoadingPulse />;
   if (!sponsor) return <ErrorView />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* --- LEFT COLUMN: IDENTITY CARD --- */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-10 bg-white border border-slate-200 rounded-[3rem] p-8 shadow-sm">
-            <div className="flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-35 h-35 rounded-[3.5rem] overflow-hidden ring-4 ring-slate-50 p-1 transition-transform duration-500 group-hover:scale-105">
-                  <img
-                    src={getImageUrl(sponsor.logo)}
-                    className="w-full h-full object-cover rounded-[3.2rem]"
-                    alt="Sponsor Logo"
-                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${sponsor.name || 'Sponsor'}&background=f1f5f9&color=64748b`)}
-                  />
-                </div>
-              </div>
+    <div
+      className="relative min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-100 p-4 text-[#1C1A17] lg:p-10"
+      style={bodyFont}
+    >
+      {/* faint paper grain */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.035] mix-blend-multiply"
+        style={{ backgroundImage: `url("${GRAIN_URI}")` }}
+      />
+      {/* masthead rule */}
+      <div
+        className="relative z-10 -m-4 mb-8 h-[3px] w-[calc(100%+2rem)] lg:-m-10 lg:mb-10 lg:w-[calc(100%+5rem)]"
+        style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }}
+      />
 
-              {/* Sponsor Name Mapping */}
-              <h1 className="mt-6 text-2xl font-black tracking-tight text-slate-800 text-center uppercase italic">
-                {sponsor.name || "N/A"}
-              </h1>
-              
-              <p className="text-red-600 font-black text-[8px] uppercase tracking-[0.3em] mt-2 bg-red-50 px-4 py-1 rounded-full">
+      <div className="relative z-10 mx-auto max-w-3xl">
+
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-8 flex cursor-pointer items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-[#8A8378] transition-colors hover:text-[#1C1A17]"
+        >
+          <ChevronLeft size={14} strokeWidth={1.75} /> Back
+        </button>
+
+        <div
+          className="overflow-hidden rounded-[2rem] border bg-white/80 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_40px_90px_-32px_rgba(28,26,23,0.28)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
+          {/* ============ NAMEPLATE ============ */}
+          <div className="flex flex-col items-center px-8 pb-10 pt-12 text-center sm:px-14">
+            <div
+              className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2"
+              style={{ borderColor: HAIRLINE }}
+            >
+              <img
+                src={getImageUrl(sponsor.logo)}
+                className="h-full w-full object-cover"
+                alt="Sponsor Logo"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            </div>
+
+            <div className="mt-6 flex items-center gap-2">
+              <div className="h-px w-6" style={{ backgroundColor: GOLD }} />
+              <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
                 {sponsor.collaboration || "Partner"}
               </p>
-
-              <div className="flex gap-3 mt-8 w-full">
-                <button 
-                  onClick={() => navigate(-1)}
-                  className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-slate-600 cursor-pointer"
-                >
-                  <ChevronLeft size={16} /> Back
-                </button>
-                <button 
-                  onClick={() => navigate(`/admin-dashboard/sponsors/edit/${sponsor._id}`)}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-white cursor-pointer"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              </div>
+              <div className="h-px w-6" style={{ backgroundColor: GOLD }} />
             </div>
+            <h1
+              className="mt-3 text-4xl leading-none tracking-tight text-[#1C1A17] sm:text-5xl"
+              style={{ ...displayFont, fontWeight: 700 }}
+            >
+              {sponsor.name || "N/A"}
+            </h1>
 
-            <div className="mt-10 space-y-5 border-t border-slate-100 pt-8">
-              <SidebarItem icon={<Building2 size={18}/>} label="Legal Entity" value={sponsor.name} />
-              <SidebarItem icon={<Calendar size={18}/>} label="Registry Date" value={sponsor.createdAt ? new Date(sponsor.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "N/A"} />
-            </div>
-          </div>
-        </div>
-
-        {/* --- RIGHT COLUMN: BENTO CONTENT --- */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <BentoCard title="Core Intelligence" icon={<Zap size={15} className="text-blue-500"/>}>
-              <DataRow icon={<ShieldCheck size={16} className="text-blue-400"/>} label="Legal Entity" value={sponsor.name} />
-              <DataRow icon={<Users size={16} className="text-blue-400"/>} label="Collaboration" value={sponsor.collaboration} />
-            </BentoCard>
-
-            <BentoCard title="Performance Metrics" icon={<Trophy size={15} className="text-emerald-500"/>}>
-              <DataRow icon={<Activity size={16} className="text-emerald-400"/>} label="Events Sponsored" value={sponsor.eventsSponsored || "0"} />
-              <DataRow icon={<Globe size={16} className="text-emerald-400"/>} label="Reach" value={sponsor.reach || "—"} />
-            </BentoCard>
+            <button
+              onClick={() => navigate(`/admin-dashboard/sponsors/edit/${sponsor._id}`)}
+              className="mt-6 flex cursor-pointer items-center gap-2 rounded-full px-7 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all hover:-translate-y-0.5 active:scale-95"
+              style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+            >
+              <Edit size={13} strokeWidth={1.75} /> Edit Record
+            </button>
           </div>
 
-          {/* MISSION PIPELINE (LARGE) */}
-          <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <GoldRule />
+
+          {/* ============ DOSSIER ============ */}
+          <div className="grid grid-cols-1 gap-x-10 gap-y-8 px-8 py-10 sm:grid-cols-2 sm:px-14">
+            <Field icon={<Fingerprint size={14} strokeWidth={1.5} />} label="Legal Entity" value={sponsor.name} />
+            <Field icon={<Users size={14} strokeWidth={1.5} />} label="Collaboration" value={sponsor.collaboration} />
+            <Field icon={<Activity size={14} strokeWidth={1.5} />} label="Events Sponsored" value={sponsor.eventsSponsored || "0"} />
+            <Field icon={<Globe size={14} strokeWidth={1.5} />} label="Market Reach" value={sponsor.reach || "—"} />
+            <Field
+              icon={<Calendar size={14} strokeWidth={1.5} />}
+              label="Registry Date"
+              value={sponsor.createdAt ? new Date(sponsor.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : "N/A"}
+            />
+            <Field icon={<ShieldCheck size={14} strokeWidth={1.5} />} label="Status" value="Verified" />
+          </div>
+
+          <GoldRule />
+
+          {/* ============ UPCOMING OPERATIONS ============ */}
+          <div className="flex flex-col items-start gap-4 px-8 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-14">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Upcoming Operations</p>
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-snug">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
+                Upcoming Operations
+              </p>
+              <h2 className="mt-2 text-xl leading-snug" style={{ ...displayFont, fontWeight: 500 }}>
                 {sponsor.upcomingEvents || "No future operations scheduled."}
               </h2>
             </div>
-            <div className="p-5 bg-red-50 rounded-[2rem] text-red-600 shadow-inner shrink-0">
-              <Globe size={24} />
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white"
+              style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+            >
+              <Globe size={20} strokeWidth={1.5} />
             </div>
-          </div>
-
-          {/* STATUS HIGHLIGHTS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatusTile icon={<ShieldCheck size={20} />} label="Security" value="Verified" color="text-emerald-600" bgColor="bg-emerald-50" />
-            <StatusTile icon={<ArrowUpRight size={20} />} label="Status" value="Active" color="text-blue-600" bgColor="bg-blue-50" />
-            <StatusTile icon={<Zap size={20} />} label="Tier" value={sponsor.collaboration?.split(' ')[0] || "Basic"} color="text-purple-600" bgColor="bg-purple-50" />
           </div>
         </div>
 
+        <p className="mt-6 text-center text-[9px] uppercase tracking-[0.28em] text-[#8A8378]">
+          Verified &nbsp;·&nbsp; Active &nbsp;·&nbsp; {sponsor.collaboration?.split(' ')[0] || "Basic"} Tier
+        </p>
       </div>
     </div>
   );
 };
 
-// --- SHARED COMPONENTS (Copied from ViewClient to ensure consistency) ---
+/* ===== SUPPORTING COMPONENTS ===== */
 
-const BentoCard = ({ title, icon, children }) => (
-  <div className="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-all duration-300">
-    <div className="flex items-center gap-3 mb-8">
-      <div className="p-2.5 bg-slate-50 rounded-xl">{icon}</div>
-      <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">{title}</h3>
-    </div>
-    <div className="space-y-6">
-      {children}
-    </div>
+const GoldRule = () => (
+  <div className="px-8 sm:px-14">
+    <div className="h-px" style={{ backgroundColor: "rgba(198,161,91,0.35)" }} />
   </div>
 );
 
-const DataRow = ({ label, icon, value, isEmail }) => (
-  <div className="flex items-center gap-4">
-    <div className="p-2 bg-slate-50 rounded-lg shrink-0">
+const Field = ({ icon, label, value }) => (
+  <div>
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
       {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#8A8378]">{label}</span>
     </div>
-    <div className="overflow-hidden">
-      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{label}</p>
-      <p className={`text-sm font-black text-slate-800 mt-0.5 truncate italic ${isEmail ? 'lowercase' : 'uppercase'}`}>
-        {value || "—"}
-      </p>
-    </div>
-  </div>
-);
-
-const SidebarItem = ({ icon, label, value }) => (
-  <div className="flex items-center gap-4 group cursor-default">
-    <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-red-50 group-hover:text-red-600 transition-all text-slate-400">
-      {icon}
-    </div>
-    <div>
-      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-      <p className="text-sm font-black text-slate-700 italic uppercase">{value || "—"}</p>
-    </div>
-  </div>
-);
-
-const StatusTile = ({ icon, label, value, color, bgColor }) => (
-  <div className={`${bgColor} border border-white p-6 rounded-[2.5rem] flex flex-col gap-3 shadow-sm`}>
-    <div className={`${color}`}>{icon}</div>
-    <div>
-      <p className="text-[9px] font-black uppercase tracking-tighter text-slate-500 opacity-70">{label}</p>
-      <p className={`text-sm font-black uppercase italic ${color}`}>{value}</p>
-    </div>
+    <p className="mt-1.5 truncate text-base text-[#1C1A17]" style={{ ...displayFont, fontWeight: 700 }}>
+      {value || "—"}
+    </p>
   </div>
 );
 
 const LoadingPulse = () => (
-  <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-    <div className="w-12 h-12 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin"></div>
-    <p className="text-slate-300 font-black uppercase tracking-[0.3em] text-[10px]">Syncing Records</p>
+  <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-white via-red-50 to-pink-100">
+    <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#E7DFD2] border-t-[#7A2233]"></div>
+    <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-[#8A8378]">Syncing Records</p>
   </div>
 );
 
 const ErrorView = () => (
-  <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
-    <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-red-50">
-      <h2 className="text-2xl font-black text-slate-800 italic uppercase">Not Found</h2>
-      <button onClick={() => window.history.back()} className="mt-6 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest">Go Back</button>
+  <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-red-50 to-pink-100 p-6 text-center">
+    <div className="rounded-[1.75rem] border border-[#E7DFD2] bg-white/85 px-12 py-14 shadow-[0_30px_60px_-24px_rgba(28,26,23,0.28)] backdrop-blur-md">
+      <h2 className="text-3xl leading-none text-[#1C1A17]" style={{ ...displayFont, fontWeight: 700 }}>
+        Not Found
+      </h2>
+      <button
+        onClick={() => window.history.back()}
+        className="mt-6 cursor-pointer rounded-full px-8 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white"
+        style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+      >
+        Go Back
+      </button>
     </div>
   </div>
 );

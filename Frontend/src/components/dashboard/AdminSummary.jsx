@@ -7,15 +7,13 @@ import {
   Building,
   Users,
   Activity,
-  Clock,
   UserMinus,
   Calendar,
   AlertCircle,
   TrendingUp,
-  LayoutDashboard,
   Download,
   Cake,
-  Bell
+  Bell,
 } from "lucide-react";
 import {
   PieChart,
@@ -26,29 +24,80 @@ import {
   Legend,
 } from "recharts";
 
-/* ================= CONFIGURATION ================= */
-const PIE_COLORS = ["#6366f1", "#06b6d4", "#f59e0b", "#10b981", "#ec4899", "#f97316", "#3b82f6", "#14b8a6", "#8b5cf6", "#ef4444", "#e11d48", "#fbbf24"];
+/* ================= CONFIGURATION =================
+   Premium editorial palette — deep garnet + antique gold on
+   warm paper. Same page-background family (white → red/pink)
+   as before; everything sitting on top of it has been pulled
+   up a register: hairline gold rules, quieter shadows, a faint
+   paper grain, and restrained corner brackets as the one
+   signature motif instead of scattered decoration.
+*/
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const HAIRLINE = "#E7DFD2";
+
+const PIE_COLORS = ["#7A2233", "#C6A15B", "#3F5B54", "#8E7A66", "#4A5A6B", "#B0765C", "#5C4A54", "#9C8355"];
 
 const SEMANTIC_COLORS = {
-  Approved: "#10b981",
-  Pending: "#f59e0b",
-  Rejected: "#ef4444",
+  Approved: "#3F5B54",
+  Pending: "#C6A15B",
+  Rejected: "#7A2233",
 };
 
-/* ================= REUSABLE COMPONENTS (RESPONSIVE) ================= */
-const StatCard = ({ icon: Icon, label, value, colorClass = "text-red-600" }) => (
-  <div className="bg-gradient-to-br from-white via-slate-50 to-red-50 p-4 sm:p-7 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-slate-100 flex flex-row sm:flex-col items-center justify-between sm:justify-center h-auto sm:h-[180px] transition-all hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 group w-full relative overflow-hidden">
-    <div className="absolute right-2 bottom-2 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-      {Icon && <Icon size={48} />}
+const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* Faint paper grain, layered over the existing gradient — the
+   one textural signature that makes the surface feel printed
+   rather than flat. Pure decoration, no layout cost. */
+const GRAIN_URI =
+  "data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.5'/%3E%3C/svg%3E";
+
+/* ================= REUSABLE COMPONENTS ================= */
+
+/* Small hairline corner bracket — the recurring editorial mark
+   used sparingly at a few key frame edges. */
+const CornerTicks = ({ color = GOLD }) => (
+  <>
+    <span
+      className="pointer-events-none absolute top-3 left-3 h-2.5 w-2.5 border-t border-l opacity-70 sm:top-4 sm:left-4"
+      style={{ borderColor: color }}
+    />
+    <span
+      className="pointer-events-none absolute top-3 right-3 h-2.5 w-2.5 border-t border-r opacity-70 sm:top-4 sm:right-4"
+      style={{ borderColor: color }}
+    />
+  </>
+);
+
+const StatCard = ({ icon: Icon, label, value, accent = GARNET }) => (
+  <div
+    className="group relative flex w-full flex-row items-center justify-between overflow-hidden rounded-2xl border border-[#E7DFD2] bg-white/70 p-4 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_16px_32px_-16px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:-translate-y-[3px] hover:border-[#D9C79A] hover:shadow-[0_1px_2px_rgba(28,26,23,0.05),0_24px_40px_-16px_rgba(28,26,23,0.18)] sm:h-[172px] sm:flex-col sm:items-center sm:justify-center sm:rounded-[1.75rem] sm:p-7"
+    style={bodyFont}
+  >
+    {/* top hairline accent, brightens on hover */}
+    <span
+      className="pointer-events-none absolute top-0 left-1/2 h-px w-10 -translate-x-1/2 opacity-40 transition-opacity duration-300 group-hover:opacity-100"
+      style={{ backgroundColor: accent }}
+    />
+    <div className="pointer-events-none absolute -right-4 -bottom-4 opacity-[0.045]">
+      {Icon && <Icon size={64} color={INK} strokeWidth={1.25} />}
     </div>
-    <div className="text-2xl sm:text-5xl font-black text-slate-900 italic tracking-tighter leading-none group-hover:text-red-600 transition-colors order-2 sm:order-1 z-10">
+    <div
+      className="order-2 z-10 text-2xl leading-none tracking-tight tabular-nums text-[#1C1A17] sm:order-1 sm:text-[2.75rem]"
+      style={{ ...displayFont, fontWeight: 700 }}
+    >
       {value ?? 0}
     </div>
-    <div className="flex flex-row sm:flex-col items-center gap-2 sm:gap-2 order-1 sm:order-2 sm:mt-4 z-10">
-      <div className={`p-2 rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-100 ${colorClass} group-hover:scale-110 transition-transform`}>
-        {Icon && <Icon size={18} className="sm:w-[20px] w-[18px]" />}
+    <div className="z-10 order-1 flex flex-row items-center gap-2.5 sm:order-2 sm:mt-4 sm:flex-col sm:gap-3">
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-full border transition-colors duration-300"
+        style={{ borderColor: `${accent}40`, color: accent }}
+      >
+        {Icon && <Icon size={15} strokeWidth={1.75} />}
       </div>
-      <span className="text-[10px] sm:text-[12px] font-extrabold uppercase text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] group-hover:text-red-600 transition-colors text-left sm:text-center max-w-[80px] sm:max-w-none">
+      <span className="max-w-[84px] text-left text-[9.5px] font-semibold uppercase tracking-[0.24em] text-[#8A8378] sm:max-w-none sm:text-center sm:text-[10.5px]">
         {label}
       </span>
     </div>
@@ -56,16 +105,26 @@ const StatCard = ({ icon: Icon, label, value, colorClass = "text-red-600" }) => 
 );
 
 const SectionCard = ({ title, children, subtitle }) => (
-  <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-xl border border-slate-50 flex flex-col hover:shadow-2xl transition-all w-full min-w-0">
-    <div className="mb-3 sm:mb-4 shrink-0 flex flex-wrap items-center gap-2">
-      <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">{title}</h3>
+  <div className="relative flex w-full min-w-0 flex-col rounded-2xl border border-[#E7DFD2] bg-white/70 p-4 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_16px_32px_-16px_rgba(28,26,23,0.12)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] hover:shadow-[0_1px_2px_rgba(28,26,23,0.05),0_24px_40px_-16px_rgba(28,26,23,0.16)] sm:rounded-[2rem] sm:p-8">
+    <div className="mb-3 flex shrink-0 flex-wrap items-baseline gap-2.5 sm:mb-5">
+      <h3
+        className="text-base leading-none tracking-tight text-[#1C1A17] sm:text-xl"
+        style={{ ...displayFont, fontWeight: 700 }}
+      >
+        {title}
+      </h3>
       {subtitle && (
-        <span className="px-2 py-1 rounded-full bg-slate-50 text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5 border border-slate-200">
+        <span
+          className="mt-0.5 border-t pt-1 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#B4ADA0] sm:text-[9px]"
+          style={{ borderColor: HAIRLINE }}
+        >
           {subtitle}
         </span>
       )}
     </div>
-    <div className="w-full min-h-[180px] sm:min-h-[300px] flex items-center justify-center">{children}</div>
+    <div className="flex min-h-[180px] w-full items-center justify-center sm:min-h-[280px]">
+      {children}
+    </div>
   </div>
 );
 
@@ -80,7 +139,7 @@ const AdminSummary = () => {
   const [domReady, setDomReady] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotif, setShowNotif] = useState(false);
-  const unseenCount = notifications.filter(n => !n.seen).length;
+  const unseenCount = notifications.filter((n) => !n.seen).length;
 
   useEffect(() => {
     setDomReady(true);
@@ -91,7 +150,7 @@ const AdminSummary = () => {
         };
         const [dashRes, attRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/dashboard/summary`, config),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin/summary`, config)
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin/summary`, config),
         ]);
         setSummary(dashRes.data);
         setAttSummary(attRes.data);
@@ -124,7 +183,9 @@ const AdminSummary = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
       await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/notifications/${notif._id}/seen`, {}, config);
-      setNotifications(notifications => notifications.map(n => n._id === notif._id ? { ...n, seen: true } : n));
+      setNotifications((notifications) =>
+        notifications.map((n) => (n._id === notif._id ? { ...n, seen: true } : n))
+      );
       if (notif.link) navigate(notif.link);
     } catch {}
   };
@@ -148,23 +209,30 @@ const AdminSummary = () => {
       ["Total Clients", summary.totalClients],
     ];
 
-    const csvContent = "data:text/csv;charset=utf-8," + reportData.map(e => e.join(",")).join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," + reportData.map((e) => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Report_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(() => setIsExporting(false), 1000);
   };
 
-  if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-white space-y-4">
-      <div className="w-10 h-10 border-4 border-slate-100 border-t-red-600 rounded-full animate-spin" />
-      <p className="italic font-black text-slate-400 uppercase tracking-[0.3em] text-[9px]">Syncing Enterprise Data</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex h-screen flex-col items-center justify-center space-y-4 bg-[#FBF8F3]">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E7DFD2] border-t-[#7A2233]" />
+        <p
+          className="text-[9px] font-semibold uppercase tracking-[0.35em] text-[#8A8378]"
+          style={bodyFont}
+        >
+          Syncing Enterprise Data
+        </p>
+      </div>
+    );
 
   const chartData = {
     plans: [
@@ -177,7 +245,10 @@ const AdminSummary = () => {
       { name: "Rejected", value: summary?.leaveSummary?.rejected || 0 },
     ],
     depts: summary?.departmentSummary?.map((d) => ({ name: d.department, value: d.employees })) || [],
-    sponsors: Object.entries(summary?.sponsorSummary?.collaborationSummary || {}).map(([name, value]) => ({ name, value })),
+    sponsors: Object.entries(summary?.sponsorSummary?.collaborationSummary || {}).map(([name, value]) => ({
+      name,
+      value,
+    })),
     stalls: Object.entries(summary?.stallSummary?.typeSummary || {}).map(([name, value]) => ({ name, value })),
   };
 
@@ -185,51 +256,95 @@ const AdminSummary = () => {
   const upcomingBirthdays = summary?.birthdaySummary?.upcoming || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-100 text-slate-900 pb-20 selection:bg-red-100">
-      <div className="max-w-[1440px] mx-auto p-4 sm:p-8 space-y-8 sm:space-y-12">
-        
+    <div
+      className="relative min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-100 pb-20 text-[#1C1A17] selection:bg-[#7A2233]/10"
+      style={bodyFont}
+    >
+      {/* faint paper grain over the existing gradient — the one
+          textural signature carried through the whole page */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.035] mix-blend-multiply"
+        style={{ backgroundImage: `url("${GRAIN_URI}")` }}
+      />
+      {/* masthead rule at the very top of the page */}
+      <div
+        className="relative z-10 h-[3px] w-full"
+        style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-[1440px] space-y-8 p-4 sm:space-y-14 sm:p-8">
         {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sm:gap-6 pt-2 sm:pt-4 w-full">
-          <div className="space-y-2 sm:space-y-4">
+        <header className="relative flex w-full flex-col items-start gap-4 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:pt-6">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center gap-2">
-              <LayoutDashboard size={16} className="text-red-600" />
-              <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-red-600">Admin Control</p>
+              <div className="h-px w-6" style={{ backgroundColor: GOLD }} />
+              <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-[#C6A15B] sm:text-[10px]">
+                Admin Control
+              </p>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-black text-slate-900 uppercase italic tracking-tighter leading-[0.9]">
-              Dashboard<br/><span className="text-red-600">Summary</span>
+            <h1
+              className="text-3xl leading-[0.95] tracking-tight text-[#1C1A17] sm:text-5xl"
+              style={{ ...displayFont, fontWeight: 700 }}
+            >
+              Dashboard <span className="italic text-[#7A2233]">Summary</span>
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full md:w-auto">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
             {/* NOTIFICATION BELL */}
             <div className="relative">
               <button
-                className="relative p-3 sm:p-4 bg-white rounded-2xl sm:rounded-[1.5rem] shadow-md border border-slate-100 hover:shadow-lg transition-all group"
+                className="group relative rounded-2xl border border-[#E7DFD2] bg-white/80 p-3 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_8px_20px_-10px_rgba(28,26,23,0.12)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] hover:shadow-[0_1px_2px_rgba(28,26,23,0.05),0_14px_28px_-10px_rgba(28,26,23,0.16)] sm:p-4"
                 onClick={() => setShowNotif((v) => !v)}
               >
-                <Bell size={20} className="text-slate-400 group-hover:text-red-600 transition-colors" />
+                <Bell size={19} strokeWidth={1.75} className="text-[#8A8378] transition-colors group-hover:text-[#7A2233]" />
                 {unseenCount > 0 && (
-                  <span className="absolute top-2 right-2 sm:top-3 sm:right-3 w-2.5 h-2.5 bg-red-600 border-2 border-white rounded-full animate-bounce"></span>
+                  <span
+                    className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full border border-white sm:top-3.5 sm:right-3.5"
+                    style={{ backgroundColor: GARNET }}
+                  ></span>
                 )}
               </button>
               {showNotif && (
-                <div className="absolute right-0 sm:right-0 mt-2 w-[85vw] sm:w-[350px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border z-50 overflow-hidden animate-pop">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notifications</span>
-                    <button className="text-xs text-slate-400 hover:text-red-500 font-black" onClick={() => setShowNotif(false)}>Close</button>
+                <div className="absolute right-0 z-50 mt-2 w-[85vw] overflow-hidden rounded-2xl border border-[#E7DFD2] bg-white/95 shadow-[0_2px_8px_rgba(28,26,23,0.06),0_30px_60px_-15px_rgba(28,26,23,0.22)] backdrop-blur-xl sm:w-[350px] sm:rounded-3xl">
+                  <div
+                    className="flex items-center justify-between border-b p-4"
+                    style={{ borderColor: HAIRLINE }}
+                  >
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#8A8378]">
+                      Notifications
+                    </span>
+                    <button
+                      className="text-xs font-semibold text-[#8A8378] transition-colors hover:text-[#7A2233]"
+                      onClick={() => setShowNotif(false)}
+                    >
+                      Close
+                    </button>
                   </div>
-                  <div className="max-h-[300px] sm:max-h-[350px] overflow-y-auto divide-y">
+                  <div className="max-h-[300px] divide-y overflow-y-auto sm:max-h-[350px]" style={{ borderColor: HAIRLINE }}>
                     {notifications.length === 0 && (
-                      <div className="p-6 text-center text-slate-400 text-xs">No notifications</div>
+                      <div className="p-6 text-center text-xs text-[#B4ADA0]">No notifications</div>
                     )}
                     {notifications.map((notif) => (
                       <div
                         key={notif._id}
-                        className={`p-4 cursor-pointer hover:bg-red-50 ${!notif.seen ? "bg-red-50/50" : ""}`}
+                        className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-[#FBF8F3] ${!notif.seen ? "bg-[#FBF8F3]/60" : ""}`}
                         onClick={() => handleNotificationClick(notif)}
                       >
-                        <div className="font-bold text-[13px] text-slate-800 mb-1">{notif.message}</div>
-                        <div className="text-[10px] text-slate-400">{new Date(notif.createdAt).toLocaleString()}</div>
+                        {!notif.seen && (
+                          <span
+                            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: GOLD }}
+                          />
+                        )}
+                        <div>
+                          <div className="mb-1 text-[13px] font-semibold leading-snug text-[#1C1A17]">
+                            {notif.message}
+                          </div>
+                          <div className="text-[10px] text-[#B4ADA0]">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -238,83 +353,128 @@ const AdminSummary = () => {
             </div>
 
             {/* DATE & STATUS CARD */}
-            <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-[2rem] shadow-md border border-slate-100 flex items-center gap-3 sm:gap-8 flex-1 sm:flex-none mt-2 sm:mt-0">
-              <div className="flex items-center gap-2 sm:gap-3 pr-4 sm:pr-6 border-r border-slate-100">
-                <Calendar className="text-red-600" size={18} />
+            <div className="mt-2 flex flex-1 items-center gap-3 rounded-2xl border border-[#E7DFD2] bg-white/80 p-3 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_8px_20px_-10px_rgba(28,26,23,0.12)] backdrop-blur-md sm:mt-0 sm:flex-none sm:gap-8 sm:rounded-[1.5rem] sm:p-4">
+              <div className="flex items-center gap-2 border-r pr-4 sm:gap-3 sm:pr-6" style={{ borderColor: HAIRLINE }}>
+                <Calendar size={17} strokeWidth={1.75} style={{ color: GARNET }} />
                 <div>
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Date</p>
-                  <p className="text-[11px] sm:text-sm font-black uppercase whitespace-nowrap">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="mb-1 text-[8px] font-semibold uppercase tracking-widest leading-none text-[#B4ADA0]">
+                    Date
+                  </p>
+                  <p className="whitespace-nowrap text-[11px] font-semibold text-[#1C1A17] sm:text-sm">
+                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${attSummary?.isHoliday ? 'bg-red-500' : 'bg-emerald-500'} border border-white`} />
-                <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest truncate max-w-[80px] sm:max-w-none">
-                    {attSummary?.isHoliday ? attSummary.holidayName : 'Live'}
+                <div
+                  className="h-2 w-2 rounded-full border border-white"
+                  style={{ backgroundColor: attSummary?.isHoliday ? GARNET : "#3F5B54" }}
+                />
+                <p className="max-w-[80px] truncate text-[10px] font-semibold uppercase tracking-widest text-[#1C1A17] sm:max-w-none sm:text-[11px]">
+                  {attSummary?.isHoliday ? attSummary.holidayName : "Live"}
                 </p>
               </div>
             </div>
           </div>
         </header>
 
-        {/* TOP STATS - Adjusts to 2 cols on mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 w-full">
-          <StatCard icon={Activity} label="Active Today" value={attSummary?.activeToday} colorClass="text-emerald-500" />
-          <StatCard icon={UserMinus} label="Staff on Leave" value={attSummary?.onLeaveToday} colorClass="text-blue-500" />
-          <StatCard icon={AlertCircle} label="Absent Count" value={attSummary?.absentToday} colorClass="text-red-600" />
+        {/* TOP STATS */}
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+          <StatCard icon={Activity} label="Active Today" value={attSummary?.activeToday} accent="#3F5B54" />
+          <StatCard icon={UserMinus} label="Staff on Leave" value={attSummary?.onLeaveToday} accent="#4A5A6B" />
+          <StatCard icon={AlertCircle} label="Absent Count" value={attSummary?.absentToday} accent={GARNET} />
         </div>
 
         {/* WORKFORCE OVERVIEW */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full">
-          <div className="bg-gradient-to-br from-white via-slate-50 to-emerald-50 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] flex justify-between items-center group relative overflow-hidden shadow-2xl shadow-slate-200 border border-emerald-100">
-            <TrendingUp className="absolute -right-4 -bottom-4 text-emerald-100 opacity-20" size={100} />
+        <div className="grid w-full grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
+          <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
+            <span
+              className="pointer-events-none absolute top-0 left-8 h-px w-12 opacity-50"
+              style={{ backgroundColor: "#3F5B54" }}
+            />
+            <TrendingUp className="pointer-events-none absolute -right-4 -bottom-4 opacity-[0.045]" size={100} color={INK} strokeWidth={1.25} />
             <div className="relative z-10">
-              <p className="text-[10px] font-black text-slate-400 uppercase opacity-50 tracking-widest mb-1">Total Workforce</p>
-              <p className="text-5xl sm:text-6xl font-black italic text-slate-900 tracking-tighter leading-none">{summary?.totalEmployees}</p>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#B4ADA0]">
+                Total Workforce
+              </p>
+              <p className="text-5xl leading-none tracking-tight tabular-nums text-[#1C1A17] sm:text-6xl" style={{ ...displayFont, fontWeight: 700 }}>
+                {summary?.totalEmployees}
+              </p>
             </div>
-            <Users className="text-emerald-200 group-hover:text-emerald-500 relative z-10 transition-colors" size={40} />
+            <Users className="relative z-10 text-[#3F5B54] opacity-30 transition-opacity duration-300 group-hover:opacity-100" size={36} strokeWidth={1.5} />
           </div>
 
-          <div className="bg-gradient-to-br from-white via-slate-50 to-blue-50 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border border-blue-100 flex justify-between items-center shadow-xl group hover:border-blue-200 transition-colors">
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Departments</p>
-              <p className="text-5xl sm:text-6xl font-black italic tracking-tighter text-slate-900 leading-none">{summary?.totalDepartments}</p>
+          <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
+            <span
+              className="pointer-events-none absolute top-0 left-8 h-px w-12 opacity-50"
+              style={{ backgroundColor: "#4A5A6B" }}
+            />
+            <div className="relative z-10">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#B4ADA0]">Departments</p>
+              <p className="text-5xl leading-none tracking-tight tabular-nums text-[#1C1A17] sm:text-6xl" style={{ ...displayFont, fontWeight: 700 }}>
+                {summary?.totalDepartments}
+              </p>
             </div>
-            <Building className="text-blue-200 group-hover:text-blue-500 transition-colors" size={40} />
+            <Building className="relative z-10 text-[#4A5A6B] opacity-30 transition-opacity duration-300 group-hover:opacity-100" size={36} strokeWidth={1.5} />
           </div>
 
-          <div className="bg-gradient-to-br from-white via-slate-50 to-orange-50 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border border-orange-100 flex justify-between items-center shadow-xl group hover:border-orange-200 transition-colors">
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Clients</p>
-              <p className="text-5xl sm:text-6xl font-black italic tracking-tighter text-slate-900 leading-none">{summary?.totalClients}</p>
+          <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
+            <span
+              className="pointer-events-none absolute top-0 left-8 h-px w-12 opacity-50"
+              style={{ backgroundColor: GOLD }}
+            />
+            <div className="relative z-10">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#B4ADA0]">Clients</p>
+              <p className="text-5xl leading-none tracking-tight tabular-nums text-[#1C1A17] sm:text-6xl" style={{ ...displayFont, fontWeight: 700 }}>
+                {summary?.totalClients}
+              </p>
             </div>
-            <BriefcaseBusiness className="text-orange-200 group-hover:text-orange-500 transition-colors" size={40} />
+            <BriefcaseBusiness className="relative z-10 opacity-30 transition-opacity duration-300 group-hover:opacity-100" style={{ color: GOLD }} size={36} strokeWidth={1.5} />
           </div>
         </div>
 
         {/* BIRTHDAY SECTION */}
-        <div className="bg-gradient-to-br from-white via-pink-50 to-pink-100 p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-xl border border-pink-100 space-y-4 sm:space-y-6 relative overflow-hidden w-full">
-          <div className="absolute top-0 right-0 p-4 sm:p-8 opacity-5">
-            <Cake size={60} className="sm:size-[100px]" />
+        <div className="relative w-full space-y-4 overflow-hidden rounded-2xl border border-[#E7DFD2] bg-white/70 p-4 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md sm:space-y-6 sm:rounded-[2rem] sm:p-8">
+          <CornerTicks />
+          <div className="pointer-events-none absolute top-0 right-0 p-4 opacity-[0.04] sm:p-8">
+            <Cake size={90} color={INK} strokeWidth={1.25} />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 relative z-10">
-            <Cake className="text-pink-500" size={18} />
-            <h3 className="text-lg sm:text-2xl font-black uppercase italic tracking-tighter text-slate-900">Birthday Spotlight</h3>
+          <div className="relative z-10 flex items-center gap-2 sm:gap-3">
+            <Cake size={18} strokeWidth={1.75} style={{ color: GARNET }} />
+            <h3 className="text-lg tracking-tight text-[#1C1A17] sm:text-2xl" style={{ ...displayFont, fontWeight: 700 }}>
+              Birthday Spotlight
+            </h3>
           </div>
-          <div className="flex flex-col gap-3 sm:gap-6 relative z-10">
+          <div className="relative z-10 flex flex-col gap-3 sm:gap-6">
             {todayBirthdays.length > 0 && (
               <div>
-                <div className="text-pink-500 font-black text-[10px] mb-3 uppercase tracking-widest">Today</div>
-                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-3">
-                  {todayBirthdays.map(emp => (
-                    <div key={emp._id} className="flex items-center gap-3 sm:gap-4 bg-gradient-to-br from-pink-500 to-rose-400 p-2 sm:p-4 rounded-2xl sm:rounded-3xl shadow-md w-full sm:w-auto">
-                      <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/50 shrink-0">
-                        <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="profile" />
+                <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: GARNET }}>
+                  Today
+                </div>
+                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+                  {todayBirthdays.map((emp) => (
+                    <div
+                      key={emp._id}
+                      className="flex w-full items-center gap-3 rounded-2xl p-2.5 shadow-[0_10px_28px_-8px_rgba(122,34,51,0.35)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-auto sm:gap-4 sm:rounded-3xl sm:p-4"
+                      style={{ background: `linear-gradient(135deg, ${GARNET}, #9C3A4E)` }}
+                    >
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-white/40 sm:h-16 sm:w-16">
+                        <img
+                          src={getImageUrl(emp.userId?.profileImage || emp.profileImage)}
+                          className="h-full w-full object-cover"
+                          alt="profile"
+                        />
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm sm:text-lg font-black italic text-white truncate uppercase tracking-tighter leading-none">
+                      <div className="flex min-w-0 flex-col">
+                        <span
+                          className="truncate text-sm leading-none tracking-tight text-white sm:text-lg"
+                          style={{ ...displayFont, fontWeight: 700 }}
+                        >
                           {emp.userId?.name || emp.name}
                         </span>
-                        <span className="text-[9px] sm:text-[10px] font-black text-pink-100 uppercase italic tracking-widest mt-1">HBD! 🎉</span>
+                        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-white/70 sm:text-[10px]">
+                          Celebrating today
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -323,9 +483,9 @@ const AdminSummary = () => {
             )}
             {upcomingBirthdays.length > 0 && (
               <div>
-                <div className="text-pink-400 font-black text-[10px] mb-3 uppercase tracking-widest">Upcoming</div>
+                <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#B4ADA0]">Upcoming</div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
-                  {upcomingBirthdays.map(emp => {
+                  {upcomingBirthdays.map((emp) => {
                     let daysLeft = null;
                     if (emp.dob) {
                       const today = new Date();
@@ -337,19 +497,29 @@ const AdminSummary = () => {
                       daysLeft = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
                     }
                     return (
-                      <div key={emp._id} className="flex items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-2xl border-2 border-pink-50 hover:border-pink-100 transition-all w-full sm:w-auto">
-                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 grayscale-[0.5] shrink-0">
-                          <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-70" alt="profile" />
+                      <div
+                        key={emp._id}
+                        className="flex w-full items-center gap-2.5 rounded-2xl border bg-[#FBF8F3]/80 p-2.5 transition-all duration-300 hover:border-[#C6A15B]/60 sm:w-auto sm:gap-3 sm:p-3"
+                        style={{ borderColor: HAIRLINE }}
+                      >
+                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border grayscale sm:h-12 sm:w-12" style={{ borderColor: HAIRLINE }}>
+                          <img
+                            src={getImageUrl(emp.userId?.profileImage || emp.profileImage)}
+                            className="h-full w-full object-cover opacity-80"
+                            alt="profile"
+                          />
                         </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-xs sm:text-sm font-black italic text-slate-500 uppercase tracking-tighter leading-none truncate">
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate text-xs leading-none tracking-tight text-[#1C1A17] sm:text-sm" style={{ ...displayFont, fontWeight: 700 }}>
                             {emp.userId?.name || emp.name}
                           </span>
-                          <span className="text-[8px] sm:text-[9px] font-bold text-pink-400 uppercase mt-1 italic">
-                            {emp.dob ? new Date(emp.dob).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                          <span className="mt-1 text-[8px] font-semibold uppercase text-[#8A8378] sm:text-[9px]">
+                            {emp.dob
+                              ? new Date(emp.dob).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                              : ""}
                             {daysLeft !== null && (
-                              <span className="ml-2 text-[8px] sm:text-[9px] text-rose-400 font-extrabold">[
-                                {daysLeft === 1 ? 'in 1 day' : `in ${daysLeft} days`}]
+                              <span className="ml-2 font-semibold" style={{ color: GOLD }}>
+                                {daysLeft === 1 ? "in 1 day" : `in ${daysLeft} days`}
                               </span>
                             )}
                           </span>
@@ -364,29 +534,61 @@ const AdminSummary = () => {
         </div>
 
         {/* CHARTS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-10 w-full">
+        <div className="grid w-full grid-cols-1 gap-4 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[
             { title: "Client Mix", sub: "Plan Distribution", data: chartData.plans },
-            { title: "Sponsors", sub: "Collaborations", data: chartData.sponsors, offset: 3 },
-            { title: "Stalls", sub: "Categories", data: chartData.stalls, offset: 6 },
-            { title: "Dept Pulse", sub: "Staffing", data: chartData.depts, offset: 9 },
+            { title: "Sponsors", sub: "Collaborations", data: chartData.sponsors, offset: 2 },
+            { title: "Stalls", sub: "Categories", data: chartData.stalls, offset: 4 },
+            { title: "Dept Pulse", sub: "Staffing", data: chartData.depts, offset: 6 },
             { title: "Leave Trends", sub: "Status", data: chartData.leaves, isSemantic: true },
           ].map((chart, idx) => (
             <SectionCard key={idx} title={chart.title} subtitle={chart.sub}>
               {domReady && (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={chart.data} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={6} dataKey="value">
+                    <Pie
+                      data={chart.data}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="55%"
+                      outerRadius="80%"
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
                       {chart.data.map((e, i) => (
-                        <Cell 
-                          key={i} 
-                          fill={chart.isSemantic ? (SEMANTIC_COLORS[e.name] || PIE_COLORS[i % PIE_COLORS.length]) : PIE_COLORS[(i + (chart.offset || 0)) % PIE_COLORS.length]} 
-                          strokeWidth={0} 
+                        <Cell
+                          key={i}
+                          fill={
+                            chart.isSemantic
+                              ? SEMANTIC_COLORS[e.name] || PIE_COLORS[i % PIE_COLORS.length]
+                              : PIE_COLORS[(i + (chart.offset || 0)) % PIE_COLORS.length]
+                          }
+                          strokeWidth={0}
                         />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '15px', border: 'none', fontWeight: '800', fontSize: '12px' }} />
-                    <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: '900', paddingTop: '15px', textTransform: 'uppercase' }} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "10px",
+                        border: `1px solid ${HAIRLINE}`,
+                        borderTop: `2px solid ${GOLD}`,
+                        fontWeight: 600,
+                        fontSize: "12px",
+                        boxShadow: "0 20px 40px -12px rgba(28,26,23,0.20)",
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconType="circle"
+                      wrapperStyle={{
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        paddingTop: "15px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        color: "#8A8378",
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -394,20 +596,41 @@ const AdminSummary = () => {
           ))}
 
           {/* REPORTING CARD */}
-          <div className="bg-gradient-to-br from-red-600 via-pink-500 to-rose-500 rounded-2xl sm:rounded-[3rem] p-5 sm:p-10 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden min-h-[180px] sm:min-h-[250px] w-full border border-rose-200">
-            <div className="absolute right-0 bottom-0 opacity-20 pointer-events-none">
-              <Download size={120} />
+          <div
+            className="relative flex min-h-[180px] w-full flex-col justify-between overflow-hidden rounded-2xl p-5 text-white shadow-[0_1px_2px_rgba(0,0,0,0.2),0_30px_60px_-20px_rgba(122,34,51,0.45)] sm:min-h-[280px] sm:rounded-[2rem] sm:p-10"
+            style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+          >
+            <span
+              className="pointer-events-none absolute top-0 left-0 h-px w-full opacity-60"
+              style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }}
+            />
+            <div className="pointer-events-none absolute right-0 bottom-0 opacity-[0.10]">
+              <Download size={120} strokeWidth={1} />
             </div>
-            <div className="space-y-2 sm:space-y-4 z-10">
-              <h4 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tighter leading-none">Global<br/>Reporting</h4>
-              <p className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.2em] opacity-90">Strategic organizational intelligence.</p>
+            <div className="z-10 space-y-2 sm:space-y-4">
+              <div className="h-px w-8" style={{ backgroundColor: GOLD }} />
+              <h4 className="text-2xl leading-none tracking-tight sm:text-4xl" style={{ ...displayFont, fontWeight: 700 }}>
+                Global <span className="italic" style={{ color: GOLD }}>Reporting</span>
+              </h4>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60 sm:text-[11px]">
+                Strategic organizational intelligence
+              </p>
             </div>
-            <button 
+            <button
               onClick={handleExport}
               disabled={isExporting}
-              className="mt-4 sm:mt-6 bg-white text-red-600 w-full py-3 sm:py-4 rounded-full text-[10px] sm:text-[12px] font-black uppercase tracking-widest flex items-center justify-center gap-2 sm:gap-3 transition-all hover:bg-slate-900 hover:text-white active:scale-95 z-10"
+              className="z-10 mt-4 flex w-full items-center justify-center gap-2.5 rounded-full py-3 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 active:scale-95 sm:mt-6 sm:py-4 sm:text-[12px]"
+              style={{
+                background: `linear-gradient(135deg, #D8BC7C, ${GOLD})`,
+                color: INK,
+                boxShadow: "0 10px 24px -8px rgba(198,161,91,0.55)",
+              }}
             >
-              {isExporting ? "Downloading..." : <><Download size={16} /> Export CSV Report</>}
+              {isExporting ? "Downloading…" : (
+                <>
+                  <Download size={16} strokeWidth={1.75} /> Export CSV Report
+                </>
+              )}
             </button>
           </div>
         </div>

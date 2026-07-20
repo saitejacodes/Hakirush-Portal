@@ -1,30 +1,57 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Camera, Plus, Trash2, CheckCircle2, LayoutGrid } from "lucide-react";
+import { LayoutGrid, Camera, Check, Plus, Trash2 } from "lucide-react";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-50";
 
-/* ================= PREMIUM SUCCESS ALERT (Consistent with SponsorAdd) ================= */
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.12)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+/* ================= CONFIRMATION DIALOG ================= */
 const SuccessAlert = ({ onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" />
-    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
-      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto mb-6">
-        <CheckCircle2 size={40} strokeWidth={2.5} />
+    <div className="absolute inset-0 bg-[#1A1A1D]/30 backdrop-blur-md" />
+    <div
+      className="relative w-full max-w-sm rounded-[1.25rem] border bg-white/95 p-10 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+      style={{ borderColor: HAIRLINE, ...bodyFont }}
+    >
+      <div
+        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+        style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+      >
+        <Check size={26} strokeWidth={1.75} />
       </div>
-      <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-800">Asset Initialized!</h3>
-      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-2 mb-8">Stall record has been created.</p>
-      <button onClick={onClose} className="w-full py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95 shadow-lg">
+      <h3 className="text-2xl leading-none" style={{ ...displayFont, fontWeight: 500, color: CHARCOAL }}>
+        Asset Initialized
+      </h3>
+      <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
+        The stall record has been created in the registry.
+      </p>
+      <button
+        onClick={onClose}
+        className="mt-8 w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+        style={{ backgroundColor: CHARCOAL }}
+      >
         Back to List
       </button>
     </div>
   </div>
 );
 
+/* ================= MAIN COMPONENT ================= */
 const StallAdd = () => {
   const navigate = useNavigate();
-  
+
   const [form, setForm] = useState({
     name: "",
     number: "",
@@ -92,100 +119,124 @@ const StallAdd = () => {
     }
   };
 
-  // Styled input classes from SponsorAdd
-  const inputBase = "w-full bg-slate-50 border border-slate-100 focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/5 rounded-2xl px-5 py-3.5 outline-none transition-all placeholder:text-slate-300";
-  const punchyInput = `${inputBase} text-xs font-black uppercase italic tracking-tight`;
-  const labelCls = "text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block ml-1";
-
   return (
-    <div className="min-h-screen bg-[#FDFDFD] text-slate-900 p-4 lg:p-10">
+    <div className={`min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-10`} style={bodyFont}>
       {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+
+      <div className="mx-auto max-w-5xl">
+        <div
+          className="overflow-hidden rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.24)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12">
-            
-            {/* PHOTO SIDEBAR */}
-            <div className="lg:col-span-4 bg-slate-50/50 p-10 border-r border-slate-100 flex flex-col items-center justify-center text-center">
-              <div className="relative group mb-6">
-                <div className="w-40 h-40 rounded-[3rem] bg-white p-2 shadow-2xl transition-transform group-hover:rotate-2">
-                  <img src={preview || "/default-avatar.png"} alt="preview" className="w-full h-full object-cover rounded-[2.5rem]" />
+
+            {/* ============ LOGO SIDEBAR ============ */}
+            <div
+              className="flex flex-col items-center justify-center border-b p-10 text-center lg:col-span-4 lg:border-b-0 lg:border-r"
+              style={{ borderColor: HAIRLINE }}
+            >
+              <div className="relative mb-6">
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
+                  <img src={preview || "/default-avatar.png"} alt="preview" className="h-full w-full object-cover" />
                 </div>
-                <label className="absolute -bottom-2 -right-2 w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white cursor-pointer shadow-xl hover:bg-red-600 transition-all hover:scale-110">
-                  <Camera size={20} />
+                <label
+                  className="absolute -bottom-1 -right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-white shadow-[0_8px_20px_-6px_rgba(26,26,29,0.6)]"
+                  style={{ backgroundColor: CHARCOAL }}
+                >
+                  <Camera size={16} strokeWidth={1.75} />
                   <input type="file" name="logo" accept="image/*" className="hidden" onChange={handleChange} />
                 </label>
               </div>
-              <h2 className="text-2xl font-black uppercase italic tracking-tighter">New <span className="text-red-600">Stall</span></h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">Initialize Asset Entry</p>
+              <h2
+                className="mt-3 text-4xl leading-none tracking-tight text-[#1C1A17]"
+                style={{ ...displayFont, fontWeight: 700 }}
+              >
+                New <span className="italic" style={{ color: GARNET }}>Employee</span>
+              </h2>
+              <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.28em]" style={{ color: GOLD }}>
+                Initialize Asset Entry
+              </p>
             </div>
 
-            {/* FORM AREA */}
-            <div className="lg:col-span-8 p-8 lg:p-12">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                
-                {/* IDENTIFICATION SECTION */}
+            {/* ============ FORM AREA ============ */}
+            <div className="p-8 lg:col-span-8 lg:p-12">
+              <form onSubmit={handleSubmit} className="space-y-10">
+
+                {/* IDENTIFICATION */}
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-6 flex items-center gap-2">
-                    <LayoutGrid size={14}/> Asset Identification
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className={labelCls}>Stall Name</label>
-                      <input name="name" placeholder="STALL NAME" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Stall Number</label>
-                      <input name="number" placeholder="ST-001" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Deployment Type</label>
-                      <input name="type" placeholder="PREMIUM / STANDARD" required onChange={handleChange} className={punchyInput} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Operation Load (Events)</label>
-                      <input type="number" name="eventCount" placeholder="0" min="0" onChange={handleChange} className={punchyInput} />
-                    </div>
+                  <SectionHeading icon={<LayoutGrid size={13} strokeWidth={1.5} />} label="Asset Identification" />
+                  <div className="grid grid-cols-1 gap-x-8 gap-y-7 md:grid-cols-2">
+                    <EditField label="Stall Name" name="name" placeholder="Stall name" required onChange={handleChange} />
+                    <EditField label="Stall Number" name="number" placeholder="ST-001" required onChange={handleChange} />
+                    <EditField label="Deployment Type" name="type" placeholder="Premium / Standard" required onChange={handleChange} />
+                    <EditField label="Operation Load (Events)" name="eventCount" type="number" placeholder="0" min="0" onChange={handleChange} />
                   </div>
                 </section>
 
-                {/* OPERATIONAL PLANS SECTION */}
+                <GoldRule />
+
+                {/* OPERATIONAL PLANS */}
                 <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Operational Plans</h3>
-                    <button type="button" onClick={addPlan} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors">
-                        <Plus size={14} /> Add Plan
+                  <div className="mb-6 flex items-center justify-between">
+                    <SectionHeading label="Operational Plans" muted />
+                    <button
+                      type="button"
+                      onClick={addPlan}
+                      className="flex cursor-pointer items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors"
+                      style={{ color: GOLD }}
+                    >
+                      <Plus size={14} strokeWidth={1.75} /> Add Plan
                     </button>
                   </div>
-                  
-                  <div className="grid grid-cols-1 gap-5">
+
+                  <div className="space-y-6">
                     {form.plans.map((plan, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                            <input 
-                                value={plan} 
-                                onChange={(e) => handlePlanChange(idx, e.target.value)} 
-                                placeholder={`MISSION PROTOCOL ${idx + 1}`} 
-                                className={punchyInput}
-                            />
-                            {form.plans.length > 1 && (
-                                <button type="button" onClick={() => removePlan(idx)} className="p-3 text-slate-400 hover:text-red-600">
-                                    <Trash2 size={16} />
-                                </button>
-                            )}
+                      <div key={idx} className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <FieldLabel label={`Plan ${idx + 1}`} />
+                          <input
+                            value={plan}
+                            onChange={(e) => handlePlanChange(idx, e.target.value)}
+                            placeholder="Describe plan"
+                            className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+                            style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+                            onFocus={(e) => (e.target.style.borderColor = GOLD)}
+                            onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+                          />
                         </div>
+                        {form.plans.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removePlan(idx)}
+                            className="cursor-pointer pb-2 transition-colors"
+                            style={{ color: SLATE }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = CHARCOAL)}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = SLATE)}
+                          >
+                            <Trash2 size={16} strokeWidth={1.75} />
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </section>
 
-                {/* ACTION BUTTONS */}
-                <div className="flex items-center gap-4 pt-4">
-                  <button type="button" onClick={() => navigate(-1)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all cursor-pointer">
+                {/* ACTIONS */}
+                <div className="flex items-center gap-6 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="cursor-pointer text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
+                    style={{ color: SLATE }}
+                  >
                     Discard
                   </button>
-                  <button 
-                    disabled={loading} 
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:from-red-600 hover:to-rose-500 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  <button
+                    disabled={loading}
+                    className="flex-1 cursor-pointer rounded-full py-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: CHARCOAL }}
                   >
-                    {loading ? "INITIALIZING..." : "EXECUTE ONBOARDING"}
+                    {loading ? "Initializing…" : "Execute Onboarding"}
                   </button>
                 </div>
               </form>
@@ -196,5 +247,36 @@ const StallAdd = () => {
     </div>
   );
 };
+
+/* ===== SUPPORTING COMPONENTS ===== */
+
+const GoldRule = () => <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />;
+
+const SectionHeading = ({ icon, label, muted }) => (
+  <h3
+    className="mb-6 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.3em]"
+    style={{ color: muted ? SLATE : GOLD }}
+  >
+    {icon}
+    {label}
+  </h3>
+);
+
+const FieldLabel = ({ label }) => (
+  <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>{label}</span>
+);
+
+const EditField = ({ label, ...props }) => (
+  <div>
+    <FieldLabel label={label} />
+    <input
+      {...props}
+      className="mt-2 w-full border-b bg-transparent pb-2 text-base outline-none transition-colors"
+      style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
+      onFocus={(e) => (e.target.style.borderColor = GOLD)}
+      onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
+    />
+  </div>
+);
 
 export default StallAdd;

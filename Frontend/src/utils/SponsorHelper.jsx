@@ -3,39 +3,56 @@ import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const HAIRLINE = "#E7DFD2";
+
+const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
 /* ================= PREMIUM CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] animate-in fade-in duration-300" />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95 duration-200">
-        <div className="w-full max-w-md rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />
-          
-          <div className="p-8">
-            <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-600 mb-6 mx-auto shadow-inner">
-              <AlertCircle size={32} strokeWidth={2.5} />
+      <div className="fixed inset-0 z-[60] bg-[#1C1A17]/40 backdrop-blur-md animate-in fade-in duration-300" />
+      <div className="fixed inset-0 z-[70] flex animate-in zoom-in-95 items-center justify-center px-4 duration-200">
+        <div
+          className="w-full max-w-md overflow-hidden rounded-[1.75rem] border bg-white shadow-[0_30px_60px_-24px_rgba(28,26,23,0.35)]"
+          style={{ borderColor: HAIRLINE }}
+        >
+          <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${GARNET}, ${GOLD} 45%, ${GARNET})` }} />
+
+          <div className="p-8 text-center" style={bodyFont}>
+            <div
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              style={{ borderColor: GOLD, color: GARNET }}
+            >
+              <AlertCircle size={28} strokeWidth={1.5} />
             </div>
 
-            <div className="text-center space-y-2 mb-8">
-              <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">
-                Terminate Sponsor<span className="text-red-600">?</span>
-              </h3>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                This sponsor record will be permanently purged from the system core.
-              </p>
-            </div>
+            <h3
+              className="text-2xl leading-none tracking-tight text-[#1C1A17]"
+              style={{ ...displayFont, fontWeight: 700 }}
+            >
+              Terminate <span className="italic" style={{ color: GARNET }}>Sponsor?</span>
+            </h3>
+            <p className="mt-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378]">
+              This record will be permanently removed from the registry.
+            </p>
 
-            <div className="flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={onCancel}
-                className="w-1/2 py-4 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                className="w-1/2 cursor-pointer rounded-2xl border py-4 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378] transition-colors hover:border-[#D9C79A] active:scale-95"
+                style={{ borderColor: HAIRLINE }}
               >
                 Abort
               </button>
               <button
                 onClick={onConfirm}
-                className="w-1/2 py-4 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-600 shadow-lg shadow-slate-200 hover:shadow-red-200 transition-all active:scale-95 cursor-pointer"
+                className="w-1/2 cursor-pointer rounded-2xl py-4 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all active:scale-95"
+                style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
               >
                 Confirm Delete
               </button>
@@ -51,21 +68,31 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
 const DeleteSuccessAlert = ({ onClose }) => {
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] animate-in fade-in" />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 animate-in zoom-in-95">
-        <div className="w-full max-w-sm rounded-[2.5rem] bg-white shadow-2xl border border-white overflow-hidden p-8 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mb-6 mx-auto">
-            <CheckCircle2 size={32} strokeWidth={2.5} />
+      <div className="fixed inset-0 z-[60] bg-[#1C1A17]/20 backdrop-blur-sm animate-in fade-in" />
+      <div className="fixed inset-0 z-[70] flex animate-in zoom-in-95 items-center justify-center px-4">
+        <div
+          className="w-full max-w-sm overflow-hidden rounded-[1.75rem] border bg-white p-8 text-center shadow-[0_30px_60px_-24px_rgba(28,26,23,0.35)]"
+          style={{ borderColor: HAIRLINE }}
+        >
+          <div
+            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: GOLD, color: "#3F5B54" }}
+          >
+            <CheckCircle2 size={28} strokeWidth={1.5} />
           </div>
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic mb-2">
-            Record Purged<span className="text-green-500">.</span>
+          <h3
+            className="mb-2 text-xl leading-none tracking-tight text-[#1C1A17]"
+            style={{ ...displayFont, fontWeight: 700 }}
+          >
+            Record Removed.
           </h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
-            The sponsor database has been updated.
+          <p className="mb-6 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378]">
+            The sponsor directory has been updated.
           </p>
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200 transition-all active:scale-95"
+            className="w-full cursor-pointer rounded-2xl border py-4 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378] transition-colors hover:border-[#D9C79A] active:scale-95"
+            style={{ borderColor: HAIRLINE }}
           >
             Acknowledge
           </button>
@@ -95,10 +122,10 @@ export const SponsorButtons = ({ id, refresh }) => {
       if (response.data.success) {
         setShowConfirm(false);
         setShowSuccess(true);
-        
+
         setTimeout(() => {
           setShowSuccess(false);
-          if (refresh) refresh(); 
+          if (refresh) refresh();
         }, 1200);
       }
     } catch (err) {
@@ -120,32 +147,37 @@ export const SponsorButtons = ({ id, refresh }) => {
         <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
       )}
 
-      <div className="flex gap-2 justify-end items-center">
+      <div className="flex items-center justify-end gap-2">
         {/* View Action */}
         <button
           onClick={() => navigate(`/admin-dashboard/sponsors/${id}`)}
-          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-600 hover:border-red-100 hover:shadow-lg hover:shadow-red-50 transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group cursor-pointer rounded-full border bg-white p-2.5 text-[#8A8378] shadow-sm transition-all duration-300 hover:border-[#D9C79A] hover:text-[#7A2233] active:scale-90"
+          style={{ borderColor: HAIRLINE }}
           title="View Details"
         >
-          <Eye size={16} strokeWidth={2.5} />
+          <Eye size={16} strokeWidth={1.75} />
         </button>
 
         {/* Edit Action */}
         <button
           onClick={() => navigate(`/admin-dashboard/sponsors/edit/${id}`)}
-          className="group p-2.5 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 hover:shadow-lg transition-all duration-300 active:scale-90 cursor-pointer"
+          className="group cursor-pointer rounded-full border bg-white p-2.5 text-[#8A8378] shadow-sm transition-all duration-300 hover:border-[#D9C79A] hover:text-[#1C1A17] active:scale-90"
+          style={{ borderColor: HAIRLINE }}
           title="Modify Sponsor"
         >
-          <Edit2 size={16} strokeWidth={2.5} />
+          <Edit2 size={16} strokeWidth={1.75} />
         </button>
 
         {/* Delete Action */}
         <button
           onClick={() => setShowConfirm(true)}
-          className="group p-2.5 rounded-full bg-slate-50 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-300 active:scale-90 cursor-pointer"
-          title="Delete Permanent"
+          className="cursor-pointer rounded-full p-2.5 transition-colors duration-300 active:scale-90"
+          style={{ backgroundColor: "#F6F2EA", color: "#8A8378" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = GARNET; e.currentTarget.style.color = "#fff"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#F6F2EA"; e.currentTarget.style.color = "#8A8378"; }}
+          title="Delete Record"
         >
-          <Trash2 size={16} strokeWidth={2.5} />
+          <Trash2 size={16} strokeWidth={1.75} />
         </button>
       </div>
     </>

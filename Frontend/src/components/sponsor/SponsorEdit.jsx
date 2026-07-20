@@ -1,29 +1,48 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { Camera, CheckCircle2, X, Building2, UserPlus, Zap, Globe, Trophy } from "lucide-react";
+import { Camera, CheckCircle2, X, Building2, Zap, Globe, ChevronLeft } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-/* ================= PREMIUM SUCCESS ALERT (Matched to Client View) ================= */
+const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
+
+const CHARCOAL = "#1A1A1D";
+const GOLD = "#AD8A56";
+const SLATE = "#7A756C";
+const GARNET = "#722F37";
+const HAIRLINE = "rgba(26,26,29,0.10)";
+const GOLD_HAIRLINE = "rgba(173,138,86,0.35)";
+
+const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
+const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
+
+/* ================= SUCCESS ALERT ================= */
 const SuccessAlert = ({ onClose }) => (
   <>
-    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-50 animate-in fade-in duration-300" />
+    <div className="fixed inset-0 bg-[#1A1A1D]/30 backdrop-blur-md z-50 animate-in fade-in duration-300" />
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-10 text-center">
-          <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <CheckCircle2 size={40} />
+      <div
+        className="w-full max-w-sm rounded-[1.25rem] border bg-white/90 shadow-[0_40px_90px_-32px_rgba(26,26,29,0.28)] backdrop-blur-md overflow-hidden animate-in zoom-in-95 duration-300"
+        style={{ borderColor: HAIRLINE }}
+      >
+        <div className="p-10 text-center" style={bodyFont}>
+          <div
+            className="flex h-16 w-16 items-center justify-center rounded-full border mx-auto mb-6"
+            style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
+          >
+            <CheckCircle2 size={30} strokeWidth={1.5} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+          <h3 className="text-2xl" style={{ ...displayFont, fontWeight: 500 }}>
             Update Verified
           </h3>
-          <p className="text-sm text-slate-500 mt-3 font-medium leading-relaxed">
-            The sponsor database has been synchronized with your new records.
+          <p className="text-xs mt-3 leading-relaxed" style={{ color: SLATE }}>
+            The sponsor record has been synchronized with your new details.
           </p>
           <button
             onClick={onClose}
-            className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black uppercase tracking-widest text-[11px] hover:from-red-600 hover:to-rose-500 transition-all shadow-xl active:scale-95 cursor-pointer"
+            className="w-full mt-8 cursor-pointer rounded-full px-8 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition-colors"
+            style={{ backgroundColor: CHARCOAL }}
           >
             Continue to Dashboard
           </button>
@@ -78,7 +97,7 @@ const SponsorEdit = () => {
         }
       } catch (err) {
         console.error("Failed to load sponsor data", err);
-        alert("Failed to load sponsor protocol.");
+        alert("Failed to load sponsor record.");
       } finally {
         setLoading(false);
       }
@@ -122,7 +141,7 @@ const SponsorEdit = () => {
         setShowAlert(true);
       }
     } catch (err) {
-      alert(err.response?.data?.error || "Update protocol failed.");
+      alert(err.response?.data?.error || "Update failed.");
     } finally {
       setSaving(false);
     }
@@ -131,178 +150,192 @@ const SponsorEdit = () => {
   if (loading) return <LoadingPulse />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-50 text-slate-900 font-sans p-4 lg:p-12">
+    <div className={`relative min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-10`} style={bodyFont}>
       {showAlert && (
         <SuccessAlert onClose={() => navigate("/admin-dashboard/sponsors")} />
       )}
 
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-10 px-4">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Administration</p>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Modify <span className="not-italic text-red-600">Sponsor</span></h1>
-          </div>
+      <div className="relative z-10 mx-auto max-w-3xl">
+
+        <div className="mb-8 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-red-600 transition-all cursor-pointer"
+            className="flex cursor-pointer items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-colors hover:text-[#1A1A1D]"
+            style={{ color: SLATE }}
           >
-            <X size={16} className="group-hover:rotate-90 transition-transform" /> Discard
+            <ChevronLeft size={14} strokeWidth={1.75} /> Back
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* --- LEFT: AVATAR --- */}
-          <div className="lg:col-span-4">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-48 h-48 rounded-[4rem] overflow-hidden ring-8 ring-slate-50 p-1 shadow-inner">
-                  <img
-                    src={preview}
-                    alt="preview"
-                    className="w-full h-full object-cover rounded-[3.5rem]"
-                  />
-                </div>
-                <label className="absolute bottom-2 right-2 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-xl hover:bg-red-600 transition-all active:scale-90">
-                  <Camera size={24} />
-                  <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleImageChange} />
-                </label>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-[1.25rem] border bg-white/80 shadow-[0_1px_2px_rgba(26,26,29,0.04),0_40px_90px_-32px_rgba(26,26,29,0.28)] backdrop-blur-md"
+          style={{ borderColor: HAIRLINE }}
+        >
+          {/* ============ NAMEPLATE / AVATAR ============ */}
+          <div className="flex flex-col items-center px-8 pb-10 pt-12 text-center sm:px-14">
+            <div className="relative">
+              <div
+                className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border"
+                style={{ borderColor: GOLD_HAIRLINE }}
+              >
+                <img src={preview} alt="preview" className="h-full w-full object-cover" />
               </div>
+              <label
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white shadow-md transition-colors"
+                style={{ backgroundColor: CHARCOAL }}
+              >
+                <Camera size={14} strokeWidth={1.75} />
+                <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleImageChange} />
+              </label>
+            </div>
 
-              <div className="mt-8 w-full">
-                <InputItem
-                  label="Sponsor Name"
-                  icon={<Building2 size={14}/>}
+            <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: GOLD }}>
+              HAKIRUSH · Editing Record
+            </p>
+            <h2
+                className="mt-3 text-5xl leading-none tracking-tight text-[#1C1A17]"
+                style={{ ...displayFont, fontWeight: 700 }}
+              >
+                Edit <span className="italic" style={{ color: GARNET }}>Sponsor</span>
+            </h2>
+          </div>
+
+          <GoldRule />
+
+          {/* ============ FORM FIELDS ============ */}
+          <div className="px-8 py-10 sm:px-14">
+            <div className="mb-8 flex items-center gap-2" style={{ color: GOLD }}>
+              <Building2 size={14} strokeWidth={1.5} />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: SLATE }}>
+                Sponsor Registry
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2">
+              <FormField label="Sponsor Name" icon={<Building2 size={14} strokeWidth={1.5} />}>
+                <input
                   name="name"
                   value={sponsor.name}
                   onChange={handleChange}
                   placeholder="Enter sponsor name"
                   required
+                  className="w-full bg-transparent outline-none text-base"
+                  style={{ ...displayFont, fontWeight: 500 }}
                 />
-              </div>
-            </div>
-          </div>
+              </FormField>
 
-          {/* --- RIGHT: FORM DATA --- */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
-                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><UserPlus size={14}/></div>
-                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Sponsor Registry</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SelectItem
-                  label="Collaboration Type"
-                  icon={<Zap size={14}/>}
+              <FormField label="Collaboration Type" icon={<Zap size={14} strokeWidth={1.5} />}>
+                <select
                   name="collaboration"
                   value={sponsor.collaboration}
                   onChange={handleChange}
                   required
-                  options={[
-                    { label: "TITLE SPONSOR", value: "Title Sponsor" },
-                    { label: "ASSOCIATE SPONSOR", value: "Associate Sponsor" },
-                    { label: "EVENT SPONSOR", value: "Event Sponsor" },
-                    { label: "MEDIA PARTNER", value: "Media Partner" }
-                  ]}
-                />
-                
-                <InputItem
-                  label="Events Sponsored"
-                  icon={<Trophy size={14}/>}
+                  className="w-full cursor-pointer bg-transparent outline-none text-base"
+                  style={{ ...displayFont, fontWeight: 500 }}
+                >
+                  <option value="">Choose Variant</option>
+                  <option value="Title Sponsor">Title Sponsor</option>
+                  <option value="Associate Sponsor">Associate Sponsor</option>
+                  <option value="Event Sponsor">Event Sponsor</option>
+                  <option value="Media Partner">Media Partner</option>
+                </select>
+              </FormField>
+
+              <FormField label="Events Sponsored" icon={<Zap size={14} strokeWidth={1.5} />}>
+                <input
                   type="number"
                   name="eventsSponsored"
                   value={sponsor.eventsSponsored}
                   onChange={handleChange}
                   placeholder="Enter count"
+                  className="w-full bg-transparent outline-none text-base"
+                  style={{ ...displayFont, fontWeight: 500 }}
                 />
+              </FormField>
 
-                <InputItem
-                  label="Market Reach"
-                  icon={<Globe size={14}/>}
+              <FormField label="Market Reach" icon={<Globe size={14} strokeWidth={1.5} />}>
+                <input
                   name="reach"
                   value={sponsor.reach}
                   onChange={handleChange}
-                  placeholder="E.G. 5M REACH"
+                  placeholder="e.g. 5M reach"
+                  className="w-full bg-transparent outline-none text-base"
+                  style={{ ...displayFont, fontWeight: 500 }}
                 />
-              </div>
-            </div>
-
-            {/* PIPELINE SECTION */}
-            <div className="bg-white border border-slate-200 rounded-[3.5rem] p-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-2 border-b border-slate-50 pb-6">
-                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl"><Zap size={14}/></div>
-                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Future Pipeline</h3>
-              </div>
-              <InputItem
-                label="Upcoming Operations"
-                icon={<Globe size={14}/>}
-                name="upcomingEvents"
-                value={sponsor.upcomingEvents}
-                onChange={handleChange}
-                placeholder="RECONFIGURE UPCOMING COLLABORATIONS..."
-              />
-            </div>
-
-            {/* ACTION FOOTER */}
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-slate-200 hover:from-red-600 hover:to-rose-500 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {saving ? "Synchronizing..." : "Authorize & Commit Changes"}
-              </button>
+              </FormField>
             </div>
           </div>
 
+          <GoldRule />
+
+          {/* ============ FUTURE PIPELINE ============ */}
+          <div className="px-8 py-10 sm:px-14">
+            <div className="mb-8 flex items-center gap-2" style={{ color: GOLD }}>
+              <Globe size={14} strokeWidth={1.5} />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.32em]" style={{ color: SLATE }}>
+                Future Pipeline
+              </span>
+            </div>
+            <FormField label="Upcoming Operations" icon={<Globe size={14} strokeWidth={1.5} />}>
+              <input
+                name="upcomingEvents"
+                value={sponsor.upcomingEvents}
+                onChange={handleChange}
+                placeholder="Reconfigure upcoming collaborations…"
+                className="w-full bg-transparent outline-none text-base"
+                style={{ ...displayFont, fontWeight: 500 }}
+              />
+            </FormField>
+          </div>
+
+          <GoldRule />
+
+          {/* ============ ACTION FOOTER ============ */}
+          <div className="flex flex-col items-center justify-center gap-4 px-8 py-10 sm:px-14">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full cursor-pointer rounded-full px-8 py-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: CHARCOAL }}
+            >
+              {saving ? "Synchronizing..." : "Authorize & Commit Changes"}
+            </button>
+          </div>
         </form>
+
+        <p className="mt-6 text-center text-[9px] uppercase tracking-[0.28em]" style={{ color: SLATE }}>
+          Secure &nbsp;·&nbsp; Encrypted &nbsp;·&nbsp; Admin Only
+        </p>
       </div>
     </div>
   );
 };
 
-/* ===== PREMIUM FORM COMPONENTS (Shared) ===== */
+/* ===== SUPPORTING COMPONENTS ===== */
 
-const InputItem = ({ label, icon, ...props }) => (
-  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
-        {label}
-      </p>
-    </div>
-    <input
-      {...props}
-      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 placeholder:text-slate-200 uppercase italic"
-    />
+const GoldRule = () => (
+  <div className="px-8 sm:px-14">
+    <div className="h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
   </div>
 );
 
-const SelectItem = ({ label, icon, options, ...props }) => (
-  <div className="group p-4 rounded-[2rem] bg-white border border-slate-200 focus-within:border-slate-900 focus-within:shadow-xl focus-within:shadow-slate-100 transition-all">
-    <div className="flex items-center gap-2 mb-2">
-      <span className="text-slate-400 group-focus-within:text-slate-900 transition-colors">{icon}</span>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-focus-within:text-slate-900">
+const FormField = ({ label, icon, children }) => (
+  <div className="border-b pb-3" style={{ borderColor: HAIRLINE }}>
+    <div className="flex items-center gap-2" style={{ color: GOLD }}>
+      {icon}
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: SLATE }}>
         {label}
-      </p>
+      </span>
     </div>
-    <select
-      {...props}
-      className="w-full bg-transparent outline-none text-xs font-bold text-slate-800 cursor-pointer uppercase italic"
-    >
-      <option value="">Choose Variant</option>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
-      ))}
-    </select>
+    <div className="mt-1.5">{children}</div>
   </div>
 );
 
 const LoadingPulse = () => (
-  <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-6">
-    <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
-    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Establishing Secure Session</p>
+  <div className={`flex min-h-screen flex-col items-center justify-center gap-4 ${PAGE_BG}`}>
+    <div className="h-9 w-9 animate-spin rounded-full border border-[#1A1A1D]/10 border-t-[#AD8A56]"></div>
+    <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-[#1A1A1D]/50">Establishing Secure Session</p>
   </div>
 );
 

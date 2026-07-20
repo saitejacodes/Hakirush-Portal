@@ -3,6 +3,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle, XCircle, Loader2, CalendarClock } from "lucide-react";
 
+const INK = "#1C1A17";
+const GARNET = "#7A2233";
+const GOLD = "#B8912E";
+const SAGE = "#3F6B52";
+const RUST = "#A24A32";
+
 /* ================= PREMIUM STATUS ALERT ================= */
 const StatusAlert = ({ type, onClose }) => {
   const isApproved = type === "approved";
@@ -11,23 +17,22 @@ const StatusAlert = ({ type, onClose }) => {
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-white p-8 animate-pop">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#E7E1D3] p-8 animate-pop">
           <div className="flex flex-col items-center text-center">
-            <div className={`p-4 rounded-full ${isApproved ? "bg-green-100" : "bg-red-100"}`}>
-              {isApproved 
-                ? <CheckCircle size={48} className="text-green-600" />
-                : <XCircle size={48} className="text-red-600" />
+            <div className={`p-4 rounded-full ${isApproved ? "bg-[#EEF3EE]" : "bg-[#FAF1EA]"}`}>
+              {isApproved
+                ? <CheckCircle size={48} style={{ color: SAGE }} />
+                : <XCircle size={48} style={{ color: RUST }} />
               }
             </div>
-            
-            <h3 className={`text-3xl font-black uppercase tracking-tighter mt-6 ${
-                isApproved ? "text-green-700" : "text-red-700"
-              }`}
+
+            <h3 className="text-3xl font-black uppercase tracking-tighter mt-6"
+              style={{ color: isApproved ? SAGE : RUST }}
             >
               {isApproved ? "Leave Approved" : "Leave Rejected"}
             </h3>
-            
-            <p className="text-slate-500 mt-2 font-medium max-w-sm">
+
+            <p className="text-[#8A8478] mt-2 font-medium max-w-sm">
               {isApproved
                 ? "The employee's leave balance has been updated successfully."
                 : "The leave request has been marked as rejected."}
@@ -35,11 +40,8 @@ const StatusAlert = ({ type, onClose }) => {
 
             <button
               onClick={onClose}
-              className={`w-full mt-8 py-4 rounded-2xl text-white font-black uppercase tracking-widest shadow-lg transition active:scale-95 ${
-                isApproved
-                  ? "bg-green-600 shadow-green-100 hover:bg-green-700"
-                  : "bg-red-600 shadow-red-100 hover:bg-red-700"
-              }`}
+              className="w-full mt-8 py-4 rounded-2xl text-[#F6F3EC] font-black uppercase tracking-widest shadow-md transition active:scale-95 hover:opacity-90"
+              style={{ backgroundColor: isApproved ? SAGE : RUST }}
             >
               Continue
             </button>
@@ -65,7 +67,7 @@ const LeaveDetails = () => {
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
-      
+
       const [leaveRes, holidayRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/detail/${id}`, { headers }),
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers })
@@ -136,14 +138,14 @@ const LeaveDetails = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-red-600 gap-4">
+    <div className="min-h-screen flex flex-col items-center justify-center text-[#B8912E] gap-4 bg-[#F6F3EC]">
       <Loader2 size={48} className="animate-spin" />
-      <p className="font-black uppercase tracking-widest text-sm">Syncing Details...</p>
+      <p className="font-black uppercase tracking-widest text-sm text-[#1C1A17]">Syncing Details...</p>
     </div>
   );
 
   if (!leave) return (
-    <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">
+    <div className="min-h-screen flex items-center justify-center text-[#8A8478] font-bold bg-[#F6F3EC]">
       Leave request not found.
     </div>
   );
@@ -154,10 +156,10 @@ const LeaveDetails = () => {
 
   const statusStyle =
     status === "approved"
-      ? "bg-green-100 text-green-700 border-green-200"
+      ? "bg-[#EEF3EE] text-[#3F6B52] border-[#D7E4D9]"
       : status === "rejected"
-      ? "bg-red-100 text-red-700 border-red-200"
-      : "bg-yellow-100 text-yellow-700 border-yellow-200";
+      ? "bg-[#FAF1EA] text-[#A24A32] border-[#EAD9CC]"
+      : "bg-[#FBF3E3] text-[#9C7A22] border-[#EFE1BF]";
 
   return (
     <>
@@ -168,23 +170,23 @@ const LeaveDetails = () => {
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 p-4 md:p-8">
+      <div className="min-h-screen bg-[#F6F3EC] p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          
+
           {/* TOP NAV */}
-          <button 
+          <button
             onClick={() => navigate("/admin-dashboard/leaves")}
-            className="flex items-center gap-2 text-slate-500 hover:text-red-600 mb-6 group cursor-pointer transition-colors"
+            className="flex items-center gap-2 text-[#8A8478] hover:text-[#B8912E] mb-6 group cursor-pointer transition-colors"
           >
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
             <span className="font-bold text-xs uppercase tracking-widest">Back to List</span>
           </button>
 
-          <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-6 md:p-10 border border-white relative overflow-hidden">
-            
+          <div className="bg-white rounded-[2.5rem] shadow-sm p-6 md:p-10 border border-[#E7E1D3] relative overflow-hidden">
+
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row items-center gap-6 pb-8 border-b border-slate-100">
-              <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl overflow-hidden ring-1 ring-slate-100">
+            <div className="flex flex-col md:flex-row items-center gap-6 pb-8 border-b border-[#F1EFE8]">
+              <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-md overflow-hidden ring-1 ring-[#E7E1D3]">
                 <img
                   src={getImageUrl(leave?.employeeId?.userId?.profileImage)}
                   alt="profile"
@@ -194,14 +196,14 @@ const LeaveDetails = () => {
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+                <h2 className="text-4xl font-black text-[#1C1A17] tracking-tighter">
                   {leave?.employeeId?.userId?.name || "Employee"}
                 </h2>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-                  <span className="px-4 py-1.5 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
+                  <span className="px-4 py-1.5 rounded-full bg-[#1C1A17] text-[#F6F3EC] text-[10px] font-black uppercase tracking-widest">
                     ID: {leave?.employeeId?.employeeId}
                   </span>
-                  <span className="px-4 py-1.5 rounded-full bg-red-50 text-red-700 text-[10px] font-black uppercase tracking-widest border border-red-100">
+                  <span className="px-4 py-1.5 rounded-full bg-[#FBF3E3] text-[#9C7A22] text-[10px] font-black uppercase tracking-widest border border-[#EFE1BF]">
                     {leave?.employeeId?.department?.dep_name || "Staff"}
                   </span>
                 </div>
@@ -216,21 +218,21 @@ const LeaveDetails = () => {
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Info label="Email Address" value={leave?.employeeId?.userId?.email} />
               <Info label="Leave Type" value={leave?.leaveType} highlight />
-              <Info 
-                label="Duration" 
-                value={`${netDays} Work Days`} 
+              <Info
+                label="Duration"
+                value={`${netDays} Work Days`}
                 subValue="Excludes weekends & holidays"
                 icon={<CalendarClock size={16}/>}
-                isRed
+                accent
               />
               <Info label="From Date" value={new Date(leave.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'})} />
               <Info label="To Date" value={new Date(leave.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'})} />
               <Info label="Designation" value={leave?.employeeId?.designation} />
 
               <div className="sm:col-span-2 lg:col-span-3">
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                  <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black mb-2">Reason</p>
-                  <p className="text-slate-700 font-medium leading-relaxed italic">
+                <div className="bg-[#FBFAF6] rounded-2xl p-6 border border-[#E7E1D3]">
+                  <p className="text-[10px] uppercase tracking-widest text-[#8A8478] font-black mb-2">Reason</p>
+                  <p className="text-[#1C1A17] font-medium leading-relaxed">
                     "{leave?.reason || "No description provided."}"
                   </p>
                 </div>
@@ -239,12 +241,13 @@ const LeaveDetails = () => {
 
             {/* Actions */}
             {isPending && (
-              <div className="mt-10 pt-8 border-t border-slate-100">
+              <div className="mt-10 pt-8 border-t border-[#F1EFE8]">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => changeStatus(leave._id, "Approved")}
                     disabled={actionLoading}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-600 text-white font-black uppercase tracking-widest shadow-lg shadow-green-100 hover:bg-green-700 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[#F6F3EC] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 hover:opacity-90"
+                    style={{ backgroundColor: SAGE }}
                   >
                     {actionLoading ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle size={20}/>}
                     Approve Request
@@ -252,7 +255,8 @@ const LeaveDetails = () => {
                   <button
                     onClick={() => changeStatus(leave._id, "Rejected")}
                     disabled={actionLoading}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest shadow-lg shadow-red-100 hover:bg-red-700 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[#F6F3EC] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 hover:opacity-90"
+                    style={{ backgroundColor: RUST }}
                   >
                      {actionLoading ? <Loader2 className="animate-spin" size={20}/> : <XCircle size={20}/>}
                     Reject Request
@@ -267,20 +271,20 @@ const LeaveDetails = () => {
   );
 };
 
-const Info = ({ label, value, subValue, highlight, isRed, icon }) => (
+const Info = ({ label, value, subValue, highlight, accent, icon }) => (
   <div className={`rounded-2xl p-5 border transition-all ${
-    isRed ? "bg-red-50/50 border-red-100" : "bg-white border-slate-100"
+    accent ? "bg-[#FBF3E3]/60 border-[#EFE1BF]" : "bg-white border-[#E7E1D3]"
   }`}>
-    <div className={`flex items-center gap-2 text-[10px] uppercase tracking-widest font-black ${isRed ? "text-red-400" : "text-slate-400"}`}>
+    <div className={`flex items-center gap-2 text-[10px] uppercase tracking-widest font-black ${accent ? "text-[#B8912E]" : "text-[#8A8478]"}`}>
         {icon}
         {label}
     </div>
     <p className={`text-lg font-bold mt-1.5 tracking-tight ${
-      highlight ? "text-red-600" : isRed ? "text-red-700" : "text-slate-900"
+      highlight ? "text-[#B8912E]" : accent ? "text-[#9C7A22]" : "text-[#1C1A17]"
     }`}>
       {value ?? "—"}
     </p>
-    {subValue && <p className="text-[10px] font-bold text-red-400 uppercase mt-0.5">{subValue}</p>}
+    {subValue && <p className="text-[10px] font-bold text-[#B8912E] uppercase mt-0.5">{subValue}</p>}
   </div>
 );
 
