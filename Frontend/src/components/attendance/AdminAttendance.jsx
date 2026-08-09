@@ -1,15 +1,17 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, Clock, ShieldAlert, Activity, User, Hash, Briefcase } from "lucide-react";
+import { Search, CalendarDays, FileText, ChevronLeft, ChevronRight, ChevronDown, Clock, ShieldAlert, Activity, User, Hash, Briefcase, MessageSquareText } from "lucide-react";
 import { Link } from "react-router-dom";
 import AttendanceHelper from "../../utils/AttendanceHelper";
 
-const ITEMS_PER_PAGE = 8;
+const PAGE_SIZE_OPTIONS = [5, 10, 15, 20];
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
-const GOLD = "#C6A15B";
-const HAIRLINE = "#E7DFD2";
+const GOLD = "#B8912E";
+const HAIRLINE = "#E7E1D3";
+const SAGE = "#3F6B52";
+const RUST = "#A24A32";
 
 const formatTimer = (attendance) => {
   if (!attendance?.checkIn) return "00:00:00";
@@ -22,13 +24,47 @@ const formatTimer = (attendance) => {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
+const normalizeStatus = (status) => {
+  if (status === null || status === undefined || status === "") return "";
+  return status.toString().toLowerCase().replace(/\s+/g, "");
+};
+
 const getTodayLabel = () => new Date().toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" });
+
+/* Scoped scrollbar styling for the table viewport */
+const ScrollbarStyle = () => (
+  <style>{`
+    .attendance-table-scroll::-webkit-scrollbar {
+      width: 10px;
+    }
+    .attendance-table-scroll::-webkit-scrollbar-track {
+      background: #FBFAF6;
+      border-radius: 999px;
+    }
+    .attendance-table-scroll::-webkit-scrollbar-thumb {
+      background-color: ${GOLD};
+      background-image: linear-gradient(180deg, ${GOLD}, ${RUST});
+      background-clip: padding-box;
+      border: 2.5px solid #FBFAF6;
+      border-radius: 999px;
+    }
+    .attendance-table-scroll::-webkit-scrollbar-thumb:hover {
+      border-color: #F5EFE0;
+    }
+    .attendance-table-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: ${GOLD} #FBFAF6;
+    }
+  `}</style>
+);
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
 
   const [dayStatus, setDayStatus] = useState("");
   const [isOffDay, setIsOffDay] = useState(false);
@@ -58,6 +94,16 @@ const AdminAttendance = () => {
     }
   };
 
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance-request`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        params: { status: "Pending" },
+      })
+      .then((res) => { if (res.data?.success) setPendingRequestCount(res.data.requests.length); })
+      .catch(() => {});
+  }, []);
+
   const handleStatusChange = async (employeeId, status) => {
     try {
       setLoading(true);
@@ -82,8 +128,28 @@ const AdminAttendance = () => {
       .sort((a, b) => a.employeeCode.localeCompare(b.employeeCode, undefined, { numeric: true }));
   }, [attendance, search]);
 
-  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
-  const paginated = useMemo(() => sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE), [sorted, currentPage]);
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
+  const paginated = useMemo(() => sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [sorted, currentPage, itemsPerPage]);
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+  };
+
+  const presentCount = useMemo(
+    () => attendance.filter((a) => normalizeStatus(a.status) === "present").length,
+    [attendance]
+  );
+
+  const absentCount = useMemo(
+    () => attendance.filter((a) => normalizeStatus(a.status) === "absent").length,
+    [attendance]
+  );
+
+  const leaveCount = useMemo(
+    () => attendance.filter((a) => normalizeStatus(a.status) === "leave").length,
+    [attendance]
+  );
 
   useEffect(() => {
     const visibleIds = paginated.map((p) => p._id ?? p.employeeMongoId);
@@ -99,10 +165,11 @@ const AdminAttendance = () => {
 
   return (
     <div className="min-h-screen bg-[#F6F3EC] pb-20">
+      <ScrollbarStyle />
       <div className="max-w-[1400px] mx-auto p-4 sm:p-8 space-y-8">
 
         {/* HEADER SECTION */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+        <header className="flex flex-col gap-6 pt-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-[#1C1A17] flex items-center justify-center text-[#B8912E] shadow-xl shadow-black/10 ring-1 ring-[#B8912E]/20">
               <Activity size={30} strokeWidth={2} />
@@ -119,14 +186,71 @@ const AdminAttendance = () => {
             </div>
           </div>
 
-          <Link
-            to="/admin-dashboard/attendance-report"
-            className="flex items-center justify-center gap-2 rounded-2xl bg-[#1C1A17] px-6 py-4 font-black uppercase text-[10px] tracking-widest text-[#F6F3EC] shadow-md hover:bg-[#B8912E]"
-            style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
-          >
-            <FileText size={16} />
-            <span>View Archive</span>
-          </Link>
+          {/* SNAPSHOT — quiet stat strip */}
+          {!loading && attendance.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 self-stretch lg:flex lg:items-stretch lg:self-auto">
+              <div
+                className="flex flex-col justify-center rounded-2xl border bg-white px-5 py-3 lg:px-6"
+                style={{ borderColor: HAIRLINE }}
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C9C2AE]">Personnel</p>
+                <p className="text-xl font-black tracking-tight text-[#1C1A17]">
+                  {attendance.length}
+                </p>
+              </div>
+              <div
+                className="flex flex-col justify-center rounded-2xl border bg-white px-5 py-3 lg:px-6"
+                style={{ borderColor: HAIRLINE }}
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C9C2AE]">Present Today</p>
+                <p className="text-xl font-black tracking-tight" style={{ color: SAGE }}>
+                  {presentCount}
+                </p>
+              </div>
+              <div
+                className="flex flex-col justify-center rounded-2xl border bg-white px-5 py-3 lg:px-6"
+                style={{ borderColor: HAIRLINE }}
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C9C2AE]">Absent</p>
+                <p className="text-xl font-black tracking-tight" style={{ color: RUST }}>
+                  {absentCount}
+                </p>
+              </div>
+              <div
+                className="flex flex-col justify-center rounded-2xl border bg-white px-5 py-3 lg:px-6"
+                style={{ borderColor: HAIRLINE }}
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C9C2AE]">On Leave</p>
+                <p className="text-xl font-black tracking-tight" style={{ color: GOLD }}>
+                  {leaveCount}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <Link
+              to="/admin-dashboard/attendance-requests"
+              className="relative flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 font-black uppercase text-[10px] tracking-widest text-[#1C1A17] border border-[#E7E1D3] shadow-sm hover:border-[#B8912E]/40 transition-all"
+            >
+              <MessageSquareText size={16} />
+              <span>Review Requests</span>
+              {pendingRequestCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-[#A24A32] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+                  {pendingRequestCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              to="/admin-dashboard/attendance-report"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-[#1C1A17] px-6 py-4 font-black uppercase text-[10px] tracking-widest text-[#F6F3EC] shadow-md hover:bg-[#B8912E]"
+              style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
+            >
+              <FileText size={16} />
+              <span>View Archive</span>
+            </Link>
+          </div>
         </header>
 
         {/* SEARCH & DATE */}
@@ -169,62 +293,106 @@ const AdminAttendance = () => {
                 </div>
               )}
 
-              {/* DESKTOP VIEW */}
-              <div className="hidden md:block overflow-x-auto px-8 py-6">
-                <table className="w-full border-separate border-spacing-y-3">
-                  <thead>
-                    <tr className="text-[11px] font-black text-[#8A8478] uppercase tracking-[0.3em]">
-                      <th className="px-8 py-4 text-left">Ref</th>
-                      <th className="px-8 py-4 text-left">Personnel</th>
-                      <th className="px-8 py-4 text-center">Timer</th>
-                      <th className="px-8 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginated.length > 0 ? paginated.map((a, i) => (
-                      <tr key={a.employeeMongoId} className="bg-[#FBFAF6] hover:bg-white border border-transparent hover:border-[#E7E1D3] transition-all group shadow-sm hover:shadow-md">
-                        <td className="px-8 py-6 first:rounded-l-[1.5rem] text-[11px] font-black text-[#D6D0BF]">
-                            #{(currentPage-1)*ITEMS_PER_PAGE+i+1}
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex flex-col">
-                            <span className="font-black uppercase text-[#1C1A17] group-hover:text-[#B8912E] transition-colors text-base leading-tight">{a.name}</span>
-                            <span className="text-[10px] font-bold text-[#8A8478] uppercase tracking-tight">ID: {a.employeeCode} • {a.department}</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6 text-center">
-                          <div className="inline-flex items-center gap-2 font-mono font-black text-[#1C1A17] bg-[#FBFAF6] px-4 py-2 rounded-[1rem] border border-[#E7E1D3]">
-                            <Clock size={14} className="text-[#B8912E]" /> {a.timer}
-                          </div>
-                        </td>
-                        <td className="px-8 py-6 last:rounded-r-[1.5rem] text-right">
-                          <AttendanceHelper
-                            employeeId={a.employeeMongoId}
-                            status={a.status}
-                            statusChange={fetchAttendance}
-                            checkIn={a.checkIn}
-                            checkOut={a.checkOut}
-                          />
-                        </td>
-                      </tr>
-                    )) : (
-                      <tr>
-                        <td colSpan="4" className="text-center py-10 text-[#8A8478] font-black uppercase tracking-widest text-xs">
-                          {isOffDay && dayStatus
-                            ? dayStatus
-                            : 'No records found for today.'}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              {/* DESKTOP VIEW — scrollable viewport with sticky header */}
+              <div className="hidden md:block px-8 pt-6 pb-2">
+                <div
+                  className="relative overflow-hidden rounded-[1.75rem] border shadow-[inset_0_1px_2px_rgba(28,26,23,0.03)]"
+                  style={{ borderColor: HAIRLINE, backgroundColor: "#FBFAF6" }}
+                >
+                  <div className="attendance-table-scroll max-h-[30rem] overflow-y-auto overflow-x-auto px-3 pb-3 pt-1">
+                    <table className="w-full border-separate" style={{ borderSpacing: "0 0.875rem" }}>
+                      <thead className="sticky top-0 z-10">
+                        <tr className="text-left text-[10.5px] font-black text-[#8A8478] uppercase tracking-[0.28em]">
+                          <th className="px-5 py-4 pt-5 font-black" style={{ backgroundColor: "#FBFAF6" }}>
+                            <span className="border-b-2 pb-1" style={{ borderColor: GOLD }}>Ref</span>
+                          </th>
+                          <th className="px-5 py-4 pt-5 font-black" style={{ backgroundColor: "#FBFAF6" }}>
+                            <span className="border-b-2 pb-1" style={{ borderColor: GOLD }}>Personnel</span>
+                          </th>
+                          <th className="px-5 py-4 pt-5 text-center font-black" style={{ backgroundColor: "#FBFAF6" }}>
+                            <span className="border-b-2 pb-1" style={{ borderColor: GOLD }}>Timer</span>
+                          </th>
+                          <th className="px-5 py-4 pt-5 text-right font-black" style={{ backgroundColor: "#FBFAF6" }}>
+                            <span className="border-b-2 pb-1" style={{ borderColor: GOLD }}>Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginated.length > 0 ? paginated.map((a, i) => (
+                          <tr
+                            key={a.employeeMongoId}
+                            className="group relative animate-in fade-in border transition-all duration-300 hover:-translate-y-[3px] hover:border-[#B8912E]/40 hover:shadow-[0_20px_36px_-18px_rgba(28,26,23,0.2)]"
+                            style={{ backgroundColor: "#fff", borderColor: HAIRLINE, animationDelay: `${i * 40}ms`, animationFillMode: "backwards" }}
+                          >
+                            <td className="relative rounded-l-[1.5rem] px-5 py-6 text-[11px] font-black text-[#D6D0BF] transition-colors duration-300 group-hover:text-[#B8912E]">
+                              {/* left accent bar — reveals on hover */}
+                              <span
+                                className="absolute left-0 top-1/2 h-2/3 w-[3px] -translate-y-1/2 rounded-r-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                style={{ background: `linear-gradient(180deg, ${GOLD}, ${RUST})` }}
+                              />
+                              #{(currentPage - 1) * itemsPerPage + i + 1}
+                            </td>
+                            <td className="px-5 py-6">
+                              <div className="flex flex-col">
+                                <span className="font-black uppercase text-[#1C1A17] group-hover:text-[#B8912E] transition-colors text-base leading-tight">{a.name}</span>
+                                <span className="text-[10px] font-bold text-[#8A8478] uppercase tracking-tight">ID: {a.employeeCode} • {a.department}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-6 text-center">
+                              <div className="inline-flex items-center gap-2 font-mono font-black text-[#1C1A17] bg-[#FBFAF6] px-4 py-2 rounded-[1rem] border border-[#E7E1D3]">
+                                <Clock size={14} className="text-[#B8912E]" /> {a.timer}
+                              </div>
+                            </td>
+                            <td className="rounded-r-[1.5rem] px-5 py-6 text-right">
+                              <div className="origin-right scale-105 opacity-90 transition-all group-hover:opacity-100">
+                                <AttendanceHelper
+                                  employeeId={a.employeeMongoId}
+                                  status={a.status}
+                                  statusChange={fetchAttendance}
+                                  checkIn={a.checkIn}
+                                  checkOut={a.checkOut}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan="4" className="text-center py-10 text-[#8A8478] font-black uppercase tracking-widest text-xs">
+                              {isOffDay && dayStatus
+                                ? dayStatus
+                                : 'No records found for today.'}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* bottom fade — hints there's more to scroll */}
+                  {paginated.length > 4 && (
+                    <div
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-[1.75rem]"
+                      style={{ background: "linear-gradient(180deg, transparent, #FBFAF6)" }}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* MOBILE VIEW */}
               <div className="md:hidden p-4 space-y-4">
                 {paginated.length > 0 ? paginated.map((a) => (
                   <div key={a.employeeMongoId} className="bg-[#FBFAF6] rounded-[1.8rem] p-5 border border-[#E7E1D3] relative overflow-hidden">
-                    <div className={`absolute top-0 left-0 h-full w-1.5 ${a.status === 'present' ? 'bg-[#3F6B52]' : 'bg-[#A24A32]'}`} />
+                    <div
+                      className="absolute top-0 left-0 h-full w-1.5"
+                      style={{
+                        backgroundColor:
+                          normalizeStatus(a.status) === "present"
+                            ? SAGE
+                            : normalizeStatus(a.status) === "leave"
+                              ? GOLD
+                              : RUST,
+                      }}
+                    />
                     <div className="flex justify-between items-start mb-4 pl-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#1C1A17] flex items-center justify-center text-[#B8912E]">
@@ -267,31 +435,68 @@ const AdminAttendance = () => {
               </div>
 
               {/* PAGINATION */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between p-6 sm:p-8 bg-[#FBFAF6] border-t border-[#E7E1D3] gap-4 sm:gap-0">
-                  <div className="order-1 sm:order-2 px-6 py-2 bg-white rounded-full border border-[#E7E1D3]">
+              {sorted.length > 0 && (
+                <div className="flex flex-col items-center gap-4 p-6 sm:p-8 bg-[#FBFAF6] border-t border-[#E7E1D3] sm:flex-row sm:justify-between">
+                  {/* Previous */}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="order-2 flex h-11 w-full flex-1 items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-white px-4 sm:px-6 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#8A8478] border border-[#E7E1D3] transition-all enabled:hover:text-[#B8912E] enabled:hover:border-[#B8912E]/40 enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed sm:order-1 sm:w-auto sm:flex-none"
+                  >
+                    <ChevronLeft size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
+                    <span>Prev</span>
+                  </button>
+
+                  {/* Page Counter — middle */}
+                  <div className="order-1 px-7 py-2.5 bg-white rounded-full border border-[#E7E1D3] sm:order-2">
                     <p className="text-[10px] sm:text-[11px] font-black text-[#8A8478] uppercase tracking-widest text-center">
-                        Page <span className="text-[#B8912E]">{currentPage}</span>
-                        <span className="mx-2 text-[#D6D0BF]">/</span> {totalPages}
+                      Page <span className="text-[#B8912E]">{currentPage}</span>
+                      <span className="mx-2 text-[#D6D0BF]">/</span> {totalPages || 1}
                     </p>
                   </div>
-                  <div className="order-2 sm:order-1 flex w-full sm:w-auto gap-3 items-center justify-between sm:contents">
+
+                  {/* Right cluster — Next + per-page, grouped as one unit */}
+                  <div className="order-3 flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
                     <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#8A8478] border border-[#E7E1D3] transition-all enabled:hover:text-[#B8912E] enabled:hover:border-[#B8912E]/40 enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="flex h-11 flex-1 items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-white px-4 sm:px-6 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#8A8478] border border-[#E7E1D3] transition-all enabled:hover:text-[#B8912E] enabled:hover:border-[#B8912E]/40 enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed sm:flex-none"
                     >
-                        <ChevronLeft size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
-                        <span>Prev</span>
+                      <span>Next</span>
+                      <ChevronRight size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
                     </button>
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="flex-1 sm:flex-none order-3 flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#8A8478] border border-[#E7E1D3] transition-all enabled:hover:text-[#B8912E] enabled:hover:border-[#B8912E]/40 enabled:active:scale-95 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+
+                    {/* divider */}
+                    <div className="hidden h-6 w-px sm:block" style={{ backgroundColor: HAIRLINE }} />
+
+                    {/* PAGE SIZE SELECTOR */}
+                    <div
+                      className="flex h-11 shrink-0 items-center gap-2.5 rounded-2xl border bg-white px-3"
+                      style={{ borderColor: HAIRLINE }}
                     >
-                        <span>Next</span>
-                        <ChevronRight size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
-                    </button>
+                      <span className="whitespace-nowrap text-[9px] font-black uppercase tracking-widest text-[#C9C2AE]">
+                        Per page
+                      </span>
+                      <div className="relative">
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                          className="cursor-pointer appearance-none rounded-lg border bg-white py-1.5 pl-3 pr-7 text-[12px] font-black text-[#1C1A17] outline-none transition-all hover:border-[#B8912E]/40 focus:border-[#B8912E]/60"
+                          style={{ borderColor: HAIRLINE }}
+                        >
+                          {PAGE_SIZE_OPTIONS.map((size) => (
+                            <option key={size} value={size}>
+                              {size}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          size={12}
+                          strokeWidth={2.5}
+                          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8A8478]"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

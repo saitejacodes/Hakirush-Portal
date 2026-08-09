@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  UploadCloud, CheckCircle2, ArrowLeft, ShieldCheck,
+  UploadCloud, CheckCircle2, AlertTriangle, ArrowLeft, ShieldCheck,
   History, FileText, Wallet, Activity, Receipt
 } from "lucide-react";
 
@@ -12,34 +12,49 @@ const GOLD = "#B8912E";
 const SAGE = "#3F6B52";
 const RUST = "#A24A32";
 
-/* ===== SHARED SUCCESS ALERT COMPONENT ===== */
-const SuccessAlert = ({ onClose }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" />
-    <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-[#E7E1D3] p-8 text-center animate-in zoom-in-95 duration-300">
-      <div className="w-20 h-20 rounded-full bg-[#EEF3EE] flex items-center justify-center mx-auto mb-6" style={{ color: SAGE }}>
-        <CheckCircle2 size={40} strokeWidth={2.5} />
+/* ===== SHARED STATUS ALERT COMPONENT (success + error) ===== */
+const StatusAlert = ({ variant = "success", title, message, onClose }) => {
+  const isError = variant === "error";
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300" />
+      <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl border border-[#E7E1D3] p-8 text-center motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-300">
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          style={{
+            backgroundColor: isError ? "#F7EAE6" : "#EEF3EE",
+            color: isError ? RUST : SAGE
+          }}
+        >
+          {isError ? <AlertTriangle size={40} strokeWidth={2.5} /> : <CheckCircle2 size={40} strokeWidth={2.5} />}
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-[#1C1A17]">{title}</h3>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[#8A8478] mt-2 mb-8">
+          {message}
+        </p>
+        <button
+          onClick={onClose}
+          className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
+          style={{
+            backgroundColor: isError ? RUST : INK,
+            color: "#F6F3EC"
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = GOLD; e.currentTarget.style.color = INK; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isError ? RUST : INK; e.currentTarget.style.color = "#F6F3EC"; }}
+        >
+          {isError ? "Try Again" : "Dismiss Ledger"}
+        </button>
       </div>
-      <h3 className="text-2xl font-black uppercase tracking-tighter text-[#1C1A17]">Vaulted!</h3>
-      <p className="text-[11px] font-bold uppercase tracking-widest text-[#8A8478] mt-2 mb-8">
-        Financial statement has been securely posted.
-      </p>
-      <button 
-        onClick={onClose} 
-        className="w-full py-4 rounded-2xl bg-[#1C1A17] text-[10px] font-black uppercase tracking-widest text-[#F6F3EC] hover:bg-[#B8912E] hover:text-[#1C1A17] transition-all active:scale-95 shadow-md cursor-pointer"
-      >
-        Dismiss Ledger
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 const AddPayslip = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
+  const [alertState, setAlertState] = useState(null); // { variant, title, message } | null
   const [history, setHistory] = useState([]);
   const [fetchingHistory, setFetchingHistory] = useState(true);
 
@@ -55,13 +70,28 @@ const AddPayslip = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setHistory(res.data.payslips || []);
-    } catch (err) { console.error(err); } 
+    } catch (err) { console.error(err); }
     finally { setFetchingHistory(false); }
   };
 
   useEffect(() => { if (id) fetchHistory(); }, [id]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    if (!selected) return;
+    if (selected.type !== "application/pdf") {
+      setAlertState({
+        variant: "error",
+        title: "Wrong Format",
+        message: "Only PDF statements are accepted. Please select a .pdf file."
+      });
+      e.target.value = "";
+      return;
+    }
+    setFile(selected);
+  };
 
   const calculations = useMemo(() => {
     const gross = ["basicSalary", "hra", "conveyanceAllowance", "medicalAllowance", "bonus"]
@@ -73,7 +103,14 @@ const AddPayslip = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) return alert("Please upload the PDF payslip");
+    if (!file) {
+      setAlertState({
+        variant: "error",
+        title: "Missing Statement",
+        message: "Please upload the PDF payslip before finalizing."
+      });
+      return;
+    }
     setLoading(true);
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => formData.append(k, v));
@@ -85,18 +122,35 @@ const AddPayslip = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       if (res.data.success) {
-        setShowAlert(true);
+        setAlertState({
+          variant: "success",
+          title: "Vaulted!",
+          message: "Financial statement has been securely posted."
+        });
         fetchHistory();
         setForm({ month: "", basicSalary: "", hra: "", conveyanceAllowance: "", medicalAllowance: "", bonus: "", providentFund: "", professionalTax: "", incomeTax: "", lossOfPay: "" });
         setFile(null);
       }
-    } catch (err) { alert("Error posting payslip"); } 
+    } catch (err) {
+      setAlertState({
+        variant: "error",
+        title: "Posting Failed",
+        message: "The statement could not be committed. Please try again."
+      });
+    }
     finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen bg-[#F6F3EC] text-[#1C1A17] font-sans">
-      {showAlert && <SuccessAlert onClose={() => setShowAlert(false)} />}
+      {alertState && (
+        <StatusAlert
+          variant={alertState.variant}
+          title={alertState.title}
+          message={alertState.message}
+          onClose={() => setAlertState(null)}
+        />
+      )}
 
       <nav className="top-0 px-6 py-3 flex justify-between items-center z-50">
         <button onClick={() => navigate(-1)} className="group px-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#8A8478] hover:text-[#B8912E] transition-all cursor-pointer pt-5">
@@ -110,18 +164,18 @@ const AddPayslip = () => {
 
       <main className="max-w-6xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* LEFT: FORM SECTION */}
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-end gap-3">
                <h1 className="text-3xl font-black uppercase tracking-tighter">Issue <span className="text-[#B8912E]">Statement</span></h1>
-               <Activity size={20} className="mb-1 text-[#D6D0BF] animate-pulse" />
+               <Activity size={20} className="mb-1 text-[#D6D0BF] motion-safe:animate-pulse" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="bg-white rounded-[2.5rem] border border-[#E7E1D3] p-8 shadow-sm space-y-8">
                 <div className="w-full md:w-1/3">
-                   <Input label="Payroll Month" name="month" type="month" value={form.month} onChange={handleChange} required />
+                   <Input label="Payroll Month" name="month" type="month" value={form.month} onChange={handleChange} required placeholder="" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
@@ -141,7 +195,12 @@ const AddPayslip = () => {
                 </div>
 
                 <div className="group relative border-2 border-dashed border-[#E7E1D3] rounded-[2rem] p-6 text-center transition-all hover:border-[#B8912E] hover:bg-[#FBF3E3]/30">
-                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setFile(e.target.files[0])} />
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                  />
                   <UploadCloud size={24} className="mx-auto text-[#D6D0BF] mb-2 group-hover:text-[#B8912E] transition-colors" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#8A8478] group-hover:text-[#9C7A22] transition-colors">
                     {file ? file.name : "Drop PDF Statement"}
@@ -165,7 +224,7 @@ const AddPayslip = () => {
               <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B8912E]/70 mb-8 flex items-center gap-2">
                 <Activity size={10}/> Real-time Calculation
               </h3>
-              
+
               <div className="space-y-5">
                 <div className="flex justify-between items-center border-b border-white/10 pb-3">
                   <span className="text-[10px] text-[#D6D0BF] uppercase font-bold tracking-widest">Gross Yield</span>
@@ -188,7 +247,7 @@ const AddPayslip = () => {
               </h2>
               <div className="space-y-3">
                 {fetchingHistory ? (
-                   <div className="p-4 bg-white/60 rounded-2xl border border-[#E7E1D3] animate-pulse text-[10px] font-black uppercase text-[#D6D0BF] text-center tracking-widest">Syncing Vault...</div>
+                   <div className="p-4 bg-white/60 rounded-2xl border border-[#E7E1D3] motion-safe:animate-pulse text-[10px] font-black uppercase text-[#D6D0BF] text-center tracking-widest">Syncing Vault...</div>
                 ) : history.length === 0 ? (
                   <div className="p-10 text-center border-2 border-dashed border-[#E7E1D3] rounded-[2rem] text-[10px] font-black uppercase text-[#D6D0BF] tracking-widest">No entries found</div>
                 ) : (
@@ -225,15 +284,15 @@ const SectionLabel = ({ icon, title, color = "text-[#8A8478]" }) => (
   </div>
 );
 
-const Input = ({ label, ...props }) => (
+const Input = ({ label, placeholder = "0.00", ...props }) => (
   <div className="group space-y-2">
     <label className="text-[9px] font-black uppercase tracking-widest text-[#8A8478] group-focus-within:text-[#B8912E] transition-colors ml-1">
       {label}
     </label>
     <input
       {...props}
+      placeholder={placeholder}
       className="w-full bg-[#F6F3EC] border border-[#E7E1D3] rounded-2xl px-5 py-3.5 text-xs font-black tracking-tight outline-none transition-all text-[#1C1A17] focus:bg-white focus:border-[#B8912E] focus:ring-4 focus:ring-[#B8912E]/10 placeholder:text-[#D6D0BF]"
-      placeholder="0.00"
     />
   </div>
 );

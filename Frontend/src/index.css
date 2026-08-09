@@ -2,7 +2,9 @@
 @import "tailwindcss";
 
 /* Global Base */
-* { font-family: "Outfit", sans-serif; }
+html, body, * {
+  font-family: "Outfit", sans-serif !important;
+}
 body { @apply bg-slate-50 text-slate-900; }
 
 /* Custom Scrollbar - Global */

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Calendar, ChevronLeft, Fingerprint, Mail,
   Droplets, Briefcase, IdCard, CreditCard,
-  PiggyBank, Heart, User, Edit
+  PiggyBank, Heart, User, Edit, X
 } from "lucide-react";
 
 const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
@@ -24,6 +24,7 @@ const EmployeeView = () => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -41,6 +42,16 @@ const EmployeeView = () => {
     fetchEmployee();
   }, [id]);
 
+  // Close lightbox on Escape key
+  useEffect(() => {
+    if (!isImageOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsImageOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isImageOpen]);
+
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/default-avatar.png";
     if (imagePath.startsWith("http")) return imagePath;
@@ -54,6 +65,8 @@ const EmployeeView = () => {
 
   if (loading) return <LoadingPulse />;
   if (!employee) return <ErrorView />;
+
+  const hasProfileImage = Boolean(employee?.userId?.profileImage);
 
   return (
     <div className={`relative min-h-screen ${PAGE_BG} p-4 text-[#1A1A1D] lg:p-10`} style={bodyFont}>
@@ -74,10 +87,11 @@ const EmployeeView = () => {
           {/* ============ NAMEPLATE ============ */}
           <div className="flex flex-col items-center px-8 pb-10 pt-12 text-center sm:px-14">
             <div
-              className="flex h-20 w-20 items-center justify-center rounded-full border"
+              onClick={() => hasProfileImage && setIsImageOpen(true)}
+              className={`flex h-20 w-20 items-center justify-center rounded-full border transition-transform ${hasProfileImage ? "cursor-pointer hover:scale-105" : ""}`}
               style={{ borderColor: GOLD_HAIRLINE, color: GOLD }}
             >
-              {employee?.userId?.profileImage ? (
+              {hasProfileImage ? (
                 <img
                   src={getImageUrl(employee.userId.profileImage)}
                   className="h-full w-full rounded-full object-cover"
@@ -137,14 +151,12 @@ const EmployeeView = () => {
                 ₹{Number(employee.salary || 0).toLocaleString('en-IN')}
               </h2>
             </div>
-            <button
+           <button
               onClick={() => navigate(`/admin-dashboard/employees/edit/${employee._id}`)}
-              className="flex cursor-pointer items-center gap-2 rounded-full border px-7 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors hover:text-white"
-              style={{ borderColor: CHARCOAL, color: CHARCOAL }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = CHARCOAL)}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              className="group flex cursor-pointer items-center gap-2 rounded-full border border-[#2F2F2F] px-7 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#2F2F2F] transition-all duration-300 hover:bg-[#2F2F2F] hover:text-white"
             >
-              <Edit size={13} strokeWidth={1.75} /> Edit Profile
+              <Edit size={14} strokeWidth={1.5} className="transition-colors group-hover:text-white" />
+              Edit Profile
             </button>
           </div>
         </div>
@@ -153,6 +165,28 @@ const EmployeeView = () => {
           Verified &nbsp;·&nbsp; Active &nbsp;·&nbsp; On-Site
         </p>
       </div>
+
+      {/* ============ IMAGE LIGHTBOX ============ */}
+      {isImageOpen && hasProfileImage && (
+        <div
+          onClick={() => setIsImageOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm"
+        >
+          <button
+            onClick={() => setIsImageOpen(false)}
+            className="absolute right-5 top-5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:bg-white/10"
+            aria-label="Close"
+          >
+            <X size={18} strokeWidth={1.75} />
+          </button>
+          <img
+            src={getImageUrl(employee.userId.profileImage)}
+            alt="Profile enlarged"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 };

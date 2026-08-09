@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
 import Holiday from "../models/Holiday.js";
@@ -63,7 +64,7 @@ const addLeave = async (req, res) => {
     const notifications = admins.map(admin => ({
       type: "leave-request",
       message: `${employeeUser.name} applied for ${leaveType} leave (${daysRequested} days)`,
-      data: { leaveId: leave._id, employeeId: employee._id, adminId: admin._id },
+      data: { leaveId: leave._id, employeeId: employee._id, adminId: admin._id, link: "/admin-dashboard/leaves" },
     }));
     await Notification.insertMany(notifications);
 
@@ -105,7 +106,52 @@ const updateLeave = async (req, res) => {
   }
 };
 
-/* ================= GET LEAVE BALANCE ================= */
+const canCancelLeave = (status) => ["Pending", "Approved"].includes(status);
+
+const cancelLeave = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const leave = await Leave.findById(id);
+
+    if (!leave) {
+      return res.status(404).json({ success: false, message: "Leave request not found" });
+    }
+
+    const employee = await Employee.findOne({ userId: req.user._id });
+    if (!employee) {
+      return res.status(403).json({ success: false, message: "Employee profile not found" });
+    }
+
+    const isOwner = leave.employeeId.toString() === employee._id.toString();
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: "You are not authorized to cancel this leave" });
+    }
+
+    if (!canCancelLeave(leave.status)) {
+      return res.status(400).json({ success: false, message: "Only pending or approved leave requests can be cancelled" });
+    }
+
+    leave.status = "Cancelled";
+    await leave.save();
+
+    const employeeUser = await Employee.findById(leave.employeeId).populate("userId");
+    if (employeeUser?.userId) {
+      await Notification.create({
+        type: "leave-status",
+        message: `Your leave request from ${leave.startDate.toLocaleDateString()} to ${leave.endDate.toLocaleDateString()} was Cancelled`,
+        data: { leaveId: leave._id, employeeId: employeeUser._id, userId: employeeUser.userId._id, status: "Cancelled" },
+      });
+    }
+
+    return res.status(200).json({ success: true, leave });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/* ================= GET LEAVE BALANCE (SELF — logged-in employee) ================= */
 const getLeaveBalance = async (req, res) => {
   try {
     const employee = await Employee.findOne({ userId: req.user._id });
@@ -116,6 +162,38 @@ const getLeaveBalance = async (req, res) => {
 
     const used = { "Casual Leave": 0, "Sick Leave": 0 };
     approved.forEach(item => { used[item._id] = item.daysUsed; });
+
+    return res.status(200).json({
+      success: true,
+      casual: { total: 12, used: used["Casual Leave"], balance: 12 - used["Casual Leave"] },
+      sick: { total: 12, used: used["Sick Leave"], balance: 12 - used["Sick Leave"] },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* ================= GET LEAVE BALANCE BY EMPLOYEE ID (ADMIN VIEW) ================= */
+const getLeaveBalanceByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({ success: false, message: "Invalid employee id" });
+    }
+
+    const approved = await Leave.aggregate([
+      {
+        $match: {
+          employeeId: new mongoose.Types.ObjectId(employeeId),
+          status: "Approved",
+        },
+      },
+      { $group: { _id: "$leaveType", daysUsed: { $sum: "$days" } } },
+    ]);
+
+    const used = { "Casual Leave": 0, "Sick Leave": 0 };
+    approved.forEach((item) => { used[item._id] = item.daysUsed; });
 
     return res.status(200).json({
       success: true,
@@ -140,7 +218,10 @@ const getLeave = async (req, res) => {
 /* ================= GET LEAVES ================= */
 const getLeaves = async (req, res) => {
   try {
-    const leaves = await Leave.find().populate({ path: "employeeId", populate: [{ path: "department" }, { path: "userId" }] }).sort({ createdAt: -1 });
+    const activeEmployeeIds = await Employee.distinct("_id");
+    const leaves = await Leave.find({ employeeId: { $in: activeEmployeeIds } })
+      .populate({ path: "employeeId", populate: [{ path: "department" }, { path: "userId" }] })
+      .sort({ createdAt: -1 });
     return res.status(200).json({ success: true, leaves });
   } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 };
@@ -156,9 +237,12 @@ const getLeaveDetail = async (req, res) => {
 
 export {
    calculateNetWorkDays,
+   canCancelLeave,
    addLeave,
    updateLeave,
+   cancelLeave,
    getLeaveBalance,
+   getLeaveBalanceByEmployeeId,
    getLeave,
    getLeaves,
    getLeaveDetail

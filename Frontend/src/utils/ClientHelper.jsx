@@ -2,6 +2,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, AlertCircle, Check } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 const CHARCOAL = "#1A1A1D";
 const GOLD = "#AD8A56";
@@ -16,7 +17,7 @@ const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 /* ================= CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[60] bg-[#1A1A1D]/30 backdrop-blur-md" />
       <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
@@ -60,13 +61,14 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
 /* ================= SUCCESS ================= */
 const DeleteSuccessAlert = ({ onClose }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[60] bg-[#1A1A1D]/20 backdrop-blur-sm" />
       <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
@@ -95,7 +97,61 @@ const DeleteSuccessAlert = ({ onClose }) => {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
+  );
+};
+
+/* ================= ICON BUTTON WITH TOOLTIP ================= */
+const IconButton = ({ icon, label, onClick, variant = "view" }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const variants = {
+    view: {
+      style: { borderColor: HAIRLINE, color: SLATE, backgroundColor: "transparent" },
+      hoverStyle: { borderColor: GOLD_HAIRLINE, color: GOLD, backgroundColor: "transparent" },
+      base: "cursor-pointer rounded-full border p-2.5 transition-colors",
+    },
+    edit: {
+      style: { borderColor: HAIRLINE, color: SLATE, backgroundColor: "transparent" },
+      hoverStyle: { borderColor: "rgba(26,26,29,0.3)", color: CHARCOAL, backgroundColor: "transparent" },
+      base: "cursor-pointer rounded-full border p-2.5 transition-colors",
+    },
+    danger: {
+      style: { color: SLATE, backgroundColor: IVORY },
+      hoverStyle: { color: "#fff", backgroundColor: CRIMSON },
+      base: "cursor-pointer rounded-full p-2.5 transition-colors",
+    },
+  };
+
+  const v = variants[variant];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={v.base}
+        style={hovered ? v.hoverStyle : v.style}
+        aria-label={label}
+      >
+        {icon}
+      </button>
+
+      <span
+        className={`pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-widest text-white transition-all duration-200 ${
+          hovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+        }`}
+        style={{ backgroundColor: CHARCOAL, ...bodyFont }}
+      >
+        {label}
+        <span
+          className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent"
+          style={{ borderTopColor: CHARCOAL }}
+        />
+      </span>
+    </div>
   );
 };
 
@@ -145,41 +201,26 @@ export const ClientButtons = ({ id, refresh }) => {
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {/* View */}
-        <button
+        <IconButton
+          variant="view"
+          label="View profile"
+          icon={<Eye size={15} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/clients/${id}`)}
-          className="cursor-pointer rounded-full border p-2.5 transition-colors"
-          style={{ borderColor: HAIRLINE, color: SLATE }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = GOLD; e.currentTarget.style.borderColor = GOLD_HAIRLINE; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = SLATE; e.currentTarget.style.borderColor = HAIRLINE; }}
-          title="View Profile"
-        >
-          <Eye size={15} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* Edit */}
-        <button
+        <IconButton
+          variant="edit"
+          label="Edit record"
+          icon={<Edit2 size={15} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/clients/edit/${id}`)}
-          className="cursor-pointer rounded-full border p-2.5 transition-colors"
-          style={{ borderColor: HAIRLINE, color: SLATE }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = CHARCOAL; e.currentTarget.style.borderColor = "rgba(26,26,29,0.3)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = SLATE; e.currentTarget.style.borderColor = HAIRLINE; }}
-          title="Edit Record"
-        >
-          <Edit2 size={15} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* Delete */}
-        <button
+        <IconButton
+          variant="danger"
+          label="Delete record"
+          icon={<Trash2 size={15} strokeWidth={1.75} />}
           onClick={() => setShowConfirm(true)}
-          className="cursor-pointer rounded-full p-2.5 transition-colors"
-          style={{ backgroundColor: IVORY, color: SLATE }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = CRIMSON; e.currentTarget.style.color = "#fff"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = IVORY; e.currentTarget.style.color = SLATE; }}
-          title="Delete Record"
-        >
-          <Trash2 size={15} strokeWidth={1.75} />
-        </button>
+        />
       </div>
     </>
   );

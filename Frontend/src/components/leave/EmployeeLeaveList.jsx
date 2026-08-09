@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Search, ClipboardList, PlusCircle, Calendar, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ClipboardList, PlusCircle, Calendar, Info, XCircle, AlertTriangle, Check } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 
@@ -13,7 +13,69 @@ const STATUS_THEME = {
   approved: "text-[#3F6B52] bg-[#EEF3EE] border-[#D7E4D9] shadow-sm",
   pending: "text-[#9C7A22] bg-[#FBF3E3] border-[#EFE1BF] shadow-sm",
   rejected: "text-[#A24A32] bg-[#FAF1EA] border-[#EAD9CC] shadow-sm",
+  cancelled: "text-[#7A2233] bg-[#F8E9EC] border-[#E8C6CF] shadow-sm",
   default: "text-[#8A8478] bg-[#F1EFE8] border-[#E7E1D3]",
+};
+
+const ACTION_MODAL_HAIRLINE = "rgba(26,26,29,0.12)";
+const ACTION_MODAL_GOLD = "#AD8A56";
+const ACTION_MODAL_GARNET = "#722F37";
+
+const ActionModal = ({ modalState, onClose }) => {
+  if (!modalState) return null;
+
+  const isSuccess = modalState.type === "success";
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-[#1A1A1D]/30 backdrop-blur-md" />
+      <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+        <div
+          className="w-full max-w-sm overflow-hidden rounded-[1.25rem] border bg-white/95 text-center shadow-[0_40px_90px_-32px_rgba(26,26,29,0.4)] backdrop-blur-md"
+          style={{ borderColor: ACTION_MODAL_HAIRLINE }}
+        >
+          <div className="px-10 pb-10 pt-12">
+            <div
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              style={{ borderColor: isSuccess ? "rgba(173,138,86,0.4)" : "rgba(114,47,55,0.2)", color: isSuccess ? ACTION_MODAL_GOLD : ACTION_MODAL_GARNET }}
+            >
+              {isSuccess ? <Check size={26} strokeWidth={1.75} /> : <AlertTriangle size={26} strokeWidth={1.75} />}
+            </div>
+            <h3 className="text-2xl leading-none text-[#1A1A1D]" style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontWeight: 500 }}>
+              {modalState.title}
+            </h3>
+            <p className="mt-3 text-xs leading-relaxed text-[#7A756C]">
+              {modalState.message}
+            </p>
+            <div className="mt-8 flex flex-col gap-3">
+              {!isSuccess && (
+                <button
+                  onClick={onClose}
+                  className="w-full cursor-pointer rounded-full border border-[#E7E1D3] bg-white py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#1A1A1D] transition-colors"
+                >
+                  {modalState.cancelLabel || "No, keep it"}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (isSuccess) {
+                    onClose();
+                    return;
+                  }
+                  onClose();
+                  modalState.onConfirm?.();
+                }}
+                className="w-full cursor-pointer rounded-full py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-white transition-colors"
+                style={{ backgroundColor: isSuccess ? "#1A1A1D" : ACTION_MODAL_GARNET }}
+              >
+                {modalState.confirmLabel || "Got it, thanks"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 };
 
 const formatDate = (value) => {
@@ -46,8 +108,11 @@ const EmployeeLeaveList = () => {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [modalState, setModalState] = useState(null);
   const navigate = useNavigate();
   const itemsPerPage = 5;
 
@@ -81,8 +146,41 @@ const EmployeeLeaveList = () => {
   const totalPages = Math.ceil(processedData.length / itemsPerPage);
   const currentItems = processedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const handleCancelLeave = async (leaveId) => {
+    try {
+      setCancellingId(leaveId);
+      setError(null);
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const res = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/leave/cancel/${leaveId}`, {}, { headers });
+
+      if (res.data.success) {
+        await fetchData();
+        setCurrentPage(1);
+        setSuccessMessage("Leave request cancelled successfully.");
+        setModalState({
+          type: "success",
+          title: "Leave Cancelled",
+          message: "Your leave request has been cancelled and logged in the register.",
+          confirmLabel: "Got it, thanks",
+        });
+      } else {
+        setError(res.data.message || "Unable to cancel leave request");
+      }
+    } catch (err) {
+      setError("Unable to cancel leave request");
+      console.error(err);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F6F3EC] pb-12">
+    <>
+      <ActionModal
+        modalState={modalState}
+        onClose={() => setModalState(null)}
+      />
+      <div className="min-h-screen bg-[#F6F3EC] pb-12">
       <div className="max-w-[1400px] mx-auto p-4 sm:p-8 space-y-6">
 
         {/* BACK BUTTON - Clean, Minimalist Position */}
@@ -146,6 +244,18 @@ const EmployeeLeaveList = () => {
             </div>
           </div>
 
+          {error && (
+            <div className="px-6 md:px-10 py-4 border-b border-[#F1EFE8] bg-[#FFF7F5] text-[#A24A32] text-sm font-semibold">
+              {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="px-6 md:px-10 py-4 border-b border-[#F1EFE8] bg-[#F5FFF7] text-[#3F6B52] text-sm font-semibold">
+              {successMessage}
+            </div>
+          )}
+
           {loading ? (
             <div className="p-24 text-center">
               <div className="w-12 h-12 border-4 border-[#EFE9D8] border-t-[#B8912E] rounded-full animate-spin mx-auto mb-5"></div>
@@ -187,6 +297,24 @@ const EmployeeLeaveList = () => {
                         <p className="text-[8px] font-black uppercase text-[#8A8478] tracking-widest mt-1">Days</p>
                       </div>
                     </div>
+
+                    {user.role === "employee" && ["pending", "approved"].includes((leave.status || "").toLowerCase()) && (
+                      <button
+                        onClick={() => setModalState({
+                          type: "confirm",
+                          title: "Cancel Leave Request",
+                          message: `Are you sure you want to cancel this ${leave.leaveType || "leave"} request?`,
+                          cancelLabel: "No, keep it",
+                          confirmLabel: "Yes, cancel it",
+                          onConfirm: () => handleCancelLeave(leave._id),
+                        })}
+                        disabled={cancellingId === leave._id}
+                        className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-[#E8C6CF] bg-[#FFF7F9] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#7A2233] transition-all disabled:opacity-60"
+                      >
+                        <XCircle size={15} />
+                        {cancellingId === leave._id ? "Cancelling..." : "Cancel Leave"}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -227,9 +355,28 @@ const EmployeeLeaveList = () => {
                           </p>
                         </td>
                         <td className="px-8 py-6 last:rounded-r-[1.5rem] text-right">
-                          <span className={`px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all duration-300 inline-block ${STATUS_THEME[leave.status?.toLowerCase()] || STATUS_THEME.default}`}>
-                            {leave.status}
-                          </span>
+                          <div className="flex flex-col items-end gap-3">
+                            <span className={`px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all duration-300 inline-block ${STATUS_THEME[leave.status?.toLowerCase()] || STATUS_THEME.default}`}>
+                              {leave.status}
+                            </span>
+                            {user.role === "employee" && ["pending", "approved"].includes((leave.status || "").toLowerCase()) && (
+                              <button
+                                onClick={() => setModalState({
+                                  type: "confirm",
+                                  title: "Cancel Leave Request",
+                                  message: `Are you sure you want to cancel this ${leave.leaveType || "leave"} request?`,
+                                  cancelLabel: "No, keep it",
+                                  confirmLabel: "Yes, cancel it",
+                                  onConfirm: () => handleCancelLeave(leave._id),
+                                })}
+                                disabled={cancellingId === leave._id}
+                                className="flex items-center gap-2 rounded-2xl border border-[#E8C6CF] bg-[#FFF7F9] px-4 py-2 text-[9px] font-black uppercase tracking-widest text-[#7A2233] transition-all disabled:opacity-60 cursor-pointer"
+                              >
+                                <XCircle size={14} />
+                                {cancellingId === leave._id ? "Cancelling..." : "Cancel"}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -270,6 +417,7 @@ const EmployeeLeaveList = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

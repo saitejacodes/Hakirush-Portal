@@ -31,6 +31,7 @@ import StallEdit from "./components/stalls/StallEdit";
 import StallView from "./components/stalls/StallView";
 import AdminAttendence from "./components/attendance/AdminAttendance";
 import AdminAttendenceReport from "./components/attendance/AdminAttendanceReport";
+import AdminAttendanceRequests from "./components/attendance/AdminAttendanceRequests";
 import EmployeeLeaveList from "./components/leave/EmployeeLeaveList";
 import AdminLeaveTable from "./components/leave/AdminLeaveTable";
 import LeaveDetails from "./components/leave/LeaveDetails";
@@ -98,6 +99,7 @@ const App = () => {
 
           <Route path="attendance" element={<AdminAttendence />} />
           <Route path="attendance-report" element={<AdminAttendenceReport />} />
+          <Route path="/admin-dashboard/attendance-requests" element={<AdminAttendanceRequests />} />
 
           <Route path="holidays" element={<HolidaysList />} />
           <Route path="add-holiday" element={<AddHoliday />} />

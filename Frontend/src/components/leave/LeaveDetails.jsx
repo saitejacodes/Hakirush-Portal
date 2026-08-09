@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle, Loader2, CalendarClock } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Loader2, CalendarClock, Wallet } from "lucide-react";
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
@@ -57,6 +57,8 @@ const LeaveDetails = () => {
   const { id } = useParams();
   const [leave, setLeave] = useState(null);
   const [holidays, setHolidays] = useState([]);
+  const [balance, setBalance] = useState(null);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [alertType, setAlertType] = useState(null);
@@ -83,6 +85,29 @@ const LeaveDetails = () => {
   }, [id]);
 
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
+
+  // Fetch the employee's leave balance once we know which employee this request belongs to
+  const fetchBalance = useCallback(async (employeeId) => {
+    if (!employeeId) return;
+    try {
+      setBalanceLoading(true);
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/leave/balance/${employeeId}`,
+        { headers }
+      );
+      if (res.data?.success) setBalance(res.data);
+    } catch (error) {
+      console.error("Balance Fetch Error:", error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const employeeId = leave?.employeeId?._id;
+    if (employeeId) fetchBalance(employeeId);
+  }, [leave, fetchBalance]);
 
   /* --- NET DAYS CALCULATION (Excluding Sat, Sun & Holidays) --- */
   const toLocalYMD = (dateInput) => {
@@ -214,6 +239,46 @@ const LeaveDetails = () => {
               </div>
             </div>
 
+            {/* Leave Balance Section */}
+            <div className="mt-8">
+              <div className="flex items-center gap-2 mb-3">
+                <Wallet size={16} className="text-[#B8912E]" />
+                <p className="text-[10px] uppercase tracking-widest text-[#8A8478] font-black">
+                  Leave Balance
+                </p>
+              </div>
+
+              {balanceLoading ? (
+                <div className="flex items-center gap-2 text-[#8A8478] text-xs font-bold uppercase tracking-widest py-4">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading balance...
+                </div>
+              ) : balance ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <BalanceCard
+                    label="Casual Leave"
+                    total={balance.casual.total}
+                    used={balance.casual.used}
+                    remaining={balance.casual.balance}
+                    color={SAGE}
+                    bg="#EEF3EE"
+                  />
+                  <BalanceCard
+                    label="Sick Leave"
+                    total={balance.sick.total}
+                    used={balance.sick.used}
+                    remaining={balance.sick.balance}
+                    color={GARNET}
+                    bg="#FAEDEF"
+                  />
+                </div>
+              ) : (
+                <p className="text-[#8A8478] text-xs font-bold uppercase tracking-widest py-4">
+                  Balance unavailable.
+                </p>
+              )}
+            </div>
+
             {/* Details Grid */}
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Info label="Email Address" value={leave?.employeeId?.userId?.email} />
@@ -287,5 +352,33 @@ const Info = ({ label, value, subValue, highlight, accent, icon }) => (
     {subValue && <p className="text-[10px] font-bold text-[#B8912E] uppercase mt-0.5">{subValue}</p>}
   </div>
 );
+
+const BalanceCard = ({ label, total, used, remaining, color, bg }) => {
+  const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+
+  return (
+    <div className="rounded-2xl p-5 border border-[#E7E1D3]" style={{ backgroundColor: bg }}>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-widest font-black" style={{ color }}>
+          {label}
+        </p>
+        <p className="text-xs font-black" style={{ color }}>
+          {remaining} / {total} left
+        </p>
+      </div>
+
+      <div className="mt-3 h-2 w-full rounded-full bg-white/70 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#8A8478]">
+        {used} used this year
+      </p>
+    </div>
+  );
+};
 
 export default LeaveDetails;

@@ -2,13 +2,14 @@ import axios from "axios";
 import {
   CalendarDays, ChevronLeft, ChevronRight,
   X, Bell, Activity, ArrowRight, Umbrella,
-  Megaphone, Cake, Award,
-  Users,
-  UserPlus
+  Megaphone, Cake, Award, Clock, Send, CheckCircle2, XCircle, Clock3,
+  Users, UserPlus
 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/authContext";
 import EmployeePunch from "../attendance/EmployeePunch";
+
+const NOTICE_TYPES = ["leave-status", "attendance-request-status"];
 
 const EmployeeSummary = () => {
   const { user, loading } = useAuth();
@@ -26,6 +27,10 @@ const EmployeeSummary = () => {
   const [anniversaries, setAnniversaries] = useState({ today: [], upcoming: [] });
   const [notifications, setNotifications] = useState([]);
   const [newEmployees, setNewEmployees] = useState([]);
+  const [selectedDay, setSelectedDay] = useState(null); 
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestForm, setRequestForm] = useState({ requestedStatus: "Present", reason: "" });
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   const TOTAL_ANNUAL_CASUAL = 12; 
   const TOTAL_ANNUAL_SICK = 12;   
   
@@ -55,11 +60,37 @@ const EmployeeSummary = () => {
     }
   };
 
+  // Returns a human-readable "joined X days ago" string for the New Employees card
+  const getDaysAgo = (date) => {
+    if (!date) return "Joined recently";
+    const joined = new Date(date);
+    if (isNaN(joined.getTime())) return "Joined recently";
+
+    const today = new Date();
+    // Normalize both to midnight so partial-day differences don't cause off-by-one results
+    const joinedMid = new Date(joined.getFullYear(), joined.getMonth(), joined.getDate());
+    const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    const diffMs = todayMid - joinedMid;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (days <= 0) return "Joined today";
+    if (days === 1) return "Joined 1 day ago";
+    if (days < 30) return `Joined ${days} days ago`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return months === 1 ? "Joined 1 month ago" : `Joined ${months} months ago`;
+
+    const years = Math.floor(months / 12);
+    return years === 1 ? "Joined 1 year ago" : `Joined ${years} years ago`;
+  };
+
   const hasUnseenNotices = announcements.some((a) => {
     const seenByArray = a.seenBy || [];
     return !seenByArray.map(id => id.toString()).includes(user?._id?.toString());
   }) || notifications.some(n => !n.seen);
-  // Fetch leave status notifications for employee
+
+  // Fetch leave-status + attendance-request-status notifications for employee
   useEffect(() => {
     if (!user?._id) return;
     const fetchNotifications = async () => {
@@ -68,7 +99,7 @@ const EmployeeSummary = () => {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.data?.success) setNotifications(res.data.notifications.filter(n => n.type === "leave-status"));
+        if (res.data?.success) setNotifications(res.data.notifications.filter(n => NOTICE_TYPES.includes(n.type)));
       } catch (err) {
         // Optionally handle error
       }
@@ -77,6 +108,18 @@ const EmployeeSummary = () => {
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Fetch my attendance correction requests
+  useEffect(() => {
+    if (!user?._id) return;
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance-request/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => { if (res.data?.success) setMyRequests(res.data.requests); })
+      .catch(() => {});
+  }, [user, calendarMonth]);
 
   const markAsSeenOnServer = async (announcementId) => {
     try {
@@ -123,10 +166,27 @@ const EmployeeSummary = () => {
     if (activeLeave) return { status: "leave", title: activeLeave.leaveType };
 
     const attRec = attendance.find(a => String(a.date) === dateStr);
-    if (attRec && attRec.status) {
-      const s = attRec.status.toLowerCase().replace(/\s+/g, "");
-      if (["present", "halfday", "absent"].includes(s))
+    if (attRec) {
+      const s = (attRec.status || "").toLowerCase().replace(/\s+/g, "");
+      const workedHours = Number(attRec.workedHours || 0);
+
+      if (attRec.checkOut) {
+        if (s === "present" || workedHours >= 8) {
+          return { status: "present", title: "Present" };
+        }
+        if (s === "halfday" || (workedHours >= 4 && workedHours < 8)) {
+          return { status: "halfday", title: "Half Day" };
+        }
+        return { status: "absent", title: "Absent" };
+      }
+
+      if (attRec.checkIn && !["present", "halfday", "absent"].includes(s)) {
+        return { status: "working", title: "Working" };
+      }
+
+      if (["present", "halfday", "absent"].includes(s)) {
         return { status: s, title: attRec.status };
+      }
     }
     return { status: "none", title: "Working Day" };
   };
@@ -166,7 +226,7 @@ const EmployeeSummary = () => {
     Promise.all([
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers }),
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/public`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/birthdays`, { headers }),
       axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers }),
@@ -222,6 +282,84 @@ const EmployeeSummary = () => {
 
   const handleAttendanceSuccess = () => {
     fetchData();
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.seen) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/notifications/${notification._id}/seen`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotifications(prev => prev.map(item => item._id === notification._id ? { ...item, seen: true } : item));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setShowBellMenu(false);
+
+    if (notification.type === "leave-status") {
+      if (user?._id) {
+        window.location.href = `/employee-dashboard/leaves/${user._id}`;
+      }
+      return;
+    }
+
+    if (notification.type === "attendance-request-status") {
+      const today = new Date();
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      setCalendarMonth(monthStart);
+      const dateStr = toYMD(today);
+      const record = attendance.find((entry) => String(entry.date) === dateStr) || null;
+      setSelectedDay({
+        day: today.getDate(),
+        dateStr,
+        status: (record?.status || "Absent").toLowerCase().replace(/\s+/g, ""),
+        title: record?.status || "Attendance detail",
+        record,
+      });
+      setRequestForm({ requestedStatus: "Present", reason: "" });
+      document.getElementById("attendance-calendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Open the zoom modal for a clicked calendar day
+  const handleDayClick = (day) => {
+    if (!day) return;
+    const { status, title } = getDayInfo(day);
+    const dateStr = toYMD(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day));
+    const record = attendance.find(a => String(a.date) === dateStr) || null;
+    setSelectedDay({ day, dateStr, status, title, record });
+    setRequestForm({ requestedStatus: "Present", reason: "" });
+  };
+
+  // Submit an attendance correction request for the selected day
+  const handleRequestSubmit = async () => {
+    if (!selectedDay || !requestForm.reason.trim()) return;
+    setSubmittingRequest(true);
+    try {
+      const token = localStorage.getItem("token");
+      const currentStatusLabel = selectedDay.record?.status || (selectedDay.status === "halfday" ? "Half Day" : "Absent");
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/attendance-request`,
+        {
+          date: selectedDay.dateStr,
+          currentStatus: currentStatusLabel,
+          requestedStatus: requestForm.requestedStatus,
+          reason: requestForm.reason,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data?.success) {
+        setMyRequests(prev => [res.data.request, ...prev]);
+        setRequestForm({ requestedStatus: "Present", reason: "" });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmittingRequest(false);
+    }
   };
 
   // Small reusable section label used across premium cards
@@ -310,23 +448,13 @@ const EmployeeSummary = () => {
                       </div>
                     )
                   })}
-                  {/* Leave Status Notifications */}
-                  {notifications.length > 0 && <div className="mt-2 mb-1 text-[10px] font-semibold uppercase text-slate-400 tracking-wide">Leave Updates</div>}
+                  {/* Leave / Attendance Status Notifications */}
+                  {notifications.length > 0 && <div className="mt-2 mb-1 text-[10px] font-semibold uppercase text-slate-400 tracking-wide">Leave &amp; Attendance Updates</div>}
                   {notifications.map(n => (
                     <div
                       key={n._id}
                       className={`p-4 rounded-2xl border flex flex-col gap-1 cursor-pointer transition-all ${n.seen ? 'opacity-50' : 'bg-amber-50/70 border-amber-100 shadow-sm hover:bg-amber-50'}`}
-                      onClick={async () => {
-                        if (!n.seen) {
-                          try {
-                            const token = localStorage.getItem("token");
-                            await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/notifications/${n._id}/seen`, {}, {
-                              headers: { Authorization: `Bearer ${token}` }
-                            });
-                            setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, seen: true } : x));
-                          } catch (err) {}
-                        }
-                      }}
+                      onClick={() => handleNotificationClick(n)}
                     >
                       <span className="text-[12px] font-medium text-amber-800">{n.message}</span>
                       <span className="text-[10px] font-medium text-slate-400">{new Date(n.createdAt).toLocaleString()}</span>
@@ -385,7 +513,7 @@ const EmployeeSummary = () => {
             {/* New Employees */}
             <div className="bg-white p-6 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] h-[280px] flex flex-col border border-slate-100">
               <SectionLabel icon={<UserPlus size={13} className="text-emerald-500" />} tone="bg-emerald-50">
-                Welcome Aboard
+                Joined Recently
               </SectionLabel>
               <div className="flex-grow overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
                 {newEmployees.length > 0 ? newEmployees.map(e => (
@@ -393,7 +521,15 @@ const EmployeeSummary = () => {
                     <img src={getImageUrl(e.profileImage)} className="w-9 h-9 rounded-full object-cover border border-white shadow-sm" alt="" />
                     <div className="flex flex-col">
                       <span className="text-[12.5px] font-medium text-emerald-900 truncate">{e.name}</span>
-                      <span className="text-[10px] font-medium text-emerald-500">Joined recently</span>
+                      <span className="text-[10px] font-medium text-emerald-500">
+                        {e.dateOfJoining ? (
+                          getDaysAgo(e.dateOfJoining)
+                        ) : typeof e.joinedDaysAgo === 'number' ? (
+                          e.joinedDaysAgo <= 0 ? 'Joined today' : (e.joinedDaysAgo === 1 ? 'Joined 1 day ago' : `Joined ${e.joinedDaysAgo} days ago`)
+                        ) : (
+                          getDaysAgo(e.joiningDate)
+                        )}
+                      </span>
                     </div>
                   </div>
                 )) : (
@@ -523,6 +659,7 @@ const EmployeeSummary = () => {
 
             {/* 5. Leaves */}
             <div 
+              id="leave-summary-card"
               onClick={() => setShowLeaveBreakdown(true)} 
               className="bg-white p-8 rounded-[2rem] shadow-[0_20px_45px_-20px_rgba(15,23,42,0.12)] border border-slate-100 flex flex-col items-center justify-center cursor-pointer h-[280px] transition-all duration-300 hover:shadow-[0_25px_50px_-15px_rgba(244,63,94,0.18)] hover:border-rose-100 active:scale-[0.98] group relative overflow-hidden"
             >
@@ -546,7 +683,7 @@ const EmployeeSummary = () => {
         </section>
 
         {/* Calendar Section */}
-        <section className="bg-white/70 backdrop-blur-2xl p-6 sm:p-10 rounded-[2.5rem] shadow-[0_25px_55px_-20px_rgba(15,23,42,0.14)] border border-white/60">
+        <section id="attendance-calendar-section" className="bg-white/70 backdrop-blur-2xl p-6 sm:p-10 rounded-[2.5rem] shadow-[0_25px_55px_-20px_rgba(15,23,42,0.14)] border border-white/60">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-400">Calendar</span>
@@ -571,13 +708,18 @@ const EmployeeSummary = () => {
                 present: "bg-emerald-500 text-white border-emerald-500 shadow-[0_10px_20px_-8px_rgba(16,185,129,0.5)]", 
                 halfday: "bg-sky-500 text-white border-sky-500 shadow-[0_10px_20px_-8px_rgba(14,165,233,0.5)]",
                 absent: "bg-rose-500 text-white border-rose-500 shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]", 
+                working: "bg-emerald-600 text-white border-emerald-600 shadow-[0_10px_20px_-8px_rgba(16,185,129,0.45)]",
                 leave: "bg-amber-400 text-white border-amber-400",
                 holiday: "bg-indigo-600 text-white border-indigo-600", 
                 weekend: "bg-slate-50 text-slate-300 border-slate-100", 
                 none: "bg-white text-slate-800 border-slate-100 shadow-sm"
               };
               return (
-                <div key={i} className={`min-h-[86px] rounded-2xl border flex flex-col items-center justify-center p-3 transition-all duration-300 hover:scale-[1.04] hover:shadow-lg ${day ? styles[status] : "opacity-0 pointer-events-none"}`}>
+                <div
+                  key={i}
+                  onClick={() => handleDayClick(day)}
+                  className={`min-h-[86px] rounded-2xl border flex flex-col items-center justify-center p-3 transition-all duration-300 hover:scale-[1.04] hover:shadow-lg ${day ? `${styles[status]} cursor-pointer` : "opacity-0 pointer-events-none"}`}
+                >
                   <span className="text-xl font-semibold leading-none">{day}</span>
                   {day && title && <span className="text-[9px] font-medium text-center mt-2 leading-tight opacity-90">{title}</span>}
                 </div>
@@ -599,6 +741,7 @@ const EmployeeSummary = () => {
                   present: "bg-emerald-500 text-white border-emerald-500", 
                   halfday: "bg-sky-500 text-white border-sky-500",
                   absent: "bg-rose-500 text-white border-rose-500", 
+                  working: "bg-emerald-600 text-white border-emerald-600",
                   leave: "bg-amber-400 text-white border-amber-400",
                   holiday: "bg-indigo-600 text-white border-indigo-600", 
                   weekend: "bg-slate-50 text-slate-300 border-slate-100", 
@@ -610,7 +753,8 @@ const EmployeeSummary = () => {
                 return (
                   <div
                     key={i}
-                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center p-1 transition-all active:scale-95 ${!day ? "opacity-0 pointer-events-none" : currentStyle}`}
+                    onClick={() => handleDayClick(day)}
+                    className={`aspect-square rounded-xl border flex flex-col items-center justify-center p-1 transition-all active:scale-95 ${!day ? "opacity-0 pointer-events-none" : `${currentStyle} cursor-pointer`}`}
                   >
                     <span className="text-base font-semibold leading-none">
                       {day}
@@ -703,6 +847,162 @@ const EmployeeSummary = () => {
                 Approved leaves are automatically deducted from your annual quota.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* DAY DETAIL / ATTENDANCE CORRECTION MODAL */}
+      {selectedDay && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xl transition-all">
+          <div className="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[2.5rem] p-8 sm:p-10 relative shadow-[0_32px_64px_-15px_rgba(15,23,42,0.25)] border border-white/60 max-h-[90vh] overflow-y-auto">
+            
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-100 rounded-full sm:hidden" />
+
+            <button
+              onClick={() => setSelectedDay(null)}
+              className="absolute top-8 right-8 p-2 rounded-full bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90 cursor-pointer"
+            >
+              <X size={20} strokeWidth={2.2} />
+            </button>
+
+            <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-400">
+              {calendarMonth.toLocaleString('default', { month: 'long' })} {selectedDay.day}, {calendarMonth.getFullYear()}
+            </span>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 mb-6">
+              {selectedDay.title || "Attendance detail"}
+            </h3>
+
+            {/* Check-in / check-out */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-50 rounded-2xl p-4 flex flex-col items-center">
+                <Clock size={16} className="text-emerald-500 mb-1" />
+                <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wide">Check-in</span>
+                <span className="text-sm font-medium text-slate-800 mt-1">
+                  {selectedDay.record?.checkIn
+                    ? new Date(selectedDay.record.checkIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                    : "—"}
+                </span>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 flex flex-col items-center">
+                <Clock size={16} className="text-rose-500 mb-1" />
+                <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wide">Check-out</span>
+                <span className="text-sm font-medium text-slate-800 mt-1">
+                  {selectedDay.record?.checkOut
+                    ? new Date(selectedDay.record.checkOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                    : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Existing request for this date, if any — otherwise offer the correction form */}
+            {(() => {
+              const existing = myRequests.find(
+  (r) =>
+    r.date === selectedDay.dateStr &&
+    r.status === "Pending"
+);
+
+if (existing) {
+  const badgeMap = {
+    Pending: {
+      icon: <Clock3 size={13} />,
+      cls: "bg-amber-50 text-amber-700 border-amber-200",
+    },
+    Approved: {
+      icon: <CheckCircle2 size={13} />,
+      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    Rejected: {
+      icon: <XCircle size={13} />,
+      cls: "bg-rose-50 text-rose-700 border-rose-200",
+    },
+  };
+
+  const badge = badgeMap[existing.status] || badgeMap.Pending;
+
+  return (
+    <div className="space-y-3">
+      <div
+        className={`flex items-center justify-between px-4 py-3 rounded-2xl border text-[12px] font-medium ${badge.cls}`}
+      >
+        <div className="flex items-center gap-2">
+          {badge.icon}
+          <span>
+            Correction to <b>{existing.requestedStatus}</b> — {existing.status}
+          </span>
+        </div>
+
+        <button
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem("token");
+
+              await axios.delete(
+                `${import.meta.env.VITE_BACKEND_URL}/api/attendance-request/${existing._id}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+
+              setMyRequests((prev) =>
+                prev.filter((r) => r._id !== existing._id)
+              );
+
+              // Close the modal after deleting
+              setSelectedDay(null);
+            } catch (err) {
+              console.log(err);
+            }
+          }}
+          className="text-red-600 hover:text-red-700 text-xs font-semibold cursor-pointer"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+              // Only offer a correction request for Absent / Half Day
+              if (!["absent", "halfday"].includes(selectedDay.status)) return null;
+
+              return (
+                <div className="border-t border-slate-100 pt-5">
+                  <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wide">Request correction</span>
+                  <div className="flex gap-2 mt-3 mb-3">
+                    {["Present", "Half Day"].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => setRequestForm(f => ({ ...f, requestedStatus: opt }))}
+                        className={`flex-1 py-2 rounded-xl text-[12px] font-medium border transition-all cursor-pointer ${
+                          requestForm.requestedStatus === opt
+                            ? "bg-rose-600 text-white border-rose-600"
+                            : "bg-white text-slate-500 border-slate-200 hover:border-rose-200"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={requestForm.reason}
+                    onChange={(e) => setRequestForm(f => ({ ...f, reason: e.target.value }))}
+                    placeholder="Reason for correction..."
+                    rows={3}
+                    className="w-full text-sm p-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-rose-300 resize-none"
+                  />
+                  <button
+                    onClick={handleRequestSubmit}
+                    disabled={submittingRequest || !requestForm.reason.trim()}
+                    className="mt-3 w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-2xl text-[12px] font-medium transition-colors cursor-pointer"
+                  >
+                    <Send size={13} /> {submittingRequest ? "Submitting..." : "Submit request"}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

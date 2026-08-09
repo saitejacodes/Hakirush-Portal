@@ -14,6 +14,9 @@ import {
   Download,
   Cake,
   Bell,
+  X,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import {
   PieChart,
@@ -24,14 +27,7 @@ import {
   Legend,
 } from "recharts";
 
-/* ================= CONFIGURATION =================
-   Premium editorial palette — deep garnet + antique gold on
-   warm paper. Same page-background family (white → red/pink)
-   as before; everything sitting on top of it has been pulled
-   up a register: hairline gold rules, quieter shadows, a faint
-   paper grain, and restrained corner brackets as the one
-   signature motif instead of scattered decoration.
-*/
+
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
 const GOLD = "#C6A15B";
@@ -48,16 +44,9 @@ const SEMANTIC_COLORS = {
 const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
 const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
-/* Faint paper grain, layered over the existing gradient — the
-   one textural signature that makes the surface feel printed
-   rather than flat. Pure decoration, no layout cost. */
 const GRAIN_URI =
   "data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.5'/%3E%3C/svg%3E";
 
-/* ================= REUSABLE COMPONENTS ================= */
-
-/* Small hairline corner bracket — the recurring editorial mark
-   used sparingly at a few key frame edges. */
 const CornerTicks = ({ color = GOLD }) => (
   <>
     <span
@@ -143,24 +132,42 @@ const AdminSummary = () => {
 
   useEffect(() => {
     setDomReady(true);
+    let mounted = true;
+    const config = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
+
     const fetchAllData = async () => {
       try {
-        const config = {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        };
         const [dashRes, attRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/dashboard/summary`, config),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin/summary`, config),
         ]);
+        if (!mounted) return;
         setSummary(dashRes.data);
         setAttSummary(attRes.data);
       } catch (err) {
         console.error("Dashboard Sync Error:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
+    // initial fetch
     fetchAllData();
+
+    // poll attendance summary so top cards update when admin marks attendance elsewhere
+    const attInterval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin/summary`, config);
+        if (mounted && res?.data) setAttSummary(res.data);
+      } catch (err) {
+        // silent
+      }
+    }, 10000);
+
+    return () => {
+      mounted = false;
+      clearInterval(attInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -186,7 +193,18 @@ const AdminSummary = () => {
       setNotifications((notifications) =>
         notifications.map((n) => (n._id === notif._id ? { ...n, seen: true } : n))
       );
-      if (notif.link) navigate(notif.link);
+
+      const targetPath = notif?.data?.link || notif?.link ||
+        (notif?.type === "leave-request"
+          ? "/admin-dashboard/leaves"
+          : notif?.type === "attendance-request"
+            ? "/admin-dashboard/attendance-requests"
+            : null);
+
+      if (targetPath) {
+        setShowNotif(false);
+        navigate(targetPath);
+      }
     } catch {}
   };
 
@@ -294,7 +312,7 @@ const AdminSummary = () => {
             {/* NOTIFICATION BELL */}
             <div className="relative">
               <button
-                className="group relative rounded-2xl border border-[#E7DFD2] bg-white/80 p-3 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_8px_20px_-10px_rgba(28,26,23,0.12)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] hover:shadow-[0_1px_2px_rgba(28,26,23,0.05),0_14px_28px_-10px_rgba(28,26,23,0.16)] sm:p-4"
+                className="group relative rounded-2xl border border-[#E7DFD2] bg-white/80 p-3 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_8px_20px_-10px_rgba(28,26,23,0.12)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] hover:shadow-[0_1px_2px_rgba(28,26,23,0.05),0_14px_28px_-10px_rgba(28,26,23,0.16)] sm:p-4 cursor-pointer"
                 onClick={() => setShowNotif((v) => !v)}
               >
                 <Bell size={19} strokeWidth={1.75} className="text-[#8A8378] transition-colors group-hover:text-[#7A2233]" />
@@ -315,10 +333,10 @@ const AdminSummary = () => {
                       Notifications
                     </span>
                     <button
-                      className="text-xs font-semibold text-[#8A8378] transition-colors hover:text-[#7A2233]"
+                      className="text-xs font-semibold text-[#8A8378] transition-colors hover:text-[#7A2233] cursor-pointer"
                       onClick={() => setShowNotif(false)}
                     >
-                      Close
+                     <XCircle size={16} />
                     </button>
                   </div>
                   <div className="max-h-[300px] divide-y overflow-y-auto sm:max-h-[350px]" style={{ borderColor: HAIRLINE }}>
@@ -379,10 +397,11 @@ const AdminSummary = () => {
         </header>
 
         {/* TOP STATS */}
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-          <StatCard icon={Activity} label="Active Today" value={attSummary?.activeToday} accent="#3F5B54" />
-          <StatCard icon={UserMinus} label="Staff on Leave" value={attSummary?.onLeaveToday} accent="#4A5A6B" />
-          <StatCard icon={AlertCircle} label="Absent Count" value={attSummary?.absentToday} accent={GARNET} />
+        <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+          <StatCard icon={Activity} label="Present Today" value={attSummary?.presentToday ?? attSummary?.activeToday} accent="#3F5B54" />
+          <StatCard icon={Clock} label="Half Day" value={attSummary?.halfDayToday} accent={GOLD} />
+          <StatCard icon={UserMinus} label="Leave" value={attSummary?.onLeaveToday} accent="#4A5A6B" />
+          <StatCard icon={AlertCircle} label="Absent" value={attSummary?.absentToday} accent={GARNET} />
         </div>
 
         {/* WORKFORCE OVERVIEW */}

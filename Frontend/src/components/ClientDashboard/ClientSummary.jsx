@@ -56,7 +56,7 @@ const ClientSportsPlan = () => {
         const headers = { Authorization: `Bearer ${token}` };
         const [clientRes, annRes, perfRes, imagesRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client`, { headers }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements`, { headers }),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/public`, { headers }),
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/performance?userId=${user._id}`, { headers }),
           // New: Fetch client images (endpoint must exist in backend)
           axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/images?userId=${user._id}`, { headers }).catch(() => ({ data: { images: [] } }))

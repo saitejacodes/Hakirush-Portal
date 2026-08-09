@@ -2,6 +2,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 /* ================= CONFIGURATION =================
    Same editorial system as the rest of the admin area —
@@ -17,7 +18,7 @@ const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 /* ================= PREMIUM CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/40 backdrop-blur-md duration-300" />
       <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
@@ -29,10 +30,14 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
 
           <div className="p-8 text-center">
             <span
-              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
               style={{ borderColor: `${GARNET}40`, color: GARNET, backgroundColor: `${GARNET}0A` }}
             >
-              <AlertTriangle size={30} strokeWidth={1.5} />
+              <span
+                className="absolute inset-0 animate-ping-slow rounded-full"
+                style={{ backgroundColor: `${GARNET}14` }}
+              />
+              <AlertTriangle size={30} strokeWidth={1.5} className="relative" />
             </span>
 
             <h3
@@ -56,7 +61,7 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
             </button>
             <button
               onClick={onConfirm}
-              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(122,34,51,0.45)] transition-all duration-300 hover:opacity-90 active:scale-95"
+              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(122,34,51,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-12px_rgba(122,34,51,0.55)] active:scale-95"
               style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
             >
               Confirm
@@ -64,13 +69,14 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
 /* ================= PREMIUM SUCCESS ALERT ================= */
 const DeleteSuccessAlert = ({ onClose }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/20 backdrop-blur-sm" />
       <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
@@ -79,10 +85,14 @@ const DeleteSuccessAlert = ({ onClose }) => {
           style={bodyFont}
         >
           <span
-            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
             style={{ borderColor: "#3F5B5440", color: "#3F5B54", backgroundColor: "#3F5B540A" }}
           >
-            <CheckCircle2 size={30} strokeWidth={1.5} />
+            <span
+              className="absolute inset-0 animate-ping-slow rounded-full"
+              style={{ backgroundColor: "#3F5B5414" }}
+            />
+            <CheckCircle2 size={30} strokeWidth={1.5} className="relative" />
           </span>
 
           <h3
@@ -96,14 +106,67 @@ const DeleteSuccessAlert = ({ onClose }) => {
           </p>
           <button
             onClick={onClose}
-            className="w-full cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(28,26,23,0.35)] transition-all duration-300 active:scale-95"
+            className="w-full cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(28,26,23,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
             style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
           >
             Acknowledged
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
+  );
+};
+
+/* ================= ICON BUTTON WITH TOOLTIP ================= */
+const IconButton = ({ icon, label, onClick, variant = "default" }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const base =
+    "group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border transition-all duration-300 active:scale-90";
+
+  const variants = {
+    default: {
+      className: `${base} text-[#B4ADA0] hover:text-[#7A2233] hover:shadow-[0_10px_20px_-8px_rgba(198,161,91,0.35)]`,
+      style: { borderColor: HAIRLINE, backgroundColor: "white" },
+      hoverStyle: { borderColor: "#D9C79A" },
+    },
+    danger: {
+      className: `${base} border-transparent text-[#C9C2B4] hover:text-white hover:shadow-[0_10px_22px_-8px_rgba(122,34,51,0.45)]`,
+      style: { backgroundColor: "#FBF8F3" },
+      hoverStyle: { backgroundColor: GARNET },
+    },
+  };
+
+  const v = variants[variant];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={v.className}
+        style={hovered ? { ...v.style, ...v.hoverStyle } : v.style}
+        aria-label={label}
+      >
+        {icon}
+      </button>
+
+      {/* CUSTOM TOOLTIP */}
+      <span
+        className={`pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-widest text-white transition-all duration-200 ${
+          hovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+        }`}
+        style={{ backgroundColor: INK, ...bodyFont }}
+      >
+        {label}
+        <span
+          className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent"
+          style={{ borderTopColor: INK }}
+        />
+      </span>
+    </div>
   );
 };
 
@@ -142,10 +205,6 @@ export const EmployeeButtons = ({ id, refresh }) => {
     }
   };
 
-  const btnStyle =
-    "p-2 rounded-full border text-[#B4ADA0] transition-all duration-300 active:scale-90 bg-white shadow-sm cursor-pointer hover:border-[#D9C79A] hover:text-[#7A2233] hover:shadow-[0_10px_20px_-8px_rgba(198,161,91,0.35)]";
-  const btnBorder = { borderColor: HAIRLINE };
-
   return (
     <>
       {showConfirm && (
@@ -160,65 +219,40 @@ export const EmployeeButtons = ({ id, refresh }) => {
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {/* VIEW PROFILE */}
-        <button
-          title="View Profile"
+        <IconButton
+          variant="default"
+          label="View profile"
+          icon={<Eye size={16} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/employees/${id}`)}
-          className={btnStyle}
-          style={btnBorder}
-        >
-          <Eye size={16} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* EDIT DETAILS */}
-        <button
-          title="Edit Details"
+        <IconButton
+          variant="default"
+          label="Edit details"
+          icon={<Edit2 size={15} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/employees/edit/${id}`)}
-          className={btnStyle}
-          style={btnBorder}
-        >
-          <Edit2 size={15} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* LEAVE MANAGEMENT */}
-        <button
-          title="Leaves"
+        <IconButton
+          variant="default"
+          label="Leaves"
+          icon={<Plane size={15} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/employees/leaves/${id}`)}
-          className={btnStyle}
-          style={btnBorder}
-        >
-          <Plane size={15} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* PAYROLL/PAYSLIP */}
-        <button
-          title="Payslip"
+        <IconButton
+          variant="default"
+          label="Payslip"
+          icon={<Receipt size={15} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
-          className={btnStyle}
-          style={btnBorder}
-        >
-          <Receipt size={15} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* DANGER: TERMINATE */}
-        <button
-          title="Delete Personnel"
+        <IconButton
+          variant="danger"
+          label="Delete personnel"
+          icon={<Trash2 size={15} strokeWidth={1.75} />}
           onClick={() => setShowConfirm(true)}
-          className="group cursor-pointer rounded-full p-2.5 text-[#C9C2B4] shadow-sm transition-all duration-300 active:scale-90"
-          style={{ backgroundColor: "#FBF8F3" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = GARNET;
-            e.currentTarget.style.color = "white";
-            e.currentTarget.style.boxShadow = "0 10px 20px -8px rgba(122,34,51,0.45)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#FBF8F3";
-            e.currentTarget.style.color = "#C9C2B4";
-            e.currentTarget.style.boxShadow = "";
-          }}
-        >
-          <Trash2 size={15} strokeWidth={1.75} />
-        </button>
+        />
       </div>
     </>
   );

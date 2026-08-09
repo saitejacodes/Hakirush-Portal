@@ -2,6 +2,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
@@ -13,7 +14,7 @@ const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
 /* ================= PREMIUM CONFIRM DELETE ================= */
 const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[60] bg-[#1C1A17]/40 backdrop-blur-md animate-in fade-in duration-300" />
       <div className="fixed inset-0 z-[70] flex animate-in zoom-in-95 items-center justify-center px-4 duration-200">
@@ -51,7 +52,7 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
               </button>
               <button
                 onClick={onConfirm}
-                className="w-1/2 cursor-pointer rounded-2xl py-4 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all active:scale-95"
+                className="w-1/2 cursor-pointer rounded-2xl py-4 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_14px_28px_-10px_rgba(122,34,51,0.45)] transition-all hover:-translate-y-0.5 active:scale-95"
                 style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
               >
                 Confirm Delete
@@ -60,13 +61,14 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
 /* ================= PREMIUM SUCCESS ALERT ================= */
 const DeleteSuccessAlert = ({ onClose }) => {
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[60] bg-[#1C1A17]/20 backdrop-blur-sm animate-in fade-in" />
       <div className="fixed inset-0 z-[70] flex animate-in zoom-in-95 items-center justify-center px-4">
@@ -98,7 +100,78 @@ const DeleteSuccessAlert = ({ onClose }) => {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
+  );
+};
+
+/* ================= ICON BUTTON WITH TOOLTIP ================= */
+const IconButton = ({ icon, label, onClick, variant = "default" }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const base =
+    "group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white shadow-sm transition-all duration-300 active:scale-90";
+
+  const variants = {
+    view: {
+      className: `${base} text-[#8A8378] hover:text-[#7A2233]`,
+      style: { borderColor: HAIRLINE },
+      hoverStyle: { borderColor: "#D9C79A" },
+    },
+    edit: {
+      className: `${base} text-[#8A8378] hover:text-[#1C1A17]`,
+      style: { borderColor: HAIRLINE },
+      hoverStyle: { borderColor: "#D9C79A" },
+    },
+    danger: {
+      className: "cursor-pointer rounded-full p-2.5 transition-colors duration-300 active:scale-90",
+      style: { backgroundColor: "#F6F2EA", color: "#8A8378" },
+      hoverStyle: { backgroundColor: GARNET, color: "#fff" },
+      isDanger: true,
+    },
+  };
+
+  const v = variants[variant];
+
+  return (
+    <div className="relative">
+      {v.isDanger ? (
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className={v.className}
+          style={hovered ? { ...v.style, ...v.hoverStyle } : v.style}
+          aria-label={label}
+        >
+          {icon}
+        </button>
+      ) : (
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className={v.className}
+          style={hovered ? { ...v.style, ...v.hoverStyle } : v.style}
+          aria-label={label}
+        >
+          {icon}
+        </button>
+      )}
+
+      <span
+        className={`pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-widest text-white transition-all duration-200 ${
+          hovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+        }`}
+        style={{ backgroundColor: INK, ...bodyFont }}
+      >
+        {label}
+        <span
+          className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent"
+          style={{ borderTopColor: INK }}
+        />
+      </span>
+    </div>
   );
 };
 
@@ -148,37 +221,26 @@ export const SponsorButtons = ({ id, refresh }) => {
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {/* View Action */}
-        <button
+        <IconButton
+          variant="view"
+          label="View details"
+          icon={<Eye size={16} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/sponsors/${id}`)}
-          className="group cursor-pointer rounded-full border bg-white p-2.5 text-[#8A8378] shadow-sm transition-all duration-300 hover:border-[#D9C79A] hover:text-[#7A2233] active:scale-90"
-          style={{ borderColor: HAIRLINE }}
-          title="View Details"
-        >
-          <Eye size={16} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* Edit Action */}
-        <button
+        <IconButton
+          variant="edit"
+          label="Modify sponsor"
+          icon={<Edit2 size={16} strokeWidth={1.75} />}
           onClick={() => navigate(`/admin-dashboard/sponsors/edit/${id}`)}
-          className="group cursor-pointer rounded-full border bg-white p-2.5 text-[#8A8378] shadow-sm transition-all duration-300 hover:border-[#D9C79A] hover:text-[#1C1A17] active:scale-90"
-          style={{ borderColor: HAIRLINE }}
-          title="Modify Sponsor"
-        >
-          <Edit2 size={16} strokeWidth={1.75} />
-        </button>
+        />
 
-        {/* Delete Action */}
-        <button
+        <IconButton
+          variant="danger"
+          label="Delete record"
+          icon={<Trash2 size={16} strokeWidth={1.75} />}
           onClick={() => setShowConfirm(true)}
-          className="cursor-pointer rounded-full p-2.5 transition-colors duration-300 active:scale-90"
-          style={{ backgroundColor: "#F6F2EA", color: "#8A8378" }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = GARNET; e.currentTarget.style.color = "#fff"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#F6F2EA"; e.currentTarget.style.color = "#8A8378"; }}
-          title="Delete Record"
-        >
-          <Trash2 size={16} strokeWidth={1.75} />
-        </button>
+        />
       </div>
     </>
   );

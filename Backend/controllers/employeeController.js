@@ -235,6 +235,7 @@ const deleteEmployee = async (req, res) => {
     const emp = await Employee.findById(req.params.id);
     if (!emp) return res.status(404).json({ success: false });
 
+    await Leave.deleteMany({ employeeId: emp._id });
     await User.findByIdAndDelete(emp.userId);
     await Employee.findByIdAndDelete(emp._id);
 

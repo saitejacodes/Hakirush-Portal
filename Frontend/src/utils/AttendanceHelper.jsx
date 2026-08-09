@@ -44,6 +44,29 @@ const statusConfig = {
   },
 };
 
+/* ================= SHARED TOOLTIP WRAPPER ================= */
+const Tooltip = ({ label, children }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children}
+      <span
+        className={`pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1C1A17] px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-widest text-white transition-all duration-200 ${
+          hovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+        }`}
+      >
+        {label}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1C1A17]" />
+      </span>
+    </div>
+  );
+};
+
 const AttendanceHelper = ({ status, employeeId, statusChange, checkIn, checkOut }) => {
   const finalStatus = normalizeStatus(status);
   const [loading, setLoading] = useState(false);
@@ -94,18 +117,19 @@ const AttendanceHelper = ({ status, employeeId, statusChange, checkIn, checkOut 
     const config = statusConfig[localStatus];
     const Icon = config.icon;
     return (
-      <button
-        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${config.border} ${config.light} ${config.text} shadow-sm animate-in fade-in zoom-in duration-300 focus:outline-none hover:brightness-95 transition-all`}
-        onClick={() => setEditMode(true)}
-        title="Click to change status"
-        style={{ cursor: 'pointer' }}
-      >
-        <Icon size={14} strokeWidth={3} />
-        <span className="text-[10px] font-black uppercase tracking-[0.15em]">
-          {localStatus}
-        </span>
-        <span className="ml-2 text-[9px] text-[#C9C2AE]">(Edit)</span>
-      </button>
+      <Tooltip label="Click to change status">
+        <button
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${config.border} ${config.light} ${config.text} shadow-sm animate-in fade-in zoom-in duration-300 focus:outline-none hover:brightness-95 transition-all`}
+          onClick={() => setEditMode(true)}
+          style={{ cursor: 'pointer' }}
+        >
+          <Icon size={14} strokeWidth={3} />
+          <span className="text-[10px] font-black uppercase tracking-[0.15em]">
+            {localStatus}
+          </span>
+          <span className="ml-2 text-[9px] text-[#C9C2AE]">(Edit)</span>
+        </button>
+      </Tooltip>
     );
   }
 
@@ -116,22 +140,22 @@ const AttendanceHelper = ({ status, employeeId, statusChange, checkIn, checkOut 
       {["Present", "Half Day", "Absent", "Leave"].map((s) => {
         const config = statusConfig[s];
         return (
-          <button
-            key={s}
-            onClick={() => {
-              markEmployee(s);
-              setEditMode(false);
-            }}
-            title={`Mark as ${s}`}
-            className={`group relative p-2 rounded-full border border-[#E7E1D3] bg-white hover:border-transparent transition-all duration-300 active:scale-90 cursor-pointer overflow-hidden shadow-sm`}
-          >
-            {/* Hover Background Slide */}
-            <div className={`absolute inset-0 translate-y-full group-hover:translate-y-0 ${config.color} transition-transform duration-300`} />
-            {/* Icon */}
-            <div className="relative z-10 text-[#C9C2AE] group-hover:text-white transition-colors">
-              <config.icon size={16} strokeWidth={2.5} />
-            </div>
-          </button>
+          <Tooltip key={s} label={`Mark as ${s}`}>
+            <button
+              onClick={() => {
+                markEmployee(s);
+                setEditMode(false);
+              }}
+              className={`group relative p-2 rounded-full border border-[#E7E1D3] bg-white hover:border-transparent transition-all duration-300 active:scale-90 cursor-pointer overflow-hidden shadow-sm`}
+            >
+              {/* Hover Background Slide */}
+              <div className={`absolute inset-0 translate-y-full group-hover:translate-y-0 ${config.color} transition-transform duration-300`} />
+              {/* Icon */}
+              <div className="relative z-10 text-[#C9C2AE] group-hover:text-white transition-colors">
+                <config.icon size={16} strokeWidth={2.5} />
+              </div>
+            </button>
+          </Tooltip>
         );
       })}
     </div>

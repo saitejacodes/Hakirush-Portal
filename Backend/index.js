@@ -18,6 +18,7 @@ import sponsorRouter from "./routes/sponsorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import stallRoutes from "./routes/stallRoutes.js";
 import payslipRoutes from "./routes/payslipRoutes.js";
+import attendanceRequestRouter from "./routes/attendanceRequestRoutes.js";
 import notificationRoute from "./routes/notificationRoute.js";
 
 connectToDatabase();
@@ -52,7 +53,7 @@ app.use("/api/holiday", holidayRouter);
 app.use("/api/sponsors", sponsorRouter);
 app.use("/api/stalls", stallRoutes);
 app.use("/api/payslip", payslipRoutes);
-
+app.use("/api/attendance-request", attendanceRequestRouter);
 app.use("/api/notifications", notificationRoute);
 
 app.get("/api/test", (req, res) => {

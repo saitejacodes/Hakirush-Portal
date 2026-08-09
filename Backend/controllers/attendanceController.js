@@ -2,6 +2,7 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import Holiday from "../models/Holiday.js";
 import Leave from "../models/Leave.js";
+import { buildAttendanceForEmployee } from "../utils/attendanceStatus.js";
 
 /* ================= HELPERS ================= */
 const formatToLocalYMD = (dateInput) => {
@@ -23,6 +24,14 @@ const getStatusFromHours = (hours) => {
     if (hours >= 8) return "Present";
     if (hours >= 4) return "Half Day";
     return "Absent";
+};
+
+const isIncompleteCheckout = (rec) => {
+    return (
+        !!rec.checkIn &&
+        !rec.checkOut &&
+        !["Present", "Half Day", "Leave"].includes(rec.status)
+    );
 };
 
 /* ================= GET ATTENDANCE (ADMIN) ================= */
@@ -52,25 +61,27 @@ const getAttendance = async (req, res) => {
             populate: ["userId", "department"],
         });
 
+        const approvedLeaves = await Leave.find({
+            status: "Approved",
+            startDate: { $lte: today },
+            endDate: { $gte: today },
+        }).lean();
+
+        const leaveByEmployeeId = new Map(
+            approvedLeaves.map((leave) => [String(leave.employeeId), leave])
+        );
+
         const attendance = employees.map((emp) => {
             const record = todayAttendance.find((a) => String(a.employeeId?._id) === String(emp._id));
-            if (record) {
-                return { ...record._doc };
-            }
-            return {
-                _id: null,
-                date: todayStr,
-                status: isOffDay ? "Holiday" : "Absent",
-                workedHours: 0,
-                checkIn: null,
-                checkOut: null,
-                isPaused: false,
-                totalPausedMs: 0,
-                employeeId: emp,
-            };
+            return buildAttendanceForEmployee({
+                employee: emp,
+                record,
+                isOffDay,
+                leaveByEmployeeId,
+                todayStr,
+            });
         });
 
-        // Send both the attendance list AND the off-day status
         console.log('[DEBUG] getAttendance:', { isOffDay, reason, today: todayStr });
         return res.json({ 
             success: true, 
@@ -94,7 +105,6 @@ const getAdminTodaySummary = async (req, res) => {
         const holidays = await Holiday.find();
         const holidayMatch = holidays.find(h => formatToLocalYMD(h.date) === todayStr);
 
-        // --- UPDATED LOGIC HERE ---
         if (dayOfWeek === 0 || dayOfWeek === 6 || holidayMatch) {
             let reason = "";
             if (holidayMatch) {
@@ -102,11 +112,19 @@ const getAdminTodaySummary = async (req, res) => {
             } else {
                 reason = dayOfWeek === 0 ? "Sunday (Weekend)" : "Saturday (Weekend)";
             }
-            return res.json({ success: true, isOffDay: true, reason: reason, activeToday: 0, onLeaveToday: 0, absentToday: 0 });
+            return res.json({
+                success: true,
+                isHoliday: true,
+                holidayName: reason,
+                presentToday: 0,
+                activeToday: 0,
+                halfDayToday: 0,
+                onLeaveToday: 0,
+                absentToday: 0,
+                lateLogins: 0,
+            });
         }
-        // --------------------------
 
-        // ✅ Get all employees (IMPORTANT)
         const employees = await Employee.find();
 
         const leaves = await Leave.find({
@@ -130,9 +148,15 @@ const getAdminTodaySummary = async (req, res) => {
 
         const absentToday = absentEmployees.length;
 
+        const halfDayToday = attendance.filter(a => (a.status === "Half Day") || (a.workedHours && a.workedHours >= 4 && a.workedHours < 8)).length;
+        const presentToday = attendance.filter(a => a.status === "Present" || (a.checkIn && a.workedHours >= 8)).length || presentIds.length;
+        const activeToday = presentToday;
+
         return res.json({
             success: true,
-            activeToday: presentIds.length,
+            presentToday,
+            activeToday,
+            halfDayToday,
             onLeaveToday: leaves.length,
             absentToday,
             lateLogins: attendance.filter(a => a.checkIn && new Date(a.checkIn).getHours() >= 10).length
@@ -145,17 +169,19 @@ const getAdminTodaySummary = async (req, res) => {
 /* ================= ATTENDANCE REPORT (ADMIN) ================= */
 const attendanceReport = async (req, res) => {
     try {
-        const { date, search } = req.query;
+        const { date, search, month, year } = req.query;
 
-        // Get all employees
         const employees = await Employee.find().populate("userId").populate("department");
 
-        // Determine date range
         let startDate, endDate;
-        if (date) {
+        if (month && year) {
+            // full month export
+            const lastDay = new Date(year, month, 0).getDate();
+            startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+            endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+        } else if (date) {
             startDate = endDate = date;
         } else {
-            // Find earliest joining date
             startDate = employees.reduce((min, emp) => {
                 if (!emp.dateOfJoining) return min;
                 const d = formatToLocalYMD(emp.dateOfJoining);
@@ -164,7 +190,6 @@ const attendanceReport = async (req, res) => {
             endDate = formatToLocalYMD(new Date());
         }
 
-        // Build date list
         function getDateList(start, end) {
             const arr = [];
             let dt = new Date(start);
@@ -177,25 +202,21 @@ const attendanceReport = async (req, res) => {
         }
         const dateList = getDateList(startDate, endDate);
 
-        // Get all attendance records in range
         const attendanceRecords = await Attendance.find({ date: { $gte: startDate, $lte: endDate } }).populate({
             path: "employeeId",
             populate: ["userId", "department"]
         });
 
-        // Build a map: { date: { employeeId: record } }
         const attendanceMap = {};
         attendanceRecords.forEach(r => {
             if (!attendanceMap[r.date]) attendanceMap[r.date] = {};
             attendanceMap[r.date][String(r.employeeId?._id)] = r;
         });
 
-        // Holidays
         const holidays = await Holiday.find();
         const holidayMap = {};
         holidays.forEach(h => holidayMap[formatToLocalYMD(h.date)] = h.title);
 
-        // Filter employees if search
         let filteredEmployees = employees;
         if (search) {
             const keyword = search.toLowerCase();
@@ -205,25 +226,26 @@ const attendanceReport = async (req, res) => {
             );
         }
 
-        // Build groupData: { date: [attendance objects] }
         const groupData = {};
         for (const d of dateList) {
             groupData[d] = [];
             for (const emp of filteredEmployees) {
-                // Only consider dates >= joining date
                 const joinDateStr = formatToLocalYMD(emp.dateOfJoining || new Date());
                 if (d < joinDateStr) continue;
                 const record = attendanceMap[d]?.[String(emp._id)];
                 if (record) {
+                    // FIX: apply the same "incomplete checkout" rule here so the
+                    // admin report and the employee calendar never disagree.
+                    const showIncomplete = isIncompleteCheckout(record);
                     groupData[d].push({
                         _id: record._id,
                         employeeId: emp.employeeId || "N/A",
                         employeeName: emp.userId?.name || "Unknown",
                         departmentName: emp.department?.dep_name || "N/A",
-                        status: record.status || "Absent",
-                        workedHours: record.workedHours,
+                        status: showIncomplete ? "Absent" : (record.status || "Absent"),
+                        workedHours: showIncomplete ? 0 : record.workedHours,
                         checkIn: record.checkIn,
-                        checkOut: record.checkOut,
+                        checkOut: showIncomplete ? null : record.checkOut,
                     });
                 } else {
                     groupData[d].push({
@@ -288,15 +310,14 @@ const checkOut = async (req, res) => {
 const pauseAttendance = async (req, res) => {
     try {
         const date = formatToLocalYMD(new Date());
-        console.log("Searching for attendance with date:", date); // DEBUG THIS
+        console.log("Searching for attendance with date:", date);
 
         const employee = await Employee.findOne({ userId: req.user._id });
-        // Use findOneAndUpdate to avoid race conditions and ensure update
         const attendance = await Attendance.findOneAndUpdate(
             { 
                 employeeId: employee._id, 
                 date: date,
-                checkOut: null // Can't pause if already checked out
+                checkOut: null
             },
             { 
                 $set: { 
@@ -326,27 +347,24 @@ const resumeAttendance = async (req, res) => {
         const date = formatToLocalYMD(new Date());
         const employee = await Employee.findOne({ userId: req.user._id });
         
-        // 1. Find the current record to get the pause timestamp
         const attendance = await Attendance.findOne({ employeeId: employee._id, date });
         
         if (!attendance || !attendance.isPaused || !attendance.pauseStartedAt) {
             return res.json({ success: true, attendance });
         }
 
-        // 2. Calculate the duration of THIS specific break
         const sessionPauseTime = new Date() - new Date(attendance.pauseStartedAt);
         
-        // 3. Use findOneAndUpdate to update the document safely
         const updatedAttendance = await Attendance.findOneAndUpdate(
             { _id: attendance._id },
             { 
-                $inc: { totalPausedMs: sessionPauseTime }, // Increment total by the new break time
+                $inc: { totalPausedMs: sessionPauseTime },
                 $set: { 
                     isPaused: false, 
                     pauseStartedAt: null 
                 } 
             },
-            { new: true } // Return the updated document to the frontend
+            { new: true }
         );
 
         return res.json({ success: true, attendance: updatedAttendance });
@@ -374,25 +392,32 @@ const getUserMonthlyAttendance = async (req, res) => {
         const start = `${year}-${String(month).padStart(2, "0")}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-        // Get all attendance records for this employee in the month
+
         const records = await Attendance.find({ employeeId: employee._id, date: { $gte: start, $lte: end } }).sort({ date: 1 });
-        // Build a map for quick lookup
+
         const recordMap = {};
         records.forEach(r => { recordMap[r.date] = r; });
-        // Build full attendance array for all days in month (from joining date up to today)
+
         const attendance = [];
         const today = new Date();
         const todayStr = formatToLocalYMD(today);
         const joinDateStr = formatToLocalYMD(employee.dateOfJoining || new Date());
+
         for (let day = 1; day <= lastDay; day++) {
             const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            // Only include up to today and after joining date
             if (dateStr > todayStr) break;
             if (dateStr < joinDateStr) continue;
             const rec = recordMap[dateStr];
             if (rec) {
-                // If checked in but not checked out, treat as Absent
-                if (rec.checkIn && !rec.checkOut) {
+                // FIX: only force "Absent" when the record is genuinely an
+                // unfinished checkin (i.e. hasn't been corrected/approved via
+                // an attendance request to Present / Half Day / Leave).
+                // Previously this checked `rec.checkIn && !rec.checkOut` alone,
+                // which meant an approved correction (status: "Present") whose
+                // checkOut was still null got silently overwritten back to
+                // "Absent" on the calendar, even though the attendance list
+                // correctly showed "Present".
+                if (isIncompleteCheckout(rec)) {
                     attendance.push({
                         ...rec._doc,
                         status: "Absent",
