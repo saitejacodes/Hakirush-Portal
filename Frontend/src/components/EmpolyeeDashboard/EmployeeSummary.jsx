@@ -165,7 +165,7 @@ const EmployeeSummary = () => {
 
     if (activeLeave) return { status: "leave", title: activeLeave.leaveType };
 
-    const attRec = attendance.find(a => String(a.date) === dateStr);
+    const attRec = attendance.find(a => toYMD(a.date) === dateStr);
     if (attRec) {
       const s = (attRec.status || "").toLowerCase().replace(/\s+/g, "");
       const workedHours = Number(attRec.workedHours || 0);
@@ -180,7 +180,7 @@ const EmployeeSummary = () => {
         return { status: "absent", title: "Absent" };
       }
 
-      if (attRec.checkIn && !["present", "halfday", "absent"].includes(s)) {
+      if (attRec.checkIn && !attRec.checkOut) {
         return { status: "working", title: "Working" };
       }
 
@@ -311,7 +311,7 @@ const EmployeeSummary = () => {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       setCalendarMonth(monthStart);
       const dateStr = toYMD(today);
-      const record = attendance.find((entry) => String(entry.date) === dateStr) || null;
+      const record = attendance.find((entry) => toYMD(entry.date) === dateStr) || null;
       setSelectedDay({
         day: today.getDate(),
         dateStr,
@@ -329,7 +329,7 @@ const EmployeeSummary = () => {
     if (!day) return;
     const { status, title } = getDayInfo(day);
     const dateStr = toYMD(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day));
-    const record = attendance.find(a => String(a.date) === dateStr) || null;
+    const record = attendance.find(a => toYMD(a.date) === dateStr) || null;
     setSelectedDay({ day, dateStr, status, title, record });
     setRequestForm({ requestedStatus: "Present", reason: "" });
   };
