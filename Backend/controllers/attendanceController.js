@@ -409,15 +409,12 @@ const getUserMonthlyAttendance = async (req, res) => {
             if (dateStr < joinDateStr) continue;
             const rec = recordMap[dateStr];
             if (rec) {
-                // FIX: only force "Absent" when the record is genuinely an
-                // unfinished checkin (i.e. hasn't been corrected/approved via
-                // an attendance request to Present / Half Day / Leave).
-                // Previously this checked `rec.checkIn && !rec.checkOut` alone,
-                // which meant an approved correction (status: "Present") whose
-                // checkOut was still null got silently overwritten back to
-                // "Absent" on the calendar, even though the attendance list
-                // correctly showed "Present".
-                if (isIncompleteCheckout(rec)) {
+                // Only force "Absent" for past incomplete check-ins.
+                // Keep today's open check-in record intact so the calendar
+                // can display it as "Working" instead of incorrectly
+                // converting it to "Absent".
+                const showIncomplete = isIncompleteCheckout(rec);
+                if (showIncomplete && dateStr < todayStr) {
                     attendance.push({
                         ...rec._doc,
                         status: "Absent",
