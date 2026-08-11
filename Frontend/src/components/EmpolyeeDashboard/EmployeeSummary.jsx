@@ -169,6 +169,8 @@ const EmployeeSummary = () => {
     if (attRec) {
       const s = (attRec.status || "").toLowerCase().replace(/\s+/g, "");
       const workedHours = Number(attRec.workedHours || 0);
+      const todayStr = toYMD(new Date());
+      const isPastDay = dateStr < todayStr;
 
       if (attRec.checkOut) {
         if (s === "present" || workedHours >= 8) {
@@ -181,6 +183,9 @@ const EmployeeSummary = () => {
       }
 
       if (attRec.checkIn && !attRec.checkOut) {
+        if (isPastDay || s === "absent") {
+          return { status: "absent", title: "Absent" };
+        }
         return { status: "working", title: "Working" };
       }
 
