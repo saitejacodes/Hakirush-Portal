@@ -39,3 +39,25 @@ test('preserves existing attendance record when no leave exists', () => {
   assert.equal(result.workedHours, 8);
   assert.equal(result._id, 'att-1');
 });
+
+test('marks a past incomplete checkout as Absent', () => {
+  const result = buildAttendanceForEmployee({
+    employee: { _id: 'emp-3', userId: { name: 'Carol' }, department: { dep_name: 'Finance' } },
+    record: {
+      _id: 'att-2',
+      date: '2026-08-05',
+      status: '',
+      workedHours: 0,
+      checkIn: '2026-08-05T08:00:00.000Z',
+      checkOut: null,
+      employeeId: { _id: 'emp-3' }
+    },
+    isOffDay: false,
+    leaveByEmployeeId: new Map(),
+    todayStr: '2026-08-06'
+  });
+
+  assert.equal(result.status, 'Absent');
+  assert.equal(result.workedHours, 0);
+  assert.equal(result.checkOut, null);
+});
