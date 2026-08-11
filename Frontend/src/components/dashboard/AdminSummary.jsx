@@ -324,49 +324,58 @@ const AdminSummary = () => {
                 )}
               </button>
               {showNotif && (
-                <div className="absolute right-0 z-50 mt-2 w-[85vw] overflow-hidden rounded-2xl border border-[#E7DFD2] bg-white/95 shadow-[0_2px_8px_rgba(28,26,23,0.06),0_30px_60px_-15px_rgba(28,26,23,0.22)] backdrop-blur-xl sm:w-[350px] sm:rounded-3xl">
+                <>
+                  {/* backdrop: closes the panel on outside tap, mobile only */}
                   <div
-                    className="flex items-center justify-between border-b p-4"
-                    style={{ borderColor: HAIRLINE }}
+                    className="fixed inset-0 z-40 sm:hidden"
+                    onClick={() => setShowNotif(false)}
+                  />
+                  <div
+                    className="fixed left-4 right-4 top-[4.5rem] z-50 overflow-hidden rounded-2xl border border-[#E7DFD2] bg-white/95 shadow-[0_2px_8px_rgba(28,26,23,0.06),0_30px_60px_-15px_rgba(28,26,23,0.22)] backdrop-blur-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[350px] sm:rounded-3xl"
                   >
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#8A8378]">
-                      Notifications
-                    </span>
-                    <button
-                      className="text-xs font-semibold text-[#8A8378] transition-colors hover:text-[#7A2233] cursor-pointer"
-                      onClick={() => setShowNotif(false)}
+                    <div
+                      className="flex items-center justify-between border-b p-4"
+                      style={{ borderColor: HAIRLINE }}
                     >
-                     <XCircle size={16} />
-                    </button>
-                  </div>
-                  <div className="max-h-[300px] divide-y overflow-y-auto sm:max-h-[350px]" style={{ borderColor: HAIRLINE }}>
-                    {notifications.length === 0 && (
-                      <div className="p-6 text-center text-xs text-[#B4ADA0]">No notifications</div>
-                    )}
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif._id}
-                        className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-[#FBF8F3] ${!notif.seen ? "bg-[#FBF8F3]/60" : ""}`}
-                        onClick={() => handleNotificationClick(notif)}
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#8A8378]">
+                        Notifications
+                      </span>
+                      <button
+                        className="text-xs font-semibold text-[#8A8378] transition-colors hover:text-[#7A2233] cursor-pointer"
+                        onClick={() => setShowNotif(false)}
                       >
-                        {!notif.seen && (
-                          <span
-                            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: GOLD }}
-                          />
-                        )}
-                        <div>
-                          <div className="mb-1 text-[13px] font-semibold leading-snug text-[#1C1A17]">
-                            {notif.message}
-                          </div>
-                          <div className="text-[10px] text-[#B4ADA0]">
-                            {new Date(notif.createdAt).toLocaleString()}
+                       <XCircle size={16} />
+                      </button>
+                    </div>
+                    <div className="max-h-[60vh] divide-y overflow-y-auto sm:max-h-[350px]" style={{ borderColor: HAIRLINE }}>
+                      {notifications.length === 0 && (
+                        <div className="p-6 text-center text-xs text-[#B4ADA0]">No notifications</div>
+                      )}
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif._id}
+                          className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-[#FBF8F3] ${!notif.seen ? "bg-[#FBF8F3]/60" : ""}`}
+                          onClick={() => handleNotificationClick(notif)}
+                        >
+                          {!notif.seen && (
+                            <span
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: GOLD }}
+                            />
+                          )}
+                          <div>
+                            <div className="mb-1 text-[13px] font-semibold leading-snug text-[#1C1A17]">
+                              {notif.message}
+                            </div>
+                            <div className="text-[10px] text-[#B4ADA0]">
+                              {new Date(notif.createdAt).toLocaleString()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 
