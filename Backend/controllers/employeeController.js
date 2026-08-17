@@ -245,7 +245,7 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
-/* ================= GET EMPLOYEES BY DEPARTMENT ================= */
+/* ================= GET EMPLOYEES BY DEPARTMENT (excludes the logged-in employee) ================= */
 const getEmployeesByDepartment = async (req, res) => { 
   try {
     const emp = await Employee.findOne({ userId: req.user._id });
@@ -254,7 +254,10 @@ const getEmployeesByDepartment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    const employees = await Employee.find({ department: emp.department })
+    const employees = await Employee.find({
+      department: emp.department,
+      userId: { $ne: req.user._id }, // exclude the logged-in employee from their own list
+    })
       .populate("userId", "name email profileImage")
       .populate("department", "dep_name description");
 
@@ -338,8 +341,6 @@ const getEmployeesByDepartmentId = async (req, res) => {
     });
   }
 };
-
-// ...existing code...
 
 /* ================= GET LEAVE BALANCE ================= */
 const getLeaveBalance = async (req, res) => {
