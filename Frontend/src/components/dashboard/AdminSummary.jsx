@@ -24,21 +24,26 @@ import {
   ResponsiveContainer,
   Cell,
   Tooltip,
-  Legend,
 } from "recharts";
 
+/* ================= DESIGN TOKENS ================= */
+/* One palette, named once, used everywhere — cards, charts, and
+   accents all pull from this instead of picking their own hex values. */
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
 const GOLD = "#C6A15B";
 const HAIRLINE = "#E7DFD2";
+const CREAM = "#FBF8F3";
+const SAGE = "#3F5B54";
+const SLATE = "#4A5A6B";
 
-const PIE_COLORS = ["#7A2233", "#C6A15B", "#3F5B54", "#8E7A66", "#4A5A6B", "#B0765C", "#5C4A54", "#9C8355"];
+const PIE_COLORS = [GARNET, GOLD, SAGE, SLATE, "#9C3A4E", "#D8BC7C", "#2E4640", "#8E7A66"];
 
 const SEMANTIC_COLORS = {
-  Approved: "#3F5B54",
-  Pending: "#C6A15B",
-  Rejected: "#7A2233",
+  Approved: SAGE,
+  Pending: GOLD,
+  Rejected: GARNET,
 };
 
 const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
@@ -275,9 +280,18 @@ const AdminSummary = () => {
 
   return (
     <div
-      className="relative min-h-screen bg-gradient-to-br from-white via-red-50 to-pink-100 pb-20 text-[#1C1A17] selection:bg-[#7A2233]/10"
+      className="relative min-h-screen bg-gradient-to-br from-[#FBF8F3] via-white to-[#F3EDE0] pb-20 text-[#1C1A17] selection:bg-[#7A2233]/10"
       style={bodyFont}
     >
+      {/* soft ambient glow behind the masthead — replaces the old pink/red
+          gradient with something drawn from the actual palette */}
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[420px] opacity-70"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 15% 0%, rgba(198,161,91,0.10), transparent 70%), radial-gradient(50% 50% at 100% 0%, rgba(122,34,51,0.06), transparent 70%)",
+        }}
+      />
       {/* faint paper grain over the existing gradient — the one
           textural signature carried through the whole page */}
       <div
@@ -395,7 +409,7 @@ const AdminSummary = () => {
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full border border-white"
-                  style={{ backgroundColor: attSummary?.isHoliday ? GARNET : "#3F5B54" }}
+                  style={{ backgroundColor: attSummary?.isHoliday ? GARNET : SAGE }}
                 />
                 <p className="max-w-[80px] truncate text-[10px] font-semibold uppercase tracking-widest text-[#1C1A17] sm:max-w-none sm:text-[11px]">
                   {attSummary?.isHoliday ? attSummary.holidayName : "Live"}
@@ -407,9 +421,9 @@ const AdminSummary = () => {
 
         {/* TOP STATS */}
         <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          <StatCard icon={Activity} label="Present Today" value={attSummary?.presentToday ?? attSummary?.activeToday} accent="#3F5B54" />
+          <StatCard icon={Activity} label="Present Today" value={attSummary?.presentToday ?? attSummary?.activeToday} accent={SAGE} />
           <StatCard icon={Clock} label="Half Day" value={attSummary?.halfDayToday} accent={GOLD} />
-          <StatCard icon={UserMinus} label="Leave" value={attSummary?.onLeaveToday} accent="#4A5A6B" />
+          <StatCard icon={UserMinus} label="Leave" value={attSummary?.onLeaveToday} accent={SLATE} />
           <StatCard icon={AlertCircle} label="Absent" value={attSummary?.absentToday} accent={GARNET} />
         </div>
 
@@ -418,7 +432,7 @@ const AdminSummary = () => {
           <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
             <span
               className="pointer-events-none absolute top-0 left-8 h-px w-12 opacity-50"
-              style={{ backgroundColor: "#3F5B54" }}
+              style={{ backgroundColor: SAGE }}
             />
             <TrendingUp className="pointer-events-none absolute -right-4 -bottom-4 opacity-[0.045]" size={100} color={INK} strokeWidth={1.25} />
             <div className="relative z-10">
@@ -429,13 +443,13 @@ const AdminSummary = () => {
                 {summary?.totalEmployees}
               </p>
             </div>
-            <Users className="relative z-10 text-[#3F5B54] opacity-30 transition-opacity duration-300 group-hover:opacity-100" size={36} strokeWidth={1.5} />
+            <Users className="relative z-10 opacity-30 transition-opacity duration-300 group-hover:opacity-100" style={{ color: SAGE }} size={36} strokeWidth={1.5} />
           </div>
 
           <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
             <span
               className="pointer-events-none absolute top-0 left-8 h-px w-12 opacity-50"
-              style={{ backgroundColor: "#4A5A6B" }}
+              style={{ backgroundColor: SLATE }}
             />
             <div className="relative z-10">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#B4ADA0]">Departments</p>
@@ -443,7 +457,7 @@ const AdminSummary = () => {
                 {summary?.totalDepartments}
               </p>
             </div>
-            <Building className="relative z-10 text-[#4A5A6B] opacity-30 transition-opacity duration-300 group-hover:opacity-100" size={36} strokeWidth={1.5} />
+            <Building className="relative z-10 opacity-30 transition-opacity duration-300 group-hover:opacity-100" style={{ color: SLATE }} size={36} strokeWidth={1.5} />
           </div>
 
           <div className="group relative flex items-center justify-between overflow-hidden rounded-[1.75rem] border border-[#E7DFD2] bg-white/70 p-6 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_20px_40px_-18px_rgba(28,26,23,0.14)] backdrop-blur-md transition-all duration-300 hover:border-[#D9C79A] sm:p-8">
@@ -603,18 +617,6 @@ const AdminSummary = () => {
                         fontWeight: 600,
                         fontSize: "12px",
                         boxShadow: "0 20px 40px -12px rgba(28,26,23,0.20)",
-                      }}
-                    />
-                    <Legend
-                      verticalAlign="bottom"
-                      iconType="circle"
-                      wrapperStyle={{
-                        fontSize: "9px",
-                        fontWeight: 600,
-                        paddingTop: "15px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#8A8378",
                       }}
                     />
                   </PieChart>
