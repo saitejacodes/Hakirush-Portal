@@ -1,51 +1,100 @@
 import React, { useEffect, useState, useCallback, useMemo, useLayoutEffect } from "react";
-// Confirmation popup for check-in
-const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
-    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-slate-100">
-      <h2 className="text-lg font-semibold mb-3 text-slate-900 tracking-tight">Confirm check-in</h2>
-      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Are you sure you want to check in now? This will start your attendance timer.</p>
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2.5 rounded-full bg-slate-50 text-slate-500 font-medium text-sm hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
-        <button onClick={onConfirm} className="flex-1 py-2.5 rounded-full bg-emerald-500 text-white font-medium text-sm hover:bg-emerald-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(16,185,129,0.5)]">Check in</button>
-      </div>
-    </div>
-  </div>
-);
-
-// Confirmation popup for check-out
-const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
-    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-slate-100">
-      <h2 className="text-lg font-semibold mb-3 text-slate-900 tracking-tight">Confirm check-out</h2>
-      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Are you sure you want to check out now? This will end your attendance for today.</p>
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2.5 rounded-full bg-slate-50 text-slate-500 font-medium text-sm hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
-        <button onClick={onConfirm} className="flex-1 py-2.5 rounded-full bg-rose-500 text-white font-medium text-sm hover:bg-rose-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]">Check out</button>
-      </div>
-    </div>
-  </div>
-);
-
-// Holiday/weekend popup
-const HolidayPopup = ({ holidayName, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
-    <div className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.25)] p-8 max-w-xs w-full text-center border border-rose-100">
-      <h2 className="text-lg font-semibold mb-3 text-rose-600 tracking-tight">No check-in allowed</h2>
-      <p className="text-[13px] text-slate-500 mb-7 leading-relaxed">Check-in isn't available on <span className="font-semibold text-rose-500">{holidayName}</span>.</p>
-      <button onClick={onClose} className="w-full py-2.5 rounded-full bg-rose-500 text-white font-medium text-sm hover:bg-rose-600 transition-colors cursor-pointer shadow-[0_10px_20px_-8px_rgba(244,63,94,0.5)]">Got it</button>
-    </div>
-  </div>
-);
 import axios from "axios";
 import { Play, Square, Coffee, RotateCcw } from "lucide-react";
 
-const statusConfig = {
-  Present: { color: "bg-emerald-500", light: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-100" },
-  Absent: { color: "bg-red-500", light: "bg-red-50", text: "text-red-700", border: "border-red-100" },
-  "Half Day": { color: "bg-blue-500", light: "bg-blue-50", text: "text-blue-700", border: "border-blue-100" },
+const theme = {
+  "--paper": "#FFFFFF",
+  "--ink": "#14213D",
+  "--muted": "#6B7686",
+  "--line": "#E2E5EA",
+  "--panel": "#F6F7F9",
+  "--blue": "#2F5FD1",
+  "--blue-light": "#EAF0FD",
+  "--green": "#1F8A5F",
+  "--green-light": "#E7F5EE",
+  "--red": "#D64545",
+  "--red-light": "#FBEAEA",
+  "--amber": "#D98B1F",
+  "--amber-light": "#FBF0DE",
 };
 
+const statusConfig = {
+  Present: { accent: "var(--green)", light: "var(--green-light)" },
+  Absent: { accent: "var(--red)", light: "var(--red-light)" },
+  "Half Day": { accent: "var(--amber)", light: "var(--amber-light)" },
+};
+
+const TARGET_HOURS = 8;
+
+const formatClock = (dateStr) => {
+  if (!dateStr) return "--:--";
+  return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+/* ---------- shared ticket-style modal ---------- */
+const TicketModal = ({ accent, light, eyebrow, title, children }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#14213D]/45 backdrop-blur-sm px-4">
+    <div className="relative w-full max-w-xs rounded-xl bg-[var(--paper)] border border-[var(--line)] shadow-[0_30px_60px_-20px_rgba(20,33,61,0.35)] overflow-hidden" style={theme}>
+      <div className="h-1.5 w-full" style={{ background: accent }} />
+      <div className="px-7 pt-6 pb-7 text-center">
+        <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full mb-3" style={{ background: light, color: accent }}>
+          {eyebrow}
+        </span>
+        <h2 className="text-lg font-semibold text-[var(--ink)] tracking-tight mb-2">{title}</h2>
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
+const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
+  <TicketModal accent="var(--blue)" light="var(--blue-light)" eyebrow="Gate opens" title="Confirm check-in">
+    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This starts your attendance timer for today.</p>
+    <div className="flex gap-2.5">
+      <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
+        Cancel
+      </button>
+      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--blue)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(47,95,209,0.6)]">
+        Check in
+      </button>
+    </div>
+  </TicketModal>
+);
+
+const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
+  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Final call" title="Confirm check-out">
+    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This ends your attendance for today — the timer stops for good.</p>
+    <div className="flex gap-2.5">
+      <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
+        Cancel
+      </button>
+      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--red)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(214,69,69,0.6)]">
+        Check out
+      </button>
+    </div>
+  </TicketModal>
+);
+
+const HolidayPopup = ({ holidayName, onClose }) => (
+  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Flight cancelled" title="Check-in isn't available">
+    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">
+      Today is <span className="font-semibold text-[var(--ink)]">{holidayName}</span> — no boarding until the next working day.
+    </p>
+    <button onClick={onClose} className="w-full py-2.5 rounded-lg bg-[var(--red)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(214,69,69,0.6)]">
+      Got it
+    </button>
+  </TicketModal>
+);
+
+/* ---------- decorative barcode — purely visual, ticket-stub texture ---------- */
+const BARCODE_PATTERN = [3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 3, 1, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2];
+const Barcode = () => (
+  <div className="flex items-end gap-[2px] h-6 opacity-70">
+    {BARCODE_PATTERN.map((w, i) => (
+      <div key={i} style={{ width: w, height: "100%", background: "var(--ink)" }} />
+    ))}
+  </div>
+);
 
 const EmployeePunch = ({ onSuccess }) => {
   const headers = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem("token")}` }), []);
@@ -56,15 +105,14 @@ const EmployeePunch = ({ onSuccess }) => {
   const [holidayName, setHolidayName] = useState("");
   const [showCheckInPopup, setShowCheckInPopup] = useState(false);
 
-
   const fetchTodayAttendance = useCallback(async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/today/me`, { headers });
       if (res.data.success && res.data.attendance) {
         setAttendance(res.data.attendance);
       }
-    } catch (error) { 
-      console.error("Error fetching attendance", error); 
+    } catch (error) {
+      console.error("Error fetching attendance", error);
     }
   }, [headers]);
 
@@ -82,7 +130,7 @@ const EmployeePunch = ({ onSuccess }) => {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/upcoming`, { headers });
       if (res.data.success && Array.isArray(res.data.holidays)) {
         const todayStr = today.toISOString().split("T")[0];
-        const found = res.data.holidays.find(h => {
+        const found = res.data.holidays.find((h) => {
           const hDate = new Date(h.date).toISOString().split("T")[0];
           return hDate === todayStr;
         });
@@ -104,13 +152,12 @@ const EmployeePunch = ({ onSuccess }) => {
         setAttendance(res.data.attendance);
         if (onSuccess) onSuccess();
       }
-    } catch (error) { 
+    } catch (error) {
       console.error(`Error during ${endpoint}:`, error.response?.data?.message || error.message);
     }
   };
 
   // Only for check-in, show popup first
-
   const [showHolidayPopup, setShowHolidayPopup] = useState(false);
   const [showCheckOutPopup, setShowCheckOutPopup] = useState(false);
 
@@ -150,7 +197,7 @@ const EmployeePunch = ({ onSuccess }) => {
     const checkInTime = new Date(attendance.checkIn).getTime();
     // totalPausedMs must be treated as 0 if undefined/null to avoid NaN
     const totalPausedMs = attendance.totalPausedMs || 0;
-    
+
     let currentTime;
     if (attendance.checkOut) {
       currentTime = new Date(attendance.checkOut).getTime();
@@ -188,7 +235,6 @@ const EmployeePunch = ({ onSuccess }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendance, calculateTime]);
 
-
   useLayoutEffect(() => {
     fetchTodayAttendance();
     checkHolidayOrWeekend();
@@ -203,85 +249,107 @@ const EmployeePunch = ({ onSuccess }) => {
   };
 
   const finalStatus = getFinalStatus();
-  const statusLabel = attendance?.checkOut ? finalStatus : attendance?.isPaused ? "On Break" : attendance?.checkIn ? "Working" : "Ready to Start";
+  const statusLabel = attendance?.checkOut
+    ? finalStatus
+    : attendance?.isPaused
+    ? "On break"
+    : attendance?.checkIn
+    ? "Working"
+    : "Ready to Checkin";
 
-  let statusColor = "bg-slate-100 text-slate-400";
+
+  let accent = "var(--muted)";
+  let accentLight = "var(--panel)";
   if (attendance?.checkOut && statusConfig[finalStatus]) {
-    statusColor = `${statusConfig[finalStatus].color} text-white`;
+    accent = statusConfig[finalStatus].accent;
+    accentLight = statusConfig[finalStatus].light;
   } else if (attendance?.isPaused) {
-    statusColor = `bg-amber-400 text-white shadow-[0_10px_20px_-8px_rgba(245,158,11,0.5)]`;
+    accent = "var(--amber)";
+    accentLight = "var(--amber-light)";
   } else if (attendance?.checkIn) {
-    statusColor = `${statusConfig.Present.color} text-white`;
+    accent = "var(--green)";
+    accentLight = "var(--green-light)";
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_25px_55px_-20px_rgba(15,23,42,0.14)] border border-white/60 p-8 sm:p-9 text-center relative overflow-hidden transition-all duration-300">
-        {/* Status Badge */}
-        <div className="flex justify-center mb-7">
-          <span className={`px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.18em] shadow-sm transition-all border border-white/40 ${statusColor}`}>
-            {statusLabel}
-          </span>
-        </div>
+    <div className="w-full max-w-md mx-auto" style={theme}>
+      <div className="relative bg-[var(--paper)] rounded-2xl border border-[var(--line)] shadow-[0_30px_70px_-30px_rgba(20,33,61,0.3)] overflow-hidden">
+        {/* accent header strip */}
+        <div className="h-1.5 w-full" style={{ background: accent, transition: "background 0.3s ease" }} />
 
-        {/* Timer Display */}
-        <div className="relative inline-block mb-2">
-          <div className="text-6xl font-semibold tabular-nums tracking-tight text-slate-900 leading-none">
-            {timer}
+        {/* ---- top stub: ticket info fields ---- */}
+        <div className="px-7 pt-5 pb-5">
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">Today</span>
+            <span
+              className="text-[10px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full"
+              style={{ background: accentLight, color: accent }}
+            >
+              {statusLabel}
+            </span>
           </div>
-          {attendance?.checkIn && !attendance?.checkOut && !attendance.isPaused && (
-             <div className="absolute inset-0 bg-emerald-400/15 blur-3xl -z-10 animate-pulse rounded-[2.5rem]" />
-          )}
+
+          <div className="grid grid-cols-2 gap-8 text-left">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Check-in</p>
+              <p className="text-lg font-semibold text-[var(--ink)] tabular-nums">{formatClock(attendance?.checkIn)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Check-out</p>
+              <p className="text-lg font-semibold text-[var(--ink)] tabular-nums">{formatClock(attendance?.checkOut)}</p>
+            </div>
+          </div>
         </div>
 
-        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-[0.2em] mt-4 mb-10">
-          Total worked hours
-        </p>
+        {/* ---- torn perforation line ---- */}
+        <div className="relative flex items-center gap-1.5 px-7">
+          <div className="flex-1 border-t border-dashed border-[var(--line)]" />
+        </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Disable check-in on holidays/weekends */}
-          {!attendance?.checkIn ? (
-            <>
+        {/* ---- bottom stub: timer + actions ---- */}
+        <div className="px-7 sm:px-9 pt-6 pb-7 text-center">
+          <div className="text-5xl font-semibold tabular-nums tracking-tight text-[var(--ink)] leading-none">{timer}</div>
+          <p className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-[0.18em] mt-3 mb-7">Total Worked Hours</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {!attendance?.checkIn ? (
               <button
                 onClick={handleCheckInClick}
-                className="col-span-2 flex items-center justify-center gap-3 px-10 py-4 rounded-full font-semibold text-base text-white bg-emerald-500 shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] hover:bg-emerald-600 active:scale-[0.98] transition-all cursor-pointer"
+                className="col-span-2 flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg font-semibold text-[15px] text-white bg-[var(--blue)] shadow-[0_16px_30px_-12px_rgba(47,95,209,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Play fill="currentColor" size={18} /> Check in
+                <Play fill="currentColor" size={17} /> Check in
               </button>
-              {/* Show popup overlays only after user clicks check-in */}
-            </>
-          ) : !attendance?.checkOut ? (
-            <>
-              {/* Pause / Resume Button */}
-              <button
-                onClick={() => handleAction(attendance.isPaused ? "resume" : "pause")}
-                className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-[1.75rem] font-medium text-[11px] transition-all active:scale-[0.98] cursor-pointer border ${
-                  attendance.isPaused 
-                  ? `bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100` 
-                  : `bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100`
-                }`}
-              >
-                {attendance.isPaused ? <RotateCcw size={19} className="animate-spin-slow" /> : <Coffee size={19} />}
-                {attendance.isPaused ? "Resume" : "Break"}
-              </button>
+            ) : !attendance?.checkOut ? (
+              <>
+                <button
+                  onClick={() => handleAction(attendance.isPaused ? "resume" : "pause")}
+                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-lg font-semibold text-[11px] uppercase tracking-wide transition-all active:scale-[0.98] cursor-pointer border"
+                  style={
+                    attendance.isPaused
+                      ? { background: "var(--blue-light)", color: "var(--blue)", borderColor: "var(--blue)33" }
+                      : { background: "var(--amber-light)", color: "var(--amber)", borderColor: "var(--amber)33" }
+                  }
+                >
+                  {attendance.isPaused ? <RotateCcw size={18} /> : <Coffee size={18} />}
+                  {attendance.isPaused ? "Resume" : "Break"}
+                </button>
 
-              {/* Check Out Button */}
-              <button
-                onClick={handleCheckOutClick}
-                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[1.75rem] font-medium text-[11px] bg-rose-500 text-white shadow-[0_15px_30px_-10px_rgba(244,63,94,0.5)] hover:bg-rose-600 active:scale-[0.98] transition-all cursor-pointer border border-rose-500"
-              >
-                <Square fill="currentColor" size={16} />
-                Check out
-              </button>
-            </>
-          ) : (
-            <div className="col-span-2 p-6 rounded-[1.75rem] bg-slate-50/80 border border-dashed border-slate-200">
-               <span className="text-[13px] font-medium text-slate-400">Shift completed</span>
-            </div>
-          )}
+                <button
+                  onClick={handleCheckOutClick}
+                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-lg font-semibold text-[11px] uppercase tracking-wide bg-[var(--red)] text-white shadow-[0_16px_30px_-12px_rgba(214,69,69,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <Square fill="currentColor" size={15} />
+                  Check out
+                </button>
+              </>
+            ) : (
+              <div className="col-span-2 p-5 rounded-lg bg-[var(--panel)] border border-dashed border-[var(--line)]">
+                <span className="text-[13px] font-medium text-[var(--muted)]">Shift completed &mdash; flight landed</span>
+              </div>
+            )}
+          </div>
         </div>
-        {/* Show popup overlays only when user clicks check-in and not already checked in */}
+
         {showCheckInPopup && !attendance?.checkIn && !isHoliday && (
           <ConfirmCheckInPopup onConfirm={confirmCheckIn} onCancel={cancelCheckIn} />
         )}
