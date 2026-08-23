@@ -54,7 +54,7 @@ const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
       <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
         Cancel
       </button>
-      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--blue)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(47,95,209,0.6)]">
+      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--green)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(47,95,209,0.6)]">
         Check in
       </button>
     </div>
@@ -76,9 +76,9 @@ const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
 );
 
 const HolidayPopup = ({ holidayName, onClose }) => (
-  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Flight cancelled" title="Check-in isn't available">
+  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Weekend" title="Check-in isn't available">
     <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">
-      Today is <span className="font-semibold text-[var(--ink)]">{holidayName}</span> — no boarding until the next working day.
+      Today is <span className="font-semibold text-[var(--ink)]">{holidayName}</span>
     </p>
     <button onClick={onClose} className="w-full py-2.5 rounded-lg bg-[var(--red)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(214,69,69,0.6)]">
       Got it
@@ -315,7 +315,7 @@ const EmployeePunch = ({ onSuccess }) => {
             {!attendance?.checkIn ? (
               <button
                 onClick={handleCheckInClick}
-                className="col-span-2 flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg font-semibold text-[15px] text-white bg-[var(--blue)] shadow-[0_16px_30px_-12px_rgba(47,95,209,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                className="col-span-2 flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg font-semibold text-[15px] text-white bg-[var(--green)] shadow-[0_16px_30px_-12px_rgba(47,95,209,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
               >
                 <Play fill="currentColor" size={17} /> Check in
               </button>
