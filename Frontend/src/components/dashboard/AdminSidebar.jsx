@@ -23,6 +23,12 @@ const SLATE = "#7A756C";
 const HAIRLINE = "rgba(26,26,29,0.10)";
 const GOLD_HAIRLINE = "rgba(173,138,86,0.35)";
 
+/* Accent — matches the red used on checkout / profile */
+const RED = "#C0362C";
+const RED_DEEP = "#9C2B23";
+const RED_HAIRLINE = "rgba(192,54,44,0.35)";
+const RED_WASH = "rgba(192,54,44,0.08)";
+
 const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
 const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
@@ -66,7 +72,7 @@ const AdminSidebar = () => {
         style={{ borderColor: HAIRLINE, ...bodyFont }}
       >
         {/* ============ WORDMARK ============ */}
-        <div className="relative flex h-16 items-center gap-4 px-5" style={{ backgroundColor: CHARCOAL }}>
+        <div className="relative flex h-18 items-center gap-4 px-5" style={{ backgroundColor: CHARCOAL }}>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: GOLD_HAIRLINE }}>
             <img src={Logo} className="h-6 w-6 rounded-full object-contain" alt="Logo" />
           </div>
@@ -112,16 +118,16 @@ const AdminSidebar = () => {
                   className="group/item relative flex items-center gap-4 rounded-xl py-3 pl-3 pr-4 text-[11px] font-semibold uppercase tracking-widest transition-colors duration-300"
                   style={{
                     color: isActive ? CHARCOAL : SLATE,
-                    backgroundColor: isActive ? IVORY : "transparent",
+                    backgroundColor: isActive ? RED_WASH : "transparent",
                   }}
                 >
                   {/* active rule */}
                   <span
                     className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full transition-opacity"
-                    style={{ backgroundColor: GOLD, opacity: isActive ? 1 : 0 }}
+                    style={{ backgroundColor: RED, opacity: isActive ? 1 : 0 }}
                   />
 
-                  <div className="flex w-7 shrink-0 justify-center">
+                  <div className="flex w-7 shrink-0 justify-center" style={{ color: isActive ? RED_DEEP : "inherit" }}>
                     <item.icon size={19} strokeWidth={isActive ? 2 : 1.5} />
                   </div>
 
@@ -136,9 +142,9 @@ const AdminSidebar = () => {
 
         {/* ============ FOOTER ============ */}
         <div className="absolute bottom-4 left-0 w-full px-7 opacity-0 transition-all duration-500 md:group-hover/sidebar:opacity-100">
-          <div className="mb-4 h-px" style={{ backgroundColor: GOLD_HAIRLINE }} />
+          <div className="mb-4 h-px" style={{ backgroundColor: RED_HAIRLINE }} />
           <div className="flex items-center gap-2.5" style={{ color: SLATE }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: GOLD }} />
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: RED }} />
             <span className="text-[8.5px] font-semibold uppercase tracking-[0.22em]">Node Online</span>
           </div>
         </div>
