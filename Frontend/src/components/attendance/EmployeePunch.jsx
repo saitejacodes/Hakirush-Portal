@@ -48,7 +48,7 @@ const TicketModal = ({ accent, light, eyebrow, title, children }) => (
 );
 
 const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
-  <TicketModal accent="var(--blue)" light="var(--blue-light)" eyebrow="Gate opens" title="Confirm check-in">
+  <TicketModal accent="var(--blue)" light="var(--blue-light)" title="Confirm check-in">
     <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This starts your attendance timer for today.</p>
     <div className="flex gap-2.5">
       <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
@@ -62,7 +62,7 @@ const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
 );
 
 const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
-  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Final call" title="Confirm check-out">
+  <TicketModal accent="var(--red)" light="var(--red-light)" title="Confirm check-out">
     <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This ends your attendance for today — the timer stops for good.</p>
     <div className="flex gap-2.5">
       <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
@@ -344,7 +344,7 @@ const EmployeePunch = ({ onSuccess }) => {
               </>
             ) : (
               <div className="col-span-2 p-5 rounded-lg bg-[var(--panel)] border border-dashed border-[var(--line)]">
-                <span className="text-[13px] font-medium text-[var(--muted)]">Shift completed &mdash; flight landed</span>
+                <span className="text-[13px] font-medium text-[var(--muted)]">Shift completed</span>
               </div>
             )}
           </div>
