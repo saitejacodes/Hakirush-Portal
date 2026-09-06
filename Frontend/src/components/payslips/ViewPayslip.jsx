@@ -1,17 +1,52 @@
 import axios from "axios";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, Download, ShieldCheck, 
-  Calendar, History, Lock, Wallet, 
-  ArrowUpRight, CreditCard 
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Download,
+  Eye,
+  Lock,
+  X,
 } from "lucide-react";
 
+// HAKIRUSH admin dashboard tokens
 const INK = "#1C1A17";
+const PAPER = "#FBF8F3";
 const GARNET = "#7A2233";
-const GOLD = "#B8912E";
+const GOLD = "#C6A15B";
 const SAGE = "#3F6B52";
 const RUST = "#A24A32";
+const HAIRLINE = "#E7E1D3";
+const MUTED = "#8A8478";
+
+const monthLabel = (raw) => {
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+};
+
+const shortMonth = (raw) => {
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString("en-IN", { month: "short" });
+};
+
+const rupees = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+
+const viewStatement = (url) => {
+  if (url) window.open(url, "_blank", "noopener,noreferrer");
+};
+
+const downloadStatement = (url, filename) => {
+  if (!url) return;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "payslip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
 
 const ViewPayslip = () => {
   const { id } = useParams();
@@ -21,195 +56,188 @@ const ViewPayslip = () => {
   const [selectedSlip, setSelectedSlip] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchPayslips = async () => {
       try {
         const token = localStorage.getItem("token");
-        const empRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
+        const empRes = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         const employeeId = empRes?.data?.employee?._id;
-        
         if (employeeId) {
-          const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/payslip/employee/${employeeId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          const sortedData = (res.data.payslips || []).sort((a, b) => 
-            new Date(b.month) - new Date(a.month)
+          const res = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/payslip/employee/${employeeId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
-          setPayslips(sortedData);
+          const sorted = (res.data.payslips || []).sort(
+            (a, b) => new Date(b.month) - new Date(a.month)
+          );
+          if (!cancelled) setPayslips(sorted);
         }
-      } catch (err) { 
-        console.error("Fetch Error:", err); 
-      } finally { 
-        setLoading(false); 
+      } catch (err) {
+        console.error("Fetch Error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
     fetchPayslips();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const totalLifetime = useMemo(() => 
-    payslips.reduce((acc, curr) => acc + Number(curr.netSalary || 0), 0), 
-  [payslips]);
+  const totalLifetime = useMemo(
+    () => payslips.reduce((acc, p) => acc + Number(p.netSalary || 0), 0),
+    [payslips]
+  );
+
+  const average = payslips.length ? totalLifetime / payslips.length : 0;
+
+  // Last 6 statements, oldest to newest, for the trend strip
+  const trend = useMemo(() => {
+    const recent = [...payslips].slice(0, 6).reverse();
+    const max = Math.max(...recent.map((p) => Number(p.netSalary || 0)), 1);
+    return recent.map((p) => ({
+      key: p._id,
+      label: shortMonth(p.month),
+      pct: Math.max(Number(p.netSalary || 0) / max, 0.06),
+      isLatest: p._id === payslips[0]?._id,
+    }));
+  }, [payslips]);
 
   return (
-    <div className="min-h-screen bg-[#F6F3EC] font-sans text-[#1C1A17] selection:bg-[#FBF3E3] flex justify-center items-start overflow-x-hidden">
-      
-      {/* Main container */}
-      <div className="w-full max-w-5xl p-6 md:p-12">
-        
-        {/* Header Section */}
-        <div className="flex justify-end items-center mb-10">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1C1A17] rounded-full text-[8px] font-black text-[#F6F3EC] uppercase tracking-widest">
-            <Lock size={10} className="text-[#B8912E]" /> Secure Terminal
+    <div className="min-h-screen bg-[#F6F3EC] font-sans text-[#1C1A17]">
+      <div className="w-full max-w-4xl mx-auto p-6 md:p-12">
+
+        {/* Letterhead / summary */}
+        <div
+          className="rounded-3xl overflow-hidden mb-10"
+          style={{ backgroundColor: GARNET }}
+        >
+          <div className="h-[3px]" style={{ backgroundColor: GOLD }} />
+          <div className="px-8 py-9">
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2"
+              style={{ color: GOLD }}
+            >
+              Payroll statement
+            </p>
+            <h1 className="text-3xl font-black tracking-tight" style={{ color: PAPER, fontFamily: "'Playfair Display', serif" }}>
+              Your earnings, on record
+            </h1>
           </div>
         </div>
 
-        {/* SUMMARY CARD */}
-        <div className="bg-white rounded-[2.5rem] p-8 mb-12 border border-[#E7E1D3] shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-            <ShieldCheck size={120} className="text-[#1C1A17]" />
+        {/* Ledger */}
+        <div>
+          <div className="flex items-baseline justify-between px-1 mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MUTED }}>
+              Statement history
+            </span>
+            {!loading && payslips.length > 0 && (
+              <span className="text-[10px] font-bold" style={{ color: MUTED }}>
+                {payslips.length} {payslips.length === 1 ? "entry" : "entries"}
+              </span>
+            )}
           </div>
-          
-          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 text-center sm:text-left">
-            <div className="space-y-1 w-full sm:w-auto">
-              <div className="flex items-center justify-center sm:justify-start gap-2 text-[#B8912E] mb-1">
-                <Wallet size={14} />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Financial Ledger</span>
-              </div>
-              <h1 className="text-4xl font-black tracking-tighter uppercase text-[#1C1A17]">
-                Payroll Archive
-              </h1>
-            </div>
 
-            <div className="flex justify-center sm:justify-end gap-10 w-full sm:w-auto">
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black text-[#8A8478] uppercase tracking-widest">Aggregate</p>
-                <p className="text-3xl font-black tracking-tighter text-[#1C1A17]">
-                  <span className="text-[#B8912E] mr-0.5">₹</span>{totalLifetime.toLocaleString('en-IN')}
+          <div className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: HAIRLINE }}>
+            {loading ? (
+              <div className="py-16 flex flex-col items-center gap-3">
+                <div
+                  className="w-6 h-6 border-2 rounded-full animate-spin"
+                  style={{ borderColor: HAIRLINE, borderTopColor: GOLD }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: MUTED }}>
+                  Loading your statements…
                 </p>
               </div>
-              <div className="space-y-0.5 text-right">
-                <p className="text-[9px] font-black text-[#8A8478] uppercase tracking-widest">Slips</p>
-                <p className="text-3xl font-black text-[#1C1A17]">{payslips.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* LIST SECTION */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-center sm:justify-start gap-2 px-4 mb-6 text-[#8A8478]">
-            <History size={14} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Transaction History</span>
-          </div>
-
-          {loading ? (
-            <div className="py-20 flex flex-col items-center sm:items-start px-4 gap-4">
-              <div className="w-8 h-8 border-2 border-[#EFE9D8] border-t-[#B8912E] rounded-full animate-spin" />
-              <p className="text-[8px] font-black uppercase tracking-widest text-[#8A8478]">Decrypting Records...</p>
-            </div>
-          ) : payslips.length > 0 ? (
-            payslips.map((p) => (
-              <div 
-                key={p._id} 
-                onClick={() => setSelectedSlip(p)}
-                className="group bg-white p-6 rounded-[2rem] border border-[#E7E1D3] flex items-center justify-between hover:border-[#B8912E]/40 hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
-              >
-                <div className="flex items-center gap-6">
-                  <div className="h-14 w-14 rounded-2xl bg-[#F6F3EC] flex items-center justify-center text-[#8A8478] group-hover:bg-[#FBF3E3] group-hover:text-[#B8912E] transition-all">
-                    <Calendar size={24} />
+            ) : payslips.length > 0 ? (
+              payslips.map((p, i) => (
+                <button
+                  key={p._id}
+                  onClick={() => setSelectedSlip(p)}
+                  className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-[#FBF8F3] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+                  style={{
+                    borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
+                    outlineColor: GOLD,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SAGE }} />
+                    <span className="font-bold text-[15px]">{monthLabel(p.month)}</span>
                   </div>
-                  <div>
-                    <p className="font-black text-lg uppercase tracking-tight text-[#1C1A17] group-hover:text-[#B8912E]">{p.month}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SAGE }} />
-                      <p className="text-[8px] font-bold text-[#8A8478] uppercase tracking-widest">Verified Credit</p>
+                  <div className="flex items-center gap-5">
+                    <span className="font-black text-lg tracking-tight tabular-nums text-red-600">
+                      {rupees(p.netSalary)}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View statement for ${monthLabel(p.month)}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          viewStatement(p.payslipFile);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer"
+                        style={{ color: MUTED }}
+                      >
+                        <Eye size={16} />
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Download statement for ${monthLabel(p.month)}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadStatement(p.payslipFile, `payslip-${p.month}`);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer"
+                        style={{ color: MUTED }}
+                      >
+                        <Download size={16} />
+                      </span>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="font-black text-xl tracking-tighter text-[#1C1A17]">
-                      ₹{Number(p.netSalary).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full border border-[#E7E1D3] flex items-center justify-center text-[#C9C2AE] group-hover:bg-[#1C1A17] group-hover:text-[#F6F3EC] group-hover:border-[#1C1A17] transition-all">
-                    <ArrowUpRight size={18} />
-                  </div>
-                </div>
+                </button>
+              ))
+            ) : (
+              <div className="py-16 text-center px-10">
+                <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: MUTED }}>
+                  No statements on file yet
+                </p>
+                <p className="text-[12px] mt-1" style={{ color: MUTED }}>
+                  Your first payslip will appear here once it's processed.
+                </p>
               </div>
-            ))
-          ) : (
-            <div className="py-20 text-center sm:text-left px-10 bg-white/60 rounded-[3rem] border border-dashed border-[#E7E1D3]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#8A8478]">No records found in database</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* DETAIL MODAL */}
-      {selectedSlip && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-md animate-in fade-in duration-300" 
-            onClick={() => setSelectedSlip(null)} 
-          />
-          <div className="relative bg-white w-full max-w-[360px] rounded-[3.5rem] shadow-2xl overflow-hidden border border-[#E7E1D3] animate-in zoom-in-95 duration-300">
-            
-            <div className="pt-12 pb-6 text-center">
-              <div className="inline-flex p-4 bg-[#FBF3E3] rounded-2xl text-[#B8912E] mb-4">
-                <CreditCard size={28} />
-              </div>
-              <h3 className="text-3xl font-black uppercase tracking-tighter text-[#1C1A17]">{selectedSlip.month}</h3>
-              <p className="text-[9px] font-black text-[#8A8478] uppercase tracking-widest mt-1">Audit Breakdown</p>
-            </div>
-
-            <div className="px-10 space-y-6">
-              <div className="bg-[#FBFAF6] rounded-3xl p-6 space-y-4 border border-[#F1EFE8]">
-                <MiniRow label="Base Compensation" value={selectedSlip.basicSalary} />
-                <MiniRow label="Housing / HRA" value={selectedSlip.hra} />
-                <div className="pt-4 border-t border-[#E7E1D3]">
-                    <MiniRow label="Total Deductions" value={selectedSlip.totalDeductions} color="text-[#A24A32]" />
-                </div>
-              </div>
-
-              <div className="text-center py-2">
-                 <p className="text-[9px] font-black text-[#8A8478] uppercase tracking-widest mb-1">Final Disbursed Amount</p>
-                 <p className="text-4xl font-black tracking-tighter text-[#1C1A17]">
-                   <span className="text-[#B8912E] text-lg mr-1">₹</span>
-                   {Number(selectedSlip.netSalary).toLocaleString('en-IN')}
-                 </p>
-              </div>
-            </div>
-
-            <div className="p-10 pt-6 space-y-3">
-              <button 
-                onClick={() => window.open(selectedSlip.payslipFile, '_blank')} 
-                className="w-full py-5 rounded-2xl bg-[#1C1A17] text-[#F6F3EC] font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#B8912E] hover:text-[#1C1A17] transition-all cursor-pointer shadow-md active:scale-95"
-              >
-                <Download size={18}/> Get Statement
-              </button>
-              <button 
-                onClick={() => setSelectedSlip(null)} 
-                className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-[#8A8478] hover:text-[#1C1A17] cursor-pointer transition-colors"
-              >
-                Dismiss Analysis
-              </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-const MiniRow = ({ label, value, color = "text-[#1C1A17]" }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-[9px] font-black text-[#8A8478] uppercase tracking-widest">{label}</span>
-    <span className={`text-sm font-black tracking-tight ${color}`}>₹{Number(value || 0).toLocaleString('en-IN')}</span>
+const Figure = ({ label, value }) => (
+  <div>
+    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(251,248,243,0.6)" }}>
+      {label}
+    </p>
+   
+  </div>
+);
+
+const Row = ({ label, value, color = INK, negative = false }) => (
+  <div className="flex justify-between items-center py-1.5">
+    <span className="text-[12px] font-semibold" style={{ color: MUTED }}>
+      {label}
+    </span>
+    <span className="text-[14px] font-black tabular-nums" style={{ color }}>
+      {negative ? "−" : ""}
+      {rupees(value)}
+    </span>
   </div>
 );
 
