@@ -183,18 +183,6 @@ const EmployeeLeaveList = () => {
       <div className="min-h-screen bg-[#F6F3EC] pb-12">
       <div className="max-w-[1400px] mx-auto p-4 sm:p-8 space-y-6">
 
-        {/* BACK BUTTON - Clean, Minimalist Position */}
-        <div className="flex justify-start">
-          <button
-            onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all cursor-pointer"
-          >
-            <ChevronLeft size={18} className="text-[#8A8478] group-hover:text-[#B8912E] group-hover:-translate-x-1 transition-all" strokeWidth={3} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#8A8478] group-hover:text-[#B8912E] transition-colors">
-              Return to Dashboard
-            </span>
-          </button>
-        </div>
 
         {/* HEADER */}
         <header className="flex items-center gap-6">
