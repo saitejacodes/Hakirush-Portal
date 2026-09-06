@@ -1,27 +1,26 @@
 import React, { useEffect, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import axios from "axios";
-import { Play, Square, Coffee, RotateCcw } from "lucide-react";
+import { Play, Square, Coffee, RotateCcw, Timer } from "lucide-react";
 
 const theme = {
   "--paper": "#FFFFFF",
-  "--ink": "#14213D",
-  "--muted": "#6B7686",
-  "--line": "#E2E5EA",
-  "--panel": "#F6F7F9",
-  "--blue": "#2F5FD1",
-  "--blue-light": "#EAF0FD",
-  "--green": "#1F8A5F",
-  "--green-light": "#E7F5EE",
-  "--red": "#D64545",
-  "--red-light": "#FBEAEA",
-  "--amber": "#D98B1F",
-  "--amber-light": "#FBF0DE",
+  "--ink": "#1C1A17",
+  "--muted": "#8A8478",
+  "--line": "#E7E1D3",
+  "--panel": "#F6F3EC",
+  "--garnet": "#7A2233",
+  "--gold": "#C6A15B",
+  "--gold-light": "#FBF3E3",
+  "--sage": "#3F6B52",
+  "--sage-light": "#E9F1EC",
+  "--rust": "#A24A32",
+  "--rust-light": "#FBEEE9",
 };
 
 const statusConfig = {
-  Present: { accent: "var(--green)", light: "var(--green-light)" },
-  Absent: { accent: "var(--red)", light: "var(--red-light)" },
-  "Half Day": { accent: "var(--amber)", light: "var(--amber-light)" },
+  Present: { accent: "var(--sage)", light: "var(--sage-light)" },
+  Absent: { accent: "var(--rust)", light: "var(--rust-light)" },
+  "Half Day": { accent: "var(--gold)", light: "var(--gold-light)" },
 };
 
 const TARGET_HOURS = 8;
@@ -31,15 +30,17 @@ const formatClock = (dateStr) => {
   return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-/* ---------- shared ticket-style modal ---------- */
-const TicketModal = ({ accent, light, eyebrow, title, children }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#14213D]/45 backdrop-blur-sm px-4">
-    <div className="relative w-full max-w-xs rounded-xl bg-[var(--paper)] border border-[var(--line)] shadow-[0_30px_60px_-20px_rgba(20,33,61,0.35)] overflow-hidden" style={theme}>
+/* ---------- shared match-day modal ---------- */
+const MatchModal = ({ accent, light, eyebrow, title, children }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1C1A17]/45 backdrop-blur-sm px-4">
+    <div className="relative w-full max-w-xs rounded-xl bg-[var(--paper)] border border-[var(--line)] shadow-[0_30px_60px_-20px_rgba(28,26,23,0.35)] overflow-hidden" style={theme}>
       <div className="h-1.5 w-full" style={{ background: accent }} />
       <div className="px-7 pt-6 pb-7 text-center">
-        <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full mb-3" style={{ background: light, color: accent }}>
-          {eyebrow}
-        </span>
+        {eyebrow && (
+          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full mb-3" style={{ background: light, color: accent }}>
+            {eyebrow}
+          </span>
+        )}
         <h2 className="text-lg font-semibold text-[var(--ink)] tracking-tight mb-2">{title}</h2>
         {children}
       </div>
@@ -48,52 +49,53 @@ const TicketModal = ({ accent, light, eyebrow, title, children }) => (
 );
 
 const ConfirmCheckInPopup = ({ onConfirm, onCancel }) => (
-  <TicketModal accent="var(--blue)" light="var(--blue-light)" title="Confirm check-in">
-    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This starts your attendance timer for today.</p>
+  <MatchModal accent="var(--sage)" light="var(--sage-light)" eyebrow="Kickoff" title="Start today's shift?">
+    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">The clock starts running the moment you confirm.</p>
     <div className="flex gap-2.5">
       <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
-        Cancel
+        Not yet
       </button>
-      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--green)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(47,95,209,0.6)]">
-        Check in
+      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--sage)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(63,107,82,0.5)]">
+        Kick off
       </button>
     </div>
-  </TicketModal>
+  </MatchModal>
 );
 
 const ConfirmCheckOutPopup = ({ onConfirm, onCancel }) => (
-  <TicketModal accent="var(--red)" light="var(--red-light)" title="Confirm check-out">
-    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">This ends your attendance for today — the timer stops for good.</p>
+  <MatchModal accent="var(--garnet)" light="var(--rust-light)" eyebrow="Full-time" title="End today's shift?">
+    <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">The clock stops for good — you can't restart it after this.</p>
     <div className="flex gap-2.5">
       <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg bg-[var(--panel)] text-[var(--muted)] font-semibold text-sm hover:bg-[var(--line)] transition-colors cursor-pointer">
-        Cancel
+        Stay on
       </button>
-      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--red)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(214,69,69,0.6)]">
-        Check out
+      <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg bg-[var(--garnet)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(122,34,51,0.5)]">
+        Blow the whistle
       </button>
     </div>
-  </TicketModal>
+  </MatchModal>
 );
 
 const HolidayPopup = ({ holidayName, onClose }) => (
-  <TicketModal accent="var(--red)" light="var(--red-light)" eyebrow="Weekend" title="Check-in isn't available">
+  <MatchModal accent="var(--rust)" light="var(--rust-light)" eyebrow="No match today" title="Check-in isn't available">
     <p className="text-[13px] text-[var(--muted)] mb-6 leading-relaxed">
       Today is <span className="font-semibold text-[var(--ink)]">{holidayName}</span>
     </p>
-    <button onClick={onClose} className="w-full py-2.5 rounded-lg bg-[var(--red)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(214,69,69,0.6)]">
+    <button onClick={onClose} className="w-full py-2.5 rounded-lg bg-[var(--garnet)] text-white font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-[0_10px_20px_-10px_rgba(122,34,51,0.5)]">
       Got it
     </button>
-  </TicketModal>
+  </MatchModal>
 );
 
-/* ---------- decorative barcode — purely visual, ticket-stub texture ---------- */
-const BARCODE_PATTERN = [3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 3, 1, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2];
-const Barcode = () => (
-  <div className="flex items-end gap-[2px] h-6 opacity-70">
-    {BARCODE_PATTERN.map((w, i) => (
-      <div key={i} style={{ width: w, height: "100%", background: "var(--ink)" }} />
-    ))}
-  </div>
+/* ---------- decorative pitch stripes — purely visual, mown-grass texture ---------- */
+const PitchStripes = () => (
+  <div
+    className="h-3 w-full opacity-60"
+    style={{
+      backgroundImage:
+        "repeating-linear-gradient(90deg, var(--sage-light) 0 18px, transparent 18px 36px)",
+    }}
+  />
 );
 
 const EmployeePunch = ({ onSuccess }) => {
@@ -252,72 +254,89 @@ const EmployeePunch = ({ onSuccess }) => {
   const statusLabel = attendance?.checkOut
     ? finalStatus
     : attendance?.isPaused
-    ? "On break"
+    ? "Half-time"
     : attendance?.checkIn
-    ? "Working"
-    : "Ready to Checkin";
-
+    ? "Live"
+    : "Pre-match";
 
   let accent = "var(--muted)";
   let accentLight = "var(--panel)";
+  let isLive = false;
   if (attendance?.checkOut && statusConfig[finalStatus]) {
     accent = statusConfig[finalStatus].accent;
     accentLight = statusConfig[finalStatus].light;
   } else if (attendance?.isPaused) {
-    accent = "var(--amber)";
-    accentLight = "var(--amber-light)";
+    accent = "var(--gold)";
+    accentLight = "var(--gold-light)";
   } else if (attendance?.checkIn) {
-    accent = "var(--green)";
-    accentLight = "var(--green-light)";
+    accent = "var(--sage)";
+    accentLight = "var(--sage-light)";
+    isLive = true;
   }
 
   return (
     <div className="w-full max-w-md mx-auto" style={theme}>
-      <div className="relative bg-[var(--paper)] rounded-2xl border border-[var(--line)] shadow-[0_30px_70px_-30px_rgba(20,33,61,0.3)] overflow-hidden">
+      <div className="relative bg-[var(--paper)] rounded-2xl border border-[var(--line)] shadow-[0_30px_70px_-30px_rgba(28,26,23,0.25)] overflow-hidden">
         {/* accent header strip */}
         <div className="h-1.5 w-full" style={{ background: accent, transition: "background 0.3s ease" }} />
 
-        {/* ---- top stub: ticket info fields ---- */}
+        {/* ---- top: fixture info ---- */}
         <div className="px-7 pt-5 pb-5">
           <div className="flex items-center justify-between mb-6">
-            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">Today</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">Today's shift</span>
             <span
-              className="text-[10px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full"
+              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full"
               style={{ background: accentLight, color: accent }}
             >
+              {isLive && (
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent }} />
+              )}
               {statusLabel}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-8 text-left">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Check-in</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Kickoff</p>
               <p className="text-lg font-semibold text-[var(--ink)] tabular-nums">{formatClock(attendance?.checkIn)}</p>
             </div>
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Check-out</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] mb-1.5">Final whistle</p>
               <p className="text-lg font-semibold text-[var(--ink)] tabular-nums">{formatClock(attendance?.checkOut)}</p>
             </div>
           </div>
         </div>
 
-        {/* ---- torn perforation line ---- */}
-        <div className="relative flex items-center gap-1.5 px-7">
-          <div className="flex-1 border-t border-dashed border-[var(--line)]" />
+        {/* ---- halfway line: pitch center marking ---- */}
+        <div className="relative flex items-center px-7">
+          <div className="flex-1 border-t border-dashed" style={{ borderColor: "var(--line)" }} />
+          <span
+            className="absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full border-2"
+            style={{ borderColor: "var(--line)", background: "var(--paper)" }}
+          />
         </div>
 
-        {/* ---- bottom stub: timer + actions ---- */}
-        <div className="px-7 sm:px-9 pt-6 pb-7 text-center">
-          <div className="text-5xl font-semibold tabular-nums tracking-tight text-[var(--ink)] leading-none">{timer}</div>
-          <p className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-[0.18em] mt-3 mb-7">Total Worked Hours</p>
+        {/* ---- scoreboard: the match clock ---- */}
+        <div className="px-7 sm:px-9 pt-7 pb-7 text-center">
+          <div className="rounded-xl py-6 mb-7" style={{ background: "var(--ink)" }}>
+            <div
+              className="text-5xl font-semibold tabular-nums tracking-tight leading-none"
+              style={{ color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}
+            >
+              {timer}
+            </div>
+            <p className="flex items-center justify-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] mt-3" style={{ color: "rgba(251,248,243,0.55)" }}>
+              <Timer size={11} /> Match clock
+            </p>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             {!attendance?.checkIn ? (
               <button
                 onClick={handleCheckInClick}
-                className="col-span-2 flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg font-semibold text-[15px] text-white bg-[var(--green)] shadow-[0_16px_30px_-12px_rgba(47,95,209,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                className="col-span-2 flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg font-semibold text-[15px] text-white bg-[var(--sage)] shadow-[0_16px_30px_-12px_rgba(63,107,82,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Play fill="currentColor" size={17} /> Check in
+                <Play fill="currentColor" size={17} /> Kick off
               </button>
             ) : !attendance?.checkOut ? (
               <>
@@ -326,29 +345,31 @@ const EmployeePunch = ({ onSuccess }) => {
                   className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-lg font-semibold text-[11px] uppercase tracking-wide transition-all active:scale-[0.98] cursor-pointer border"
                   style={
                     attendance.isPaused
-                      ? { background: "var(--blue-light)", color: "var(--blue)", borderColor: "var(--blue)33" }
-                      : { background: "var(--amber-light)", color: "var(--amber)", borderColor: "var(--amber)33" }
+                      ? { background: "var(--sage-light)", color: "var(--sage)", borderColor: "var(--sage)" }
+                      : { background: "var(--gold-light)", color: "var(--gold)", borderColor: "var(--gold)" }
                   }
                 >
                   {attendance.isPaused ? <RotateCcw size={18} /> : <Coffee size={18} />}
-                  {attendance.isPaused ? "Resume" : "Break"}
+                  {attendance.isPaused ? "Second half" : "Half-time"}
                 </button>
 
                 <button
                   onClick={handleCheckOutClick}
-                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-lg font-semibold text-[11px] uppercase tracking-wide bg-[var(--red)] text-white shadow-[0_16px_30px_-12px_rgba(214,69,69,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-lg font-semibold text-[11px] uppercase tracking-wide bg-[var(--garnet)] text-white shadow-[0_16px_30px_-12px_rgba(122,34,51,0.5)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <Square fill="currentColor" size={15} />
-                  Check out
+                  Full-time
                 </button>
               </>
             ) : (
-              <div className="col-span-2 p-5 rounded-lg bg-[var(--panel)] border border-dashed border-[var(--line)]">
+              <div className="col-span-2 p-5 rounded-lg bg-[var(--panel)] border border-dashed" style={{ borderColor: "var(--line)" }}>
                 <span className="text-[13px] font-medium text-[var(--muted)]">Shift completed</span>
               </div>
             )}
           </div>
         </div>
+
+        <PitchStripes />
 
         {showCheckInPopup && !attendance?.checkIn && !isHoliday && (
           <ConfirmCheckInPopup onConfirm={confirmCheckIn} onCancel={cancelCheckIn} />
