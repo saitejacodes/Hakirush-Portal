@@ -1,191 +1,258 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 import axios from "axios";
-import { 
-  Eye, EyeOff, ShieldCheck, Lock, KeyRound, 
-  AlertCircle, ArrowLeft, CheckCircle2, ShieldAlert 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Lock,
+  ShieldCheck,
 } from "lucide-react";
 
-/* ================= COMPACT SUCCESS MODAL ================= */
-const SuccessAlert = ({ onClose }) => (
-  <>
-    <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-[100] animate-in fade-in duration-500" />
-    <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-      <div className="w-full max-w-[320px] bg-white rounded-[2.5rem] shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="h-1.5 bg-gradient-to-r from-red-600 to-rose-500" />
-        <div className="p-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 relative">
-            <CheckCircle2 size={32} />
-          </div>
-          <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Key Updated</h3>
-          <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest leading-tight">
-            Vault encryption successful.
-          </p>
-          <button
-            onClick={onClose}
-            className="w-full mt-6 py-4 rounded-xl bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[9px] hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 transition-all active:scale-95 cursor-pointer"
-          >
-            Return to Hub
-          </button>
-        </div>
-      </div>
-    </div>
-  </>
-);
+// HAKIRUSH design tokens (matches the payslip / admin dashboard system)
+const INK = "#1C1A17";
+const PAPER = "#FBF8F3";
+const GARNET = "#7A2233";
+const GOLD = "#C6A15B";
+const SAGE = "#3F6B52";
+const RUST = "#A24A32";
+const HAIRLINE = "#E7E1D3";
+const MUTED = "#8A8478";
+
+const strengthOf = (pw) => {
+  if (!pw) return { score: 0, label: "" };
+  let score = 0;
+  if (pw.length >= 8) score += 25;
+  if (/[A-Z]/.test(pw)) score += 25;
+  if (/[0-9]/.test(pw)) score += 25;
+  if (/[^A-Za-z0-9]/.test(pw)) score += 25;
+  const labels = { 25: "Weak", 50: "Fair", 75: "Strong", 100: "Excellent" };
+  return { score, label: labels[score] || "Weak" };
+};
+
+const strengthColor = (score) => {
+  if (score <= 25) return RUST;
+  if (score <= 50) return GOLD;
+  if (score <= 75) return GOLD;
+  return SAGE;
+};
 
 const Setting = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [setting, setSetting] = useState({
+  const [form, setForm] = useState({
     userId: user?._id,
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-
-  const [showPassword, setShowPassword] = useState({ old: false, new: false, confirm: false });
+  const [show, setShow] = useState({ old: false, new: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
+  const [done, setDone] = useState(false);
 
-  const strengthData = useMemo(() => {
-    if (!setting.newPassword) return { score: 0, label: "Empty" };
-    let score = 0;
-    if (setting.newPassword.length >= 8) score += 25;
-    if (/[A-Z]/.test(setting.newPassword)) score += 25;
-    if (/[0-9]/.test(setting.newPassword)) score += 25;
-    if (/[^A-Za-z0-9]/.test(setting.newPassword)) score += 25;
-    const labels = ["Insecure", "Weak", "Fair", "Strong", "Elite"];
-    return { score, label: labels[Math.floor(score / 25)] || "Insecure" };
-  }, [setting.newPassword]);
+  const strength = useMemo(() => strengthOf(form.newPassword), [form.newPassword]);
+  const mismatch =
+    form.confirmPassword.length > 0 && form.newPassword !== form.confirmPassword;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSetting({ ...setting, [name]: value });
+    setForm((f) => ({ ...f, [name]: value }));
     if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!setting.oldPassword || !setting.newPassword) return setError("Keys required.");
-    if (setting.newPassword !== setting.confirmPassword) return setError("Mismatch detected.");
-
+    if (!form.oldPassword || !form.newPassword) {
+      return setError("Enter your current and new password.");
+    }
+    if (form.newPassword !== form.confirmPassword) {
+      return setError("New password and confirmation don't match.");
+    }
     try {
       setLoading(true);
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/setting/change-password`,
-        setting,
+        form,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-      if (res.data.success) setShowAlert(true);
+      if (res.data.success) setDone(true);
     } catch (err) {
-      setError(err?.response?.data?.error || "Link failed.");
+      setError(err?.response?.data?.error || "Couldn't update your password. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex items-center justify-center p-4 sm:p-6">
-      {showAlert && <SuccessAlert onClose={() => { setShowAlert(false); navigate(-1); }} />}
-      
+    <div className="min-h-screen bg-[#F6F3EC] font-sans text-[#1C1A17] flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-xl border border-slate-100 p-6 sm:p-10 relative overflow-hidden">
-          <ShieldAlert size={140} className="absolute -top-6 -right-6 opacity-[0.03] text-slate-900 pointer-events-none" />
 
-          <div className="text-center mb-6 sm:mb-8 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-full mb-3">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-[0.3em] text-white">Encrypted Link</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-              Vault <span className="text-red-600">Keys</span>
-            </h2>
+        <div className="rounded-3xl overflow-hidden bg-white border" style={{ borderColor: HAIRLINE }}>
+          {/* Letterhead */}
+          <div style={{ backgroundColor: GARNET }} className="relative px-8 pt-8 pb-9">
+            <div className="h-[3px] absolute top-0 left-0 right-0" style={{ backgroundColor: GOLD }} />
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2" style={{ color: GOLD }}>
+              Account security
+            </p>
+            <h1
+              className="text-2xl font-black tracking-tight"
+              style={{ color: PAPER, fontFamily: "'Playfair Display', serif" }}
+            >
+              Update your password
+            </h1>
           </div>
 
-          {error && (
-            <div className="mb-6 flex items-center justify-center gap-2 bg-red-50 border-b-2 border-red-500 py-3 px-4 rounded-xl">
-              <AlertCircle size={14} className="text-red-600 shrink-0" />
-              <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-red-600">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
-            <PasswordField 
-              label="Old Master Key" 
-              name="oldPassword"
-              value={setting.oldPassword}
-              show={showPassword.old}
-              onChange={handleChange}
-              toggle={() => setShowPassword(p => ({...p, old: !p.old}))}
-              icon={<KeyRound size={16} />}
-            />
-
-            <div className="pt-2 sm:pt-4 border-t border-slate-50">
-              <PasswordField 
-                label="New Key" 
-                name="newPassword"
-                value={setting.newPassword}
-                show={showPassword.new}
-                onChange={handleChange}
-                toggle={() => setShowPassword(p => ({...p, new: !p.new}))}
-                icon={<Lock size={16} />}
-              />
-              
-              <div className="mt-3 px-1">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[7px] font-black uppercase tracking-widest text-slate-300">Complexity</span>
-                  <span className={`text-[7px] font-black uppercase tracking-widest ${strengthData.score >= 75 ? 'text-emerald-500' : 'text-slate-300'}`}>
-                    {strengthData.label}
-                  </span>
+          <div className="px-8 py-8">
+            {done ? (
+              <div className="text-center py-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                  style={{ backgroundColor: "#EEF3EF", color: SAGE }}
+                >
+                  <CheckCircle2 size={28} />
                 </div>
-                <div className="h-1 w-full bg-slate-100 rounded-full flex gap-0.5">
-                  {[25, 50, 75, 100].map((step) => (
-                    <div 
-                      key={step}
-                      className={`h-full flex-1 rounded-full transition-all duration-700 ${
-                        strengthData.score >= step 
-                        ? (strengthData.score <= 25 ? 'bg-red-500' : strengthData.score <= 50 ? 'bg-orange-400' : strengthData.score <= 75 ? 'bg-blue-500' : 'bg-emerald-500')
-                        : 'bg-slate-50'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <h2 className="text-lg font-black tracking-tight mb-1.5">Password updated</h2>
+                <p className="text-[13px] mb-7" style={{ color: MUTED }}>
+                  Use your new password the next time you sign in.
+                </p>
+                <button
+                  onClick={() => navigate(-1)}
+                  className="w-full py-4 rounded-xl font-bold text-[12px] uppercase tracking-widest transition-colors"
+                  style={{ backgroundColor: INK, color: PAPER }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = INK)}
+                >
+                  Done
+                </button>
               </div>
-            </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div
+                    className="flex items-start gap-2.5 py-3 px-4 rounded-xl border"
+                    style={{ backgroundColor: "#FBF2EE", borderColor: "rgba(162,74,50,0.25)" }}
+                  >
+                    <p className="text-[12px] font-semibold" style={{ color: RUST }}>
+                      {error}
+                    </p>
+                  </div>
+                )}
 
-            <PasswordField 
-              label="Verify Key" 
-              name="confirmPassword"
-              value={setting.confirmPassword}
-              show={showPassword.confirm}
-              onChange={handleChange}
-              toggle={() => setShowPassword(p => ({...p, confirm: !p.confirm}))}
-              icon={<ShieldCheck size={16} />}
-            />
+                <Field
+                  step={1}
+                  label="Current password"
+                  name="oldPassword"
+                  value={form.oldPassword}
+                  show={show.old}
+                  onChange={handleChange}
+                  toggle={() => setShow((s) => ({ ...s, old: !s.old }))}
+                  icon={<KeyRound size={16} />}
+                />
 
-            <div className="pt-4 sm:pt-6">
-              <button
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-4 py-4 rounded-[1.5rem] sm:rounded-[2rem] bg-slate-900 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-white shadow-2xl transition-all hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer"
-              >
-                <span>{loading ? "Encrypting..." : "Update Vault"}</span>
-              </button>
-            </div>
-          </form>
+                <div className="pt-1 border-t" style={{ borderColor: HAIRLINE }}>
+                  <div className="pt-5">
+                    <Field
+                      step={2}
+                      label="New password"
+                      name="newPassword"
+                      value={form.newPassword}
+                      show={show.new}
+                      onChange={handleChange}
+                      toggle={() => setShow((s) => ({ ...s, new: !s.new }))}
+                      icon={<Lock size={16} />}
+                    />
+                  </div>
+
+                  {form.newPassword && (
+                    <div className="mt-3 pl-9">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold" style={{ color: MUTED }}>
+                          Password strength
+                        </span>
+                        <span
+                          className="text-[10px] font-bold"
+                          style={{ color: strengthColor(strength.score) }}
+                        >
+                          {strength.label}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full rounded-full flex gap-1" style={{ backgroundColor: HAIRLINE }}>
+                        {[25, 50, 75, 100].map((step) => (
+                          <div
+                            key={step}
+                            className="h-full flex-1 rounded-full transition-colors duration-300"
+                            style={{
+                              backgroundColor:
+                                strength.score >= step ? strengthColor(strength.score) : "transparent",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Field
+                  step={3}
+                  label="Confirm new password"
+                  name="confirmPassword"
+                  value={form.confirmPassword}
+                  show={show.confirm}
+                  onChange={handleChange}
+                  toggle={() => setShow((s) => ({ ...s, confirm: !s.confirm }))}
+                  icon={<ShieldCheck size={16} />}
+                  invalid={mismatch}
+                  hint={mismatch ? "Doesn't match your new password" : ""}
+                />
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-[12px] uppercase tracking-widest transition-colors disabled:opacity-50 cursor-pointer"
+                  style={{ backgroundColor: INK, color: PAPER }}
+                  onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = GOLD)}
+                  onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = INK)}
+                >
+                  {loading && (
+                    <span
+                      className="w-3.5 h-3.5 border-2 rounded-full animate-spin"
+                      style={{ borderColor: "rgba(251,248,243,0.35)", borderTopColor: PAPER }}
+                    />
+                  )}
+                  {loading ? "Updating…" : "Update password"}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const PasswordField = ({ label, name, value, show, onChange, toggle, icon }) => (
-  <div className="space-y-1.5 sm:space-y-2">
-    <label className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">{label}</label>
-    <div className="relative group">
-      <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors">
+const Field = ({ step, label, name, value, show, onChange, toggle, icon, invalid, hint }) => (
+  <div>
+    <div className="flex items-center gap-2.5 mb-2">
+      <span
+        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+        style={{ backgroundColor: INK, color: GOLD }}
+      >
+        {step}
+      </span>
+      <label className="text-[12px] font-bold" style={{ color: INK }}>
+        {label}
+      </label>
+    </div>
+    <div className="relative pl-9">
+      <div
+        className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none"
+        style={{ color: MUTED }}
+      >
         {icon}
       </div>
       <input
@@ -193,17 +260,32 @@ const PasswordField = ({ label, name, value, show, onChange, toggle, icon }) => 
         name={name}
         value={value}
         onChange={onChange}
-        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 sm:py-4 pl-11 sm:pl-12 pr-11 sm:pr-12 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-red-500 transition-all placeholder:text-slate-200"
+        autoComplete={name === "oldPassword" ? "current-password" : "new-password"}
+        className="w-full rounded-xl py-3.5 pl-10 pr-11 text-[13px] font-semibold outline-none border transition-colors placeholder:text-[#C9C2AE]"
+        style={{
+          backgroundColor: "#FBF8F3",
+          borderColor: invalid ? RUST : HAIRLINE,
+          color: INK,
+        }}
+        onFocus={(e) => (e.currentTarget.style.borderColor = invalid ? RUST : GOLD)}
+        onBlur={(e) => (e.currentTarget.style.borderColor = invalid ? RUST : HAIRLINE)}
         placeholder="••••••••"
       />
       <button
         type="button"
         onClick={toggle}
-        className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-900 cursor-pointer"
+        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+        style={{ color: MUTED }}
+        aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
       >
-        {show ? <EyeOff size={14} /> : <Eye size={14} />}
+        {show ? <EyeOff size={15} /> : <Eye size={15} />}
       </button>
     </div>
+    {hint && (
+      <p className="text-[11px] font-semibold mt-1.5 pl-9" style={{ color: RUST }}>
+        {hint}
+      </p>
+    )}
   </div>
 );
 
