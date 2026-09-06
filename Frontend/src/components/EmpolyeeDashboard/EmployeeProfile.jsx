@@ -97,14 +97,6 @@ const EmployeeProfile = () => {
 
       <div className="relative z-10 mx-auto max-w-3xl">
 
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-8 flex cursor-pointer items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] transition-colors hover:text-[#7A2233]"
-          style={{ color: "#8A8378" }}
-        >
-          <ChevronLeft size={14} strokeWidth={1.75} /> Back
-        </button>
-
         <div
           className="relative overflow-hidden rounded-[1.75rem] border bg-white/70 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_40px_90px_-32px_rgba(28,26,23,0.24)] backdrop-blur-md"
           style={{ borderColor: HAIRLINE }}
