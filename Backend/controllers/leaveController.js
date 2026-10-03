@@ -3,7 +3,7 @@ import Leave from "../models/Leave.js";
 import User from "../models/User.js";
 import Department from "../models/Department.js";
 import Notification from "../models/Notification.js";
-import { sendLeaveRequestToManagerEmail, sendLeaveStatusEmail } from "../services/emailService.js";
+import { sendLeaveRequestToManagerEmail, sendLeaveStatusEmail, sendLeaveRequestToAdminEmail } from "../services/emailService.js";
 import { asyncHandler, badRequest, conflict, forbidden, notFound } from "../middleware/errorHandler.js";
 import { requireObjectId, requireYmd, requireEnum, trimmedString, parsePagination } from "../utils/validate.js";
 import { businessDate, addDays } from "../utils/orgTime.js";
@@ -80,32 +80,39 @@ const addLeave = asyncHandler(async (req, res) => {
     });
   }
 
+  // Determine if the employee is the manager of their own department
+  const dept = await Department.findById(employee.department).lean();
+  const isSelfManager = dept && dept.managerEmployeeId && String(dept.managerEmployeeId) === String(employee._id);
+
   const leave = await Leave.create({
     employeeId: employee._id,
     leaveType,
     startDate: ymdToDate(startYmd),
     endDate: ymdToDate(endYmd),
     reason,
-    status: "Pending",
+    status: isSelfManager ? "Approved" : "Pending",
     days,
   });
 
   const balance = await computeLeaveBalance(employee._id, clockNow());
   const typeBalance = leaveType === "Sick Leave" ? balance.sick : balance.casual;
 
-  // Check if department has a manager
-  const dept = await Department.findById(employee.department).lean();
   let managerNotified = false;
-  if (dept && dept.managerEmployeeId && String(dept.managerEmployeeId) !== String(employee._id)) {
-    const managerEmp = await Employee.findById(dept.managerEmployeeId).populate("userId").lean();
-    if (managerEmp?.userId && managerEmp.userId.isActive !== false) {
-      await Notification.create({
-        type: "leave-request",
-        message: `${req.user.name || "An employee"} applied for ${leaveType} leave (${days} days)`,
-        data: { leaveId: leave._id, employeeId: employee._id, adminId: managerEmp.userId._id, link: "/employee-dashboard" } // Manager views it on their dash
-      });
-      sendLeaveRequestToManagerEmail(managerEmp.userId, employee, leave);
-      managerNotified = true;
+  if (dept && dept.managerEmployeeId) {
+    if (!isSelfManager) {
+      const managerEmp = await Employee.findById(dept.managerEmployeeId).populate("userId").lean();
+      if (managerEmp?.userId && managerEmp.userId.isActive !== false) {
+        await Notification.create({
+          type: "leave-request",
+          message: `${req.user.name || "An employee"} applied for ${leaveType} leave (${days} days)`,
+          data: { leaveId: leave._id, employeeId: employee._id, adminId: managerEmp.userId._id, link: "/employee-dashboard" } // Manager views it on their dash
+        });
+        sendLeaveRequestToManagerEmail(managerEmp.userId, employee, leave);
+        managerNotified = true;
+      }
+    } else {
+      // The manager themselves is applying for leave, it's auto-approved, send FYI email to Admin
+      sendLeaveRequestToAdminEmail({ ...employee, name: req.user.name }, leave);
     }
   }
 

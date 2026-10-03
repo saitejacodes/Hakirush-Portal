@@ -78,6 +78,40 @@ export const sendLeaveRequestToManagerEmail = async (managerUser, employee, leav
   await transporter.sendMail(mailOptions).catch(console.error);
 };
 
+export const sendLeaveRequestToAdminEmail = async (employee, leave) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const loginLink = `${frontendUrl}/login`;
+
+  try {
+    const User = (await import("../models/User.js")).default;
+    const admins = await User.find({ role: "admin" }).select("email").lean();
+    if (!admins.length) return;
+
+    const mailOptions = {
+      from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+      to: admins.map((a) => a.email).join(","),
+      subject: `Manager Leave FYI: ${employee.name} (${leave.days} days)`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #7A2233; text-align: center;">Manager Leave Taken</h2>
+          <p>Hello Admin,</p>
+          <p>This is an automated notification. The manager <strong>${employee.name}</strong> has applied for <strong>${leave.leaveType}</strong>.</p>
+          <p><em>As a manager, this leave has been automatically approved.</em></p>
+          <ul>
+            <li><strong>Duration:</strong> ${leave.days} days</li>
+            <li><strong>Reason:</strong> ${leave.reason || "N/A"}</li>
+          </ul>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 export const sendLeaveStatusEmail = async (employeeUser, leave, status, managerName) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
   const color = status === "Approved" ? "#2E7D32" : "#C62828";
