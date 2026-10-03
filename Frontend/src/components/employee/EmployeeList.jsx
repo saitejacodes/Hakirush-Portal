@@ -62,6 +62,44 @@ const StatusChip = ({ isActive }) => {
 
 const statusDotColor = (isActive) => (isActive === false ? "#B4ADA0" : SAGE);
 
+/* ================= STATUS FILTER (dropdown, same style as Per page) ================= */
+const STATUS_OPTIONS = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
+  { key: "inactive", label: "Inactive" },
+];
+
+const StatusFilter = ({ value, onChange, counts }) => (
+  <div
+    className="flex h-[52px] w-full shrink-0 items-center gap-2.5 rounded-2xl border bg-white px-4 lg:w-auto"
+    style={{ borderColor: HAIRLINE }}
+  >
+    <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-widest text-[#B4ADA0]">
+      Status
+    </span>
+    <div className="relative flex-1 lg:flex-none">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Filter by status"
+        className="w-full cursor-pointer appearance-none rounded-lg border bg-white py-1.5 pl-3 pr-7 text-[12px] font-bold text-[#1C1A17] outline-none transition-all hover:border-[#D9C79A] focus:border-[#C6A15B]/60"
+        style={{ borderColor: HAIRLINE }}
+      >
+        {STATUS_OPTIONS.map(({ key, label }) => (
+          <option key={key} value={key}>
+            {label} ({counts[key]})
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={12}
+        strokeWidth={2.25}
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8A8378]"
+      />
+    </div>
+  </div>
+);
+
 /* ================= PREMIUM MOBILE CARD ================= */
 const MobileEmployeeCard = ({ emp, getImageUrl, index, refresh }) => {
   return (
@@ -114,6 +152,7 @@ const List = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [empLoading, setEmpLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "inactive"
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
@@ -165,14 +204,23 @@ const List = () => {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  // Search + status filter together
   useEffect(() => {
-    const result = employees.filter((emp) =>
-      emp.name.toLowerCase().includes(search.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(search.toLowerCase())
-    );
+    const q = search.toLowerCase();
+    const result = employees.filter((emp) => {
+      const matchesSearch =
+        emp.name.toLowerCase().includes(q) ||
+        emp.employeeId.toLowerCase().includes(q);
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" ? emp.isActive !== false : emp.isActive === false);
+
+      return matchesSearch && matchesStatus;
+    });
     setFilteredEmployees(result);
     setCurrentPage(1);
-  }, [search, employees]);
+  }, [search, statusFilter, employees]);
 
   const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -185,6 +233,21 @@ const List = () => {
 
   const departmentCount = useMemo(
     () => new Set(employees.map((e) => e.dep_name).filter((d) => d && d !== "N/A")).size,
+    [employees]
+  );
+
+  const statusCounts = useMemo(
+    () => ({
+      all: employees.length,
+      active: employees.filter((e) => e.isActive !== false).length,
+      inactive: employees.filter((e) => e.isActive === false).length,
+    }),
+    [employees]
+  );
+
+  // Only show the filter if the API actually returns isActive
+  const hasStatusData = useMemo(
+    () => employees.some((e) => typeof e.isActive === "boolean"),
     [employees]
   );
 
@@ -237,7 +300,7 @@ const List = () => {
                 <span className="italic" style={{ color: GARNET }}>Organization</span> Staff
               </h1>
               <p className="max-w-md text-[12px] font-medium leading-relaxed text-[#8A8378] sm:text-[13px]">
-                Every active member of the workforce, searchable by name, ID, or department.
+                Every member of the workforce, searchable by name or ID.
               </p>
             </div>
           </div>
@@ -296,6 +359,11 @@ const List = () => {
                   </span>
                 )}
               </div>
+
+              {/* STATUS FILTER */}
+              {hasStatusData && (
+                <StatusFilter value={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
+              )}
 
               {/* ACTION BUTTON */}
               <Link
@@ -540,7 +608,7 @@ const EmptyState = () => (
       <UserX size={20} strokeWidth={1.5} />
     </span>
     <p className="text-xs font-semibold uppercase tracking-widest text-[#B4ADA0]">No records found</p>
-    <p className="mt-1.5 text-[11px] text-[#B4ADA0]">Try a different name or employee ID.</p>
+    <p className="mt-1.5 text-[11px] text-[#B4ADA0]">Try a different name, ID, or status.</p>
   </div>
 );
 
