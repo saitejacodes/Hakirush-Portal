@@ -270,10 +270,10 @@ const AdminAttendance = () => {
 
               {/* --- SPECIAL DAY BANNER --- */}
               {isOffDay && (
-                <div className="text-center pt-10 pb-2 px-6">
-                  <div className="inline-flex items-center gap-3 bg-[#FAF1EA] text-[#A24A32] px-6 py-4 rounded-full border border-[#EAD9CC] shadow-sm">
-                    <ShieldAlert size={22} className="text-[#A24A32]" />
-                    <span className="font-black uppercase tracking-widest text-sm">
+                <div className="text-center pt-4 px-6">
+                  <div className="inline-flex items-center gap-3 bg-[#FAF1EA] text-[#A24A32] px-4 py-2 rounded-full border border-[#EAD9CC] shadow-sm">
+                    <ShieldAlert size={15} className="text-[#A24A32]" />
+                    <span className="font-black uppercase tracking-widest text-xs">
                       {dayStatus} - System Inactive
                     </span>
                   </div>
@@ -281,7 +281,7 @@ const AdminAttendance = () => {
               )}
 
               {/* DESKTOP VIEW — scrollable viewport with sticky header */}
-              <div className="hidden md:block px-8 pt-6 pb-2">
+              <div className="hidden md:block px-8 pb-2">
                 <div
                   className="relative overflow-hidden rounded-[1.75rem] border shadow-[inset_0_1px_2px_rgba(28,26,23,0.03)]"
                   style={{ borderColor: HAIRLINE, backgroundColor: "#FBFAF6" }}
