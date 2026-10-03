@@ -37,6 +37,7 @@ const EmployeeSidebar = () => {
     { link: `/employee-dashboard/profile/${user?._id}`, icon: UserCircle, title: "My Profile" },
     { link: `/employee-dashboard/leaves/${user?._id}`, icon: CalendarCheck, title: "Leaves" },
     { link: `/employee-dashboard/payslips/${user?._id}`, icon: FileText, title: "Payslips" },
+    ...(user?.isManager ? [{ link: "/employee-dashboard/team-requests", icon: CalendarCheck, title: "Team Requests" }] : []),
     { link: "/employee-dashboard/setting", icon: Settings, title: "Settings" },
   ];
 
