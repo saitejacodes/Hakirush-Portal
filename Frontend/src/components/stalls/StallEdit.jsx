@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { Camera, CheckCircle2, Building2, Zap, Globe, ChevronLeft, Trash2, Plus } from "lucide-react";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
 
@@ -128,7 +128,7 @@ const StallEdit = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file || file.size > MAX_FILE_SIZE) {
-      alert("File too large. Max 10MB");
+      alert("File too large. Max 5MB");
       return;
     }
     setLogo(file);

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { apiErrorMessage } from "../../utils/apiError";
 import {
   Building2,
   FileText,
@@ -88,13 +89,16 @@ const AddDepartments = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
 
     try {
+      // No manager on create: a manager must be an active member of the
+      // department, so it is assigned from "Edit department" later.
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/department/add`,
-        department,
+        { dep_name: department.dep_name.trim(), description: department.description },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -106,7 +110,7 @@ const AddDepartments = () => {
         setShowAlert(true);
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to create department");
+      setError(apiErrorMessage(err, "Failed to create department"));
     } finally {
       setLoading(false);
     }
@@ -230,6 +234,11 @@ const AddDepartments = () => {
                       />
                     </div>
                   </div>
+
+                  <p className="text-[11.5px] leading-relaxed" style={{ color: SLATE }}>
+                    A department manager is assigned after employees have been added to this
+                    department (Departments → Edit).
+                  </p>
 
                   {/* Submit */}
                   <button

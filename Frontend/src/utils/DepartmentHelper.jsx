@@ -3,6 +3,7 @@ import { Edit2, Eye, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { apiErrorCode, apiErrorMessage } from "./apiError";
 
 /* ================= CONFIGURATION =================
    Same editorial system as the rest of the admin area —
@@ -46,6 +47,8 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
             </h3>
             <p className="mt-2 text-[10.5px] font-semibold uppercase leading-relaxed tracking-widest text-[#B4ADA0]">
               This will permanently remove the <br /> department from the system.
+              <br />
+              Only departments with no employees can be deleted.
             </p>
           </div>
 
@@ -183,7 +186,11 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
     try {
       const res = await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`,
@@ -203,7 +210,19 @@ export const DepartmentButtons = ({ id, onDepartmentDelete }) => {
         }, 1500);
       }
     } catch (err) {
-      alert(err?.response?.data?.error || "Failed to delete");
+      setShowConfirm(false);
+      if (apiErrorCode(err) === "DEPARTMENT_NOT_EMPTY") {
+        alert(
+          apiErrorMessage(
+            err,
+            "This department still has employees. Move or deactivate them before deleting it."
+          )
+        );
+      } else {
+        alert(apiErrorMessage(err, "Failed to delete"));
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 

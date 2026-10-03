@@ -104,21 +104,8 @@ const AdminAttendance = () => {
       .catch(() => {});
   }, []);
 
-  const handleStatusChange = async (employeeId, status) => {
-    try {
-      setLoading(true);
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/attendance/admin-mark`,
-        { employeeId, status },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      await fetchAttendance();
-    } catch (err) {
-      alert("Failed to update attendance status.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Manual status changes go through AttendanceHelper -> PUT /api/attendance/update/:employeeId
+  // (the single admin manual-status contract; POST /api/attendance/admin-mark does not exist).
 
   useEffect(() => { fetchAttendance(); }, []);
 

@@ -1,9 +1,11 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import authorizeRoles, { requireAdmin, requireEmployee } from "../middleware/roleMiddleware.js";
 import {
   addLeave,
   getLeave,
   getLeaves,
+  getMyLeaves,
   getLeaveDetail,
   updateLeave,
   cancelLeave,
@@ -12,15 +14,16 @@ import {
 } from "../controllers/leaveController.js";
 
 const router = express.Router();
+const adminOrEmployee = authorizeRoles("admin", "employee");
 
-router.post("/add", authMiddleware, addLeave);
-router.get("/balance/me", authMiddleware, getLeaveBalance);
-router.get("/balance/:employeeId", authMiddleware, getLeaveBalanceByEmployeeId);
-router.get("/detail/:id", authMiddleware, getLeaveDetail);
-router.get("/:id/:role", authMiddleware, getLeave);
-router.get("/", authMiddleware, getLeaves);
-router.put("/cancel/:id", authMiddleware, cancelLeave);
-router.put("/:id", authMiddleware, updateLeave);
-
+router.post("/add", authMiddleware, requireEmployee, addLeave);
+router.get("/me", authMiddleware, requireEmployee, getMyLeaves);
+router.get("/balance/me", authMiddleware, requireEmployee, getLeaveBalance);
+router.get("/balance/:employeeId", authMiddleware, adminOrEmployee, getLeaveBalanceByEmployeeId);
+router.get("/detail/:id", authMiddleware, adminOrEmployee, getLeaveDetail);
+router.get("/:id/:role", authMiddleware, adminOrEmployee, getLeave);
+router.get("/", authMiddleware, requireAdmin, getLeaves);
+router.put("/cancel/:id", authMiddleware, requireEmployee, cancelLeave);
+router.put("/:id", authMiddleware, requireAdmin, updateLeave);
 
 export default router;

@@ -1,14 +1,13 @@
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   Download,
   Eye,
-  Lock,
-  X,
+  Loader2,
 } from "lucide-react";
+import { apiErrorMessage } from "../../utils/apiError";
+import { downloadPayslip, openPayslip, payslipHasFile } from "../../utils/payslipFiles";
 
 // HAKIRUSH admin dashboard tokens
 const INK = "#1C1A17";
@@ -26,34 +25,28 @@ const monthLabel = (raw) => {
   return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 };
 
-const shortMonth = (raw) => {
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString("en-IN", { month: "short" });
-};
-
 const rupees = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
-
-const viewStatement = (url) => {
-  if (url) window.open(url, "_blank", "noopener,noreferrer");
-};
-
-const downloadStatement = (url, filename) => {
-  if (!url) return;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename || "payslip";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
 
 const ViewPayslip = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSlip, setSelectedSlip] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [busy, setBusy] = useState(null); // `${payslipId}:view|download`
+  const [actionError, setActionError] = useState("");
+
+  const runAction = async (payslipId, kind, fn) => {
+    if (busy) return;
+    setBusy(`${payslipId}:${kind}`);
+    setActionError("");
+    try {
+      await fn();
+    } catch (err) {
+      setActionError(apiErrorMessage(err, "Couldn't open this payslip. Try again."));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +70,7 @@ const ViewPayslip = () => {
         }
       } catch (err) {
         console.error("Fetch Error:", err);
+        if (!cancelled) setLoadError(apiErrorMessage(err, "Couldn't load your payslips."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -86,25 +80,6 @@ const ViewPayslip = () => {
       cancelled = true;
     };
   }, [id]);
-
-  const totalLifetime = useMemo(
-    () => payslips.reduce((acc, p) => acc + Number(p.netSalary || 0), 0),
-    [payslips]
-  );
-
-  const average = payslips.length ? totalLifetime / payslips.length : 0;
-
-  // Last 6 statements, oldest to newest, for the trend strip
-  const trend = useMemo(() => {
-    const recent = [...payslips].slice(0, 6).reverse();
-    const max = Math.max(...recent.map((p) => Number(p.netSalary || 0)), 1);
-    return recent.map((p) => ({
-      key: p._id,
-      label: shortMonth(p.month),
-      pct: Math.max(Number(p.netSalary || 0) / max, 0.06),
-      isLatest: p._id === payslips[0]?._id,
-    }));
-  }, [payslips]);
 
   return (
     <div className="min-h-screen bg-[#F6F3EC] font-sans text-[#1C1A17]">
@@ -142,6 +117,11 @@ const ViewPayslip = () => {
             )}
           </div>
 
+          {actionError && (
+            <p role="alert" className="mb-3 px-1 text-[12px] font-semibold" style={{ color: RUST }}>
+              {actionError}
+            </p>
+          )}
           <div className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: HAIRLINE }}>
             {loading ? (
               <div className="py-16 flex flex-col items-center gap-3">
@@ -153,15 +133,21 @@ const ViewPayslip = () => {
                   Loading your statements…
                 </p>
               </div>
+            ) : loadError ? (
+              <div className="py-16 text-center px-10">
+                <p className="text-[12px] font-semibold" style={{ color: RUST }}>{loadError}</p>
+              </div>
             ) : payslips.length > 0 ? (
-              payslips.map((p, i) => (
-                <button
+              payslips.map((p, i) => {
+                const hasFile = payslipHasFile(p);
+                const viewing = busy === `${p._id}:view`;
+                const downloading = busy === `${p._id}:download`;
+                return (
+                <div
                   key={p._id}
-                  onClick={() => setSelectedSlip(p)}
-                  className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-[#FBF8F3] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+                  className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-[#FBF8F3] transition-colors"
                   style={{
                     borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
-                    outlineColor: GOLD,
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -173,36 +159,33 @@ const ViewPayslip = () => {
                       {rupees(p.netSalary)}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span
-                        role="button"
-                        tabIndex={0}
+                      <button
+                        type="button"
+                        disabled={!hasFile || Boolean(busy)}
                         aria-label={`View statement for ${monthLabel(p.month)}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          viewStatement(p.payslipFile);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer"
-                        style={{ color: MUTED }}
+                        title={hasFile ? "View PDF" : "No PDF on file"}
+                        onClick={() => runAction(p._id, "view", () => openPayslip(p._id))}
+                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                        style={{ color: MUTED, outlineColor: GOLD }}
                       >
-                        <Eye size={16} />
-                      </span>
-                      <span
-                        role="button"
-                        tabIndex={0}
+                        {viewing ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!hasFile || Boolean(busy)}
                         aria-label={`Download statement for ${monthLabel(p.month)}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadStatement(p.payslipFile, `payslip-${p.month}`);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer"
-                        style={{ color: MUTED }}
+                        title={hasFile ? "Download PDF" : "No PDF on file"}
+                        onClick={() => runAction(p._id, "download", () => downloadPayslip(p._id, `payslip-${p.month}`))}
+                        className="p-1.5 rounded-lg hover:bg-[#F1EFE8] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                        style={{ color: MUTED, outlineColor: GOLD }}
                       >
-                        <Download size={16} />
-                      </span>
+                        {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                      </button>
                     </div>
                   </div>
-                </button>
-              ))
+                </div>
+                );
+              })
             ) : (
               <div className="py-16 text-center px-10">
                 <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: MUTED }}>
@@ -219,26 +202,5 @@ const ViewPayslip = () => {
     </div>
   );
 };
-
-const Figure = ({ label, value }) => (
-  <div>
-    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(251,248,243,0.6)" }}>
-      {label}
-    </p>
-   
-  </div>
-);
-
-const Row = ({ label, value, color = INK, negative = false }) => (
-  <div className="flex justify-between items-center py-1.5">
-    <span className="text-[12px] font-semibold" style={{ color: MUTED }}>
-      {label}
-    </span>
-    <span className="text-[14px] font-black tabular-nums" style={{ color }}>
-      {negative ? "−" : ""}
-      {rupees(value)}
-    </span>
-  </div>
-);
 
 export default ViewPayslip;

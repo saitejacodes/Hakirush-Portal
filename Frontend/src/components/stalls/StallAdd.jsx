@@ -15,7 +15,7 @@ const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
 const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
 const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 /* ================= CONFIRMATION DIALOG ================= */
 const SuccessAlert = ({ onClose }) => (

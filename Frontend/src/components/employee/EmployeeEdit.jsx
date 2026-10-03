@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
+import { apiErrorCode, apiErrorMessage } from "../../utils/apiError";
 import {
   User, Briefcase, Heart, IndianRupee,
   Fingerprint, Camera, Check, X
@@ -31,7 +32,7 @@ const CornerTicks = ({ color = GOLD }) => (
   </>
 );
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 /* ================= CONFIRMATION DIALOG ================= */
 const ConfirmDialog = ({ onClose }) => (
@@ -138,7 +139,7 @@ const EmployeeEdit = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
-      alert("Image must be under 10MB");
+      alert("Image must be under 5MB");
       return;
     }
     setImage(file);
@@ -147,23 +148,42 @@ const EmployeeEdit = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      setSaving(true);
+    if (saving) return;
+
+    const send = (clearManager = false) => {
       const fd = new FormData();
       Object.keys(employee).forEach((key) => fd.append(key, employee[key]));
       if (image) fd.append("profileImage", image);
-
-      const res = await axios.put(
+      // Multipart sends strings; backend treats "true" as clearManager: true.
+      if (clearManager) fd.append("clearManager", "true");
+      return axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
         fd,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
+    };
+
+    try {
+      setSaving(true);
+      let res;
+      try {
+        res = await send(false);
+      } catch (err) {
+        // Moving a department's current manager to another department.
+        if (apiErrorCode(err) !== "MANAGER_REASSIGNMENT_REQUIRED") throw err;
+        const ok = window.confirm(
+          `${apiErrorMessage(err, "This employee is the manager of their current department.")}\n\n` +
+            "Clear the old department's manager assignment and save the department change?"
+        );
+        if (!ok) return;
+        res = await send(true);
+      }
 
       if (res.data.success) {
         setShowAlert(true);
       }
     } catch (err) {
-      alert(err.response?.data?.error || "Update failed");
+      alert(apiErrorMessage(err, "Update failed"));
     } finally {
       setSaving(false);
     }

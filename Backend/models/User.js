@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
       required: true
     },
     profileImage: { type: String, default: "" },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    // Incremented to revoke every issued access token (password change, deactivation, logout-all).
+    tokenVersion: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

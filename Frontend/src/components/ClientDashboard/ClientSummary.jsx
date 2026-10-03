@@ -1,26 +1,37 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/authContext";
-import { motion, AnimatePresence } from "framer-motion";
-import Cricket from "../../assets/cricket.png";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { apiErrorMessage, apiErrorStatus } from "../../utils/apiError";
 import {
-  Trophy,
-  Users,
-  Medal,
   X,
   MapPin,
   Calendar,
   ChevronRight,
   Zap,
-  Target,
   ShieldCheck,
   Activity,
-  BarChart3,
-  Bell
+  Bell,
+  ImageOff,
+  Trophy,
+  RefreshCw
 } from "lucide-react";
 
-// Helper: fallback image if none provided
-const fallbackImage = Cricket;
+const BACKEND = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/+$/, "");
+
+// Gallery URLs may be absolute (ImageKit) or backend-relative.
+const resolveImageUrl = (url) => {
+  if (!url || typeof url !== "string") return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${BACKEND}/${url.replace(/^\/+/, "")}`;
+};
+
+const formatBudget = (budget) => {
+  if (budget === null || budget === undefined || budget === "") return null;
+  const n = Number(budget);
+  if (!Number.isFinite(n)) return String(budget);
+  return n.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+};
 
 /* ================= THEME UTILS ================= */
 const getStatusBadgeClass = (status) => {
@@ -35,46 +46,91 @@ const getStatusBadgeClass = (status) => {
 const ClientSportsPlan = () => {
   const { user } = useAuth();
   const [client, setClient] = useState(null);
+  const [clientError, setClientError] = useState("");
   const [loading, setLoading] = useState(true);
   const [announcements, setAnnouncements] = useState([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
-  const [performanceData, setPerformanceData] = useState([]);
 
-  // New: State for client images
+  // Performance standings (admin-entered; empty until published)
+  const [standings, setStandings] = useState([]);
+  const [standingsUpdatedAt, setStandingsUpdatedAt] = useState(null);
+  const [standingsError, setStandingsError] = useState("");
+
+  // Client gallery (admin-uploaded; empty until published)
   const [clientImages, setClientImages] = useState([]);
+  const [galleryError, setGalleryError] = useState("");
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Top-Level Lifted States for Zoom Modals
   const [zoomImage, setZoomImage] = useState(null);
 
-  useEffect(() => {
-    if (!user?._id) return;
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-        const [clientRes, annRes, perfRes, imagesRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client`, { headers }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/public`, { headers }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/performance?userId=${user._id}`, { headers }),
-          // New: Fetch client images (endpoint must exist in backend)
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/images?userId=${user._id}`, { headers }).catch(() => ({ data: { images: [] } }))
-        ]);
-        const found = clientRes.data.clients.find((c) => c.userId?._id === user._id);
-        setClient(found || null);
-        setAnnouncements(annRes.data.announcements || []);
-        setPerformanceData(perfRes.data.performance || []);
-        setClientImages(imagesRes.data.images || []);
-      } catch (err) {
-        console.error("Connection Interrupted");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [user]);
+  const userId = user?._id;
 
+  // Own data only: /client/me, /client/me/performance, /client/me/gallery.
+  // (The full client list is admin-only and is never downloaded here.)
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const [clientRes, annRes, perfRes, galleryRes] = await Promise.allSettled([
+        axios.get(`${BACKEND}/api/client/me`, { headers }),
+        axios.get(`${BACKEND}/api/announcements/public`, { headers }),
+        axios.get(`${BACKEND}/api/client/me/performance`, { headers }),
+        axios.get(`${BACKEND}/api/client/me/gallery`, { headers })
+      ]);
+
+      if (clientRes.status === "fulfilled") {
+        setClient(clientRes.value.data?.client || null);
+        setClientError("");
+      } else {
+        setClient(null);
+        // 404 = no client record linked yet ("Access Pending"); anything else is an error
+        setClientError(
+          apiErrorStatus(clientRes.reason) === 404
+            ? ""
+            : apiErrorMessage(clientRes.reason, "Couldn't load your account.")
+        );
+      }
+
+      setAnnouncements(
+        annRes.status === "fulfilled" && Array.isArray(annRes.value.data?.announcements)
+          ? annRes.value.data.announcements
+          : []
+      );
+
+      if (perfRes.status === "fulfilled") {
+        const rows = perfRes.value.data?.standings;
+        setStandings(Array.isArray(rows) ? rows : []);
+        setStandingsUpdatedAt(perfRes.value.data?.updatedAt || null);
+        setStandingsError("");
+      } else {
+        setStandings([]);
+        setStandingsError(apiErrorMessage(perfRes.reason, "Couldn't load standings."));
+      }
+
+      if (galleryRes.status === "fulfilled") {
+        const imgs = galleryRes.value.data?.images;
+        setClientImages(Array.isArray(imgs) ? imgs.filter((img) => resolveImageUrl(img?.url)) : []);
+        setGalleryError("");
+      } else {
+        setClientImages([]);
+        setGalleryError(apiErrorMessage(galleryRes.reason, "Couldn't load the gallery."));
+      }
+      setGalleryIndex(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const retry = () => {
+    setLoading(true);
+    fetchData();
+  };
 
   // Gallery auto-advance (must be before any return)
   useEffect(() => {
@@ -97,6 +153,21 @@ const ClientSportsPlan = () => {
     </div>
   );
 
+  if (!client && clientError) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50/30 p-6">
+      <div className="text-center p-12 bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 max-w-sm w-full">
+        <h2 className="text-slate-900 font-bold text-lg tracking-tight">Something went wrong</h2>
+        <p className="text-slate-500 text-sm mt-2">{clientError}</p>
+        <button
+          onClick={retry}
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-red-600"
+        >
+          <RefreshCw size={13} /> Retry
+        </button>
+      </div>
+    </div>
+  );
+
   if (!client) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50/30 p-6">
       <div className="text-center p-12 bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 max-w-sm w-full">
@@ -109,7 +180,9 @@ const ClientSportsPlan = () => {
     </div>
   );
 
-  const plan = client.planType;
+  const plan = client.planType || "—";
+  const budgetLabel = formatBudget(client.budget);
+  const currentImage = clientImages[galleryIndex] || null;
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-red-50/30 to-slate-50 text-slate-900 font-sans overflow-hidden selection:bg-red-200/60 relative">
@@ -131,13 +204,12 @@ const ClientSportsPlan = () => {
                 <p className="text-lg font-extrabold text-red-600 tracking-tight">{plan}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl shadow-sm self-start sm:self-auto">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Status: Online</span>
-            </div>
+            {budgetLabel && (
+              <div className="flex flex-col px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl shadow-sm self-start sm:self-auto">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Budget</span>
+                <span className="text-sm font-extrabold text-slate-800 tracking-tight">{budgetLabel}</span>
+              </div>
+            )}
           </div>
 
           {/* MAIN SPACE WITH THE LEADERBOARD & IMAGES */}
@@ -156,33 +228,40 @@ const ClientSportsPlan = () => {
                     {isGalleryOpen ? "Click to hide gallery" : "Click to expand client media gallery"}
                   </p>
                 </div>
-                <motion.div
+                <Motion.div
                   animate={{ rotate: isGalleryOpen ? 90 : 0 }}
                   transition={{ type: "spring", stiffness: 250, damping: 20 }}
                   className="p-2 bg-slate-50 border border-slate-200/60 rounded-xl group-hover:bg-red-50 group-hover:border-red-100 transition-colors"
                 >
                   <ChevronRight size={16} className="text-slate-400 group-hover:text-red-600 transition-colors" />
-                </motion.div>
+                </Motion.div>
               </button>
               <AnimatePresence initial={false}>
                 {isGalleryOpen && (
-                  <motion.div
+                  <Motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25, ease: "easeInOut" }}
                   >
                     <div className="px-6 pb-6 border-t border-slate-100 pt-5 flex justify-center bg-slate-50/20">
-                      {clientImages.length > 0 ? (
+                      {galleryError ? (
+                        <div className="w-full max-w-lg h-40 flex flex-col items-center justify-center gap-2 text-slate-500 bg-slate-50 rounded-xl border border-slate-200/60 text-sm">
+                          {galleryError}
+                          <button onClick={retry} className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-600">
+                            <RefreshCw size={12} /> Retry
+                          </button>
+                        </div>
+                      ) : currentImage ? (
                         <div
-                          onClick={() => setZoomImage(clientImages[galleryIndex])}
+                          onClick={() => setZoomImage(resolveImageUrl(currentImage.url))}
                           className="relative w-full max-w-lg h-72 rounded-xl overflow-hidden shadow-sm border border-slate-200/60 cursor-pointer group/clientGallery"
                         >
                           <AnimatePresence mode="wait">
-                            <motion.img
-                              key={galleryIndex}
-                              src={clientImages[galleryIndex] || fallbackImage}
-                              alt={`Client Gallery Image ${galleryIndex + 1}`}
+                            <Motion.img
+                              key={currentImage._id || galleryIndex}
+                              src={resolveImageUrl(currentImage.url)}
+                              alt={currentImage.caption || `Gallery image ${galleryIndex + 1}`}
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
@@ -191,27 +270,31 @@ const ClientSportsPlan = () => {
                             />
                           </AnimatePresence>
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-5">
-                            <span className="text-[9px] font-bold tracking-wider text-red-400 uppercase mb-0.5">Gallery Slideshow (5s)</span>
-                            <h4 className="text-sm font-bold text-white">Gallery Image — #{galleryIndex + 1}</h4>
+                            <span className="text-[9px] font-bold tracking-wider text-red-400 uppercase mb-0.5">
+                              {clientImages.length > 1 ? `Image ${galleryIndex + 1} of ${clientImages.length} · auto-advances` : "Gallery"}
+                            </span>
+                            <h4 className="text-sm font-bold text-white">{currentImage.caption || `Gallery image #${galleryIndex + 1}`}</h4>
                             <p className="text-[11px] text-slate-300 font-medium mt-1 opacity-0 group-hover/clientGallery:opacity-100 transition-opacity duration-300">
                               Click image to view full size
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <div className="w-full max-w-lg h-72 flex items-center justify-center text-slate-400 bg-slate-100 rounded-xl border border-slate-200/60">
-                          No images available for this client.
+                        <div className="w-full max-w-lg h-40 flex flex-col items-center justify-center gap-2 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                          <ImageOff size={22} />
+                          <span className="text-sm font-medium">No gallery images yet</span>
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </Motion.div>
                 )}
               </AnimatePresence>
             </div>
-            <PerformanceLeaderboard 
-              teams={performanceData} 
-              lastMonthImage={performanceData && performanceData.length > 0 && performanceData[0].lastMonthImage ? performanceData[0].lastMonthImage : null}
-              onImageRequestZoom={(imgSrc) => setZoomImage(imgSrc)}
+            <PerformanceLeaderboard
+              teams={standings}
+              updatedAt={standingsUpdatedAt}
+              error={standingsError}
+              onRetry={retry}
             />
           </div>
         </main>
@@ -234,7 +317,7 @@ const ClientSportsPlan = () => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
             {announcements.map((a) => (
-              <motion.button
+              <Motion.button
                 whileHover={{ y: -2, scale: 1.01 }} 
                 whileTap={{ scale: 0.99 }}
                 key={a._id}
@@ -249,7 +332,7 @@ const ClientSportsPlan = () => {
                 <p className="text-sm font-bold text-slate-800 group-hover:text-red-600 transition-colors line-clamp-2 pr-2">
                   {a.title}
                 </p>
-              </motion.button>
+              </Motion.button>
             ))}
           </div>
         </aside>
@@ -259,12 +342,12 @@ const ClientSportsPlan = () => {
       <AnimatePresence>
         {activeAnnouncement && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-            <motion.div 
+            <Motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setActiveAnnouncement(null)}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             />
-            <motion.div 
+            <Motion.div 
               initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
               className="relative bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-slate-100 z-10 flex flex-col max-h-[90vh]"
             >
@@ -299,7 +382,7 @@ const ClientSportsPlan = () => {
                   "{activeAnnouncement.description}"
                 </p>
               </div>
-            </motion.div>
+            </Motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -308,14 +391,14 @@ const ClientSportsPlan = () => {
       <AnimatePresence>
         {zoomImage && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
+            <Motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setZoomImage(null)}
               className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl"
             />
-            <motion.div 
+            <Motion.div 
               initial={{ scale: 0.95, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.95, opacity: 0 }}
@@ -328,7 +411,7 @@ const ClientSportsPlan = () => {
               >
                 <X size={18}/>
               </button>
-            </motion.div>
+            </Motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -336,38 +419,14 @@ const ClientSportsPlan = () => {
   );
 };
 
-/* ================= LEADERBOARD TABLE COMPONENT ================= */
-const PerformanceLeaderboard = ({ teams = [], lastMonthImage, onImageRequestZoom }) => {
-  const sortedTeams = [...teams].sort((a, b) => b.won - a.won);
-  
-  const [isImagesOpen, setIsImagesOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const [isMarchOpen, setIsMarchOpen] = useState(false);
-  const [marchImageIndex, setMarchImageIndex] = useState(0);
-
-  const imageGallery = [Cricket, lastMonthImage || Cricket, Cricket, Cricket];
-  const marchGallery = [Cricket, Cricket, Cricket];
-
-  useEffect(() => {
-    let interval;
-    if (isImagesOpen) {
-      interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % imageGallery.length);
-      }, 6000);
-    }
-    return () => clearInterval(interval);
-  }, [isImagesOpen, imageGallery.length]);
-
-  useEffect(() => {
-    let interval;
-    if (isMarchOpen) {
-      interval = setInterval(() => {
-        setMarchImageIndex((prev) => (prev + 1) % marchGallery.length);
-      }, 6000);
-    }
-    return () => clearInterval(interval);
-  }, [isMarchOpen, marchGallery.length]);
+/* ================= LEADERBOARD TABLE COMPONENT =================
+   Standings come from GET /api/client/me/performance (entered by an admin).
+   No placeholder/fallback data is shown as if it were real. */
+const PerformanceLeaderboard = ({ teams = [], updatedAt, error, onRetry }) => {
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const sortedTeams = [...teams].sort(
+    (a, b) => num(b.points) - num(a.points) || num(b.won) - num(a.won)
+  );
 
   const getRankStyle = (index) => {
     switch (index) {
@@ -378,17 +437,38 @@ const PerformanceLeaderboard = ({ teams = [], lastMonthImage, onImageRequestZoom
     }
   };
 
+  const updatedLabel = (() => {
+    if (!updatedAt) return null;
+    const d = new Date(updatedAt);
+    return isNaN(d.getTime()) ? null : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  })();
+
   return (
     <div className="space-y-6">
       <div className="border-l-4 border-red-600 pl-5">
         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
           Company <span className="text-red-600">Performance</span>
         </h2>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Live Standings Matrix</p>
+        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">
+          Standings{updatedLabel ? ` · Updated ${updatedLabel}` : ""}
+        </p>
       </div>
 
       {/* TABLE BOX */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+        {error ? (
+          <div className="py-12 flex flex-col items-center gap-2 text-slate-500 text-sm">
+            {error}
+            <button onClick={onRetry} className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-600">
+              <RefreshCw size={12} /> Retry
+            </button>
+          </div>
+        ) : sortedTeams.length === 0 ? (
+          <div className="py-12 flex flex-col items-center gap-2 text-slate-400">
+            <Trophy size={24} />
+            <span className="text-sm font-medium">No standings published yet</span>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -403,7 +483,7 @@ const PerformanceLeaderboard = ({ teams = [], lastMonthImage, onImageRequestZoom
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sortedTeams.map((team, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                <tr key={team._id || idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="py-4 px-6">
                     <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${getRankStyle(idx)}`}>
                       {idx + 1}
@@ -414,140 +494,17 @@ const PerformanceLeaderboard = ({ teams = [], lastMonthImage, onImageRequestZoom
                       {team.teamName}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-center text-sm font-medium text-slate-500">{team.played}</td>
-                  <td className="py-4 px-4 text-center text-sm font-bold text-emerald-600 bg-emerald-50/10 border-x border-slate-100/60">{team.won}</td>
-                  <td className="py-4 px-4 text-center text-sm font-medium text-slate-400">{team.lost}</td>
-                  <td className="py-4 px-6 text-right text-sm font-bold text-slate-900 tracking-tight">{team.points} PTS</td>
+                  <td className="py-4 px-4 text-center text-sm font-medium text-slate-500">{num(team.played)}</td>
+                  <td className="py-4 px-4 text-center text-sm font-bold text-emerald-600 bg-emerald-50/10 border-x border-slate-100/60">{num(team.won)}</td>
+                  <td className="py-4 px-4 text-center text-sm font-medium text-slate-400">{num(team.lost)}</td>
+                  <td className="py-4 px-6 text-right text-sm font-bold text-slate-900 tracking-tight">{num(team.points)} PTS</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        )}
       </div>
-
-      {/* TOURNAMENT IMAGES SECTION */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden hover:border-slate-300 transition-all">
-        <button 
-          onClick={() => setIsImagesOpen(!isImagesOpen)}
-          className="w-full flex items-center justify-between p-6 text-left focus:outline-none group bg-white hover:bg-slate-50/40 transition-colors"
-        >
-          <div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-              Last Month Tournament Images
-            </h3>
-            <p className="text-slate-400 text-[11px] font-medium mt-0.5">
-              {isImagesOpen ? "Click header to hide gallery" : "Click header to expand media shelf"}
-            </p>
-          </div>
-          <motion.div
-            animate={{ rotate: isImagesOpen ? 90 : 0 }}
-            transition={{ type: "spring", stiffness: 250, damping: 20 }}
-            className="p-2 bg-slate-50 border border-slate-200/60 rounded-xl group-hover:bg-red-50 group-hover:border-red-100 transition-colors"
-          >
-            <ChevronRight size={16} className="text-slate-400 group-hover:text-red-600 transition-colors" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence initial={false}>
-          {isImagesOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-            >
-              <div className="px-6 pb-6 border-t border-slate-100 pt-5 flex justify-center bg-slate-50/20">
-                <div 
-                  onClick={() => onImageRequestZoom(imageGallery[currentImageIndex])}
-                  className="relative w-full max-w-lg h-72 rounded-xl overflow-hidden shadow-sm border border-slate-200/60 cursor-pointer group/card"
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.img 
-                      key={currentImageIndex}
-                      src={imageGallery[currentImageIndex]} 
-                      alt={`Tournament Frame ${currentImageIndex + 1}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="w-full h-full object-cover"
-                    />
-                  </AnimatePresence>
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-5">
-                    <span className="text-[9px] font-bold tracking-wider text-red-400 uppercase mb-0.5">Live Slideshow (6s)</span>
-                    <h4 className="text-sm font-bold text-white">Tournament Asset Highlights — #{currentImageIndex + 1}</h4>
-                    <p className="text-[11px] text-slate-300 font-medium mt-1 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
-                      Click image to view absolute widescreen configuration
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ================= NEW MARCH SECTION BELOW ================= */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden hover:border-slate-300 transition-all">
-        <button 
-          onClick={() => setIsMarchOpen(!isMarchOpen)}
-          className="w-full flex items-center justify-between p-6 text-left focus:outline-none group bg-white hover:bg-slate-50/40 transition-colors"
-        >
-          <div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-              March Highlights Section
-            </h3>
-            <p className="text-slate-400 text-[11px] font-medium mt-0.5">
-              {isMarchOpen ? "Click header to hide March log" : "Click header to expand March gallery archive"}
-            </p>
-          </div>
-          <motion.div
-            animate={{ rotate: isMarchOpen ? 90 : 0 }}
-            transition={{ type: "spring", stiffness: 250, damping: 20 }}
-            className="p-2 bg-slate-50 border border-slate-200/60 rounded-xl group-hover:bg-red-50 group-hover:border-red-100 transition-colors"
-          >
-            <ChevronRight size={16} className="text-slate-400 group-hover:text-red-600 transition-colors" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence initial={false}>
-          {isMarchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-            >
-              <div className="px-6 pb-6 border-t border-slate-100 pt-5 flex justify-center bg-slate-50/20">
-                <div 
-                  onClick={() => onImageRequestZoom(marchGallery[marchImageIndex])}
-                  className="relative w-full max-w-lg h-72 rounded-xl overflow-hidden shadow-sm border border-slate-200/60 cursor-pointer group/marchCard"
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.img 
-                      key={marchImageIndex}
-                      src={marchGallery[marchImageIndex]} 
-                      alt={`March Frame ${marchImageIndex + 1}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="w-full h-full object-cover"
-                    />
-                  </AnimatePresence>
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-5">
-                    <span className="text-[9px] font-bold tracking-wider text-red-400 uppercase mb-0.5">March Stream (6s)</span>
-                    <h4 className="text-sm font-bold text-white">March Division Retrospective — #{marchImageIndex + 1}</h4>
-                    <p className="text-[11px] text-slate-300 font-medium mt-1 opacity-0 group-hover/marchCard:opacity-100 transition-opacity duration-300">
-                      Click image to expand full-scale preview board
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div> 
     </div>
   );
 };

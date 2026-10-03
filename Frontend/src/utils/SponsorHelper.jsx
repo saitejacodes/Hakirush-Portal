@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { apiErrorMessage } from "./apiError";
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
@@ -203,7 +204,7 @@ export const SponsorButtons = ({ id, refresh }) => {
       }
     } catch (err) {
       console.error(err);
-      alert("System Error: Unable to delete sponsor record.");
+      alert(apiErrorMessage(err, "System Error: Unable to delete sponsor record."));
     }
   };
 

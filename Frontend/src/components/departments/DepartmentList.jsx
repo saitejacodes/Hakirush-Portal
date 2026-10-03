@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { Search, Plus, ChevronLeft, ChevronRight, ChevronDown, Building2 } from "lucide-react";
 import { DepartmentButtons } from "../../utils/DepartmentHelper";
+import { apiErrorMessage } from "../../utils/apiError";
 
 const INK = "#4A1015";        
 const INK_SOFT = "#5C161C";   
@@ -44,8 +45,14 @@ const MobileDepartmentCard = ({ dep, fetchDepartments }) => {
             >
               {dep.dep_name}
             </p>
-            <p className="mt-1 text-[11px] font-medium" style={{ color: SLATE }}>
-              Organizational unit
+            <p className="mt-1 truncate text-[11px] font-medium" style={{ color: SLATE }}>
+              Manager:{" "}
+              {dep.managerName ? (
+                <span style={{ color: INK }}>{dep.managerName}</span>
+              ) : (
+                <span style={{ color: FOG }}>Not assigned</span>
+              )}
+              {typeof dep.memberCount === "number" && <span> · {dep.memberCount} members</span>}
             </p>
           </div>
         </div>
@@ -66,7 +73,7 @@ const DepartmentList = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const navigate = useNavigate();
+  const [loadError, setLoadError] = useState("");
 
   const fetchDepartments = async () => {
     setDepLoading(true);
@@ -81,12 +88,19 @@ const DepartmentList = () => {
           _id: dep._id,
           sno: sno++,
           dep_name: dep.dep_name,
+          managerName: dep.manager?.name || null,
+          // "invalid" = assigned manager is inactive or moved to another department
+          managerInvalid: dep.managerStatus === "invalid",
+          managerDesignation: dep.manager?.designation || "",
+          memberCount: typeof dep.memberCount === "number" ? dep.memberCount : null,
         }));
         setDepartments(data);
         setFilteredDepartments(data);
+        setLoadError("");
       }
     } catch (err) {
       console.error("Failed to load departments");
+      setLoadError(apiErrorMessage(err, "Failed to load departments."));
     } finally {
       setDepLoading(false);
     }
@@ -208,7 +222,7 @@ const DepartmentList = () => {
                 ) : (
                   <div className="py-14 text-center">
                     <p className="text-[13px] font-medium" style={{ color: FOG }}>
-                      {search ? "No departments match that search." : "No departments yet — add the first one."}
+                      {loadError || (search ? "No departments match that search." : "No departments yet — add the first one.")}
                     </p>
                   </div>
                 )}
@@ -217,11 +231,12 @@ const DepartmentList = () => {
               {/* DESKTOP */}
               <div className="hidden px-4 pb-4 md:block lg:px-6">
                 <div
-                  className="grid grid-cols-[56px_1fr_170px] items-center px-4 py-2 text-[11.5px] font-medium"
+                  className="grid grid-cols-[56px_1fr_220px_170px] items-center px-4 py-2 text-[11.5px] font-medium"
                   style={{ color: FOG }}
                 >
                   <span>Ref</span>
                   <span>Department</span>
+                  <span>Manager</span>
                   <span className="text-right">Actions</span>
                 </div>
 
@@ -229,7 +244,7 @@ const DepartmentList = () => {
                   {paginatedDepartments.map((dep) => (
                     <div
                       key={dep._id}
-                      className="dept-row grid grid-cols-[56px_1fr_170px] items-center rounded-lg px-4 py-3.5"
+                      className="dept-row grid grid-cols-[56px_1fr_220px_170px] items-center rounded-lg px-4 py-3.5"
                       style={{ backgroundColor: PAPER }}
                     >
                       <div
@@ -246,6 +261,35 @@ const DepartmentList = () => {
                         >
                           {dep.dep_name}
                         </p>
+                        {typeof dep.memberCount === "number" && (
+                          <p className="mt-0.5 text-[11px] font-medium" style={{ color: SLATE }}>
+                            {dep.memberCount} {dep.memberCount === 1 ? "member" : "members"}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 pr-3">
+                        {dep.managerName ? (
+                          <>
+                            <p className="truncate text-[13px] font-semibold" style={{ color: INK }}>
+                              {dep.managerName}
+                            </p>
+                            {dep.managerInvalid && (
+                              <p className="truncate text-[11px] font-medium" style={{ color: "#B4432E" }}>
+                                No longer eligible - reassign
+                              </p>
+                            )}
+                            {dep.managerDesignation && (
+                              <p className="truncate text-[11px]" style={{ color: SLATE }}>
+                                {dep.managerDesignation}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-[12.5px] font-medium italic" style={{ color: FOG }}>
+                            Not assigned
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex justify-end">
@@ -258,7 +302,7 @@ const DepartmentList = () => {
                     <div className="flex flex-col items-center gap-2 py-16">
                       <Building2 size={20} strokeWidth={1.5} color={FOG} />
                       <p className="text-[13px] font-medium" style={{ color: FOG }}>
-                        {search ? "No departments match that search." : "No departments yet — add the first one."}
+                        {loadError || (search ? "No departments match that search." : "No departments yet — add the first one.")}
                       </p>
                     </div>
                   )}

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Clock, CalendarDays, Loader2 } from "lucide-react";
+import { apiErrorMessage } from "./apiError";
 
 const normalizeStatus = (status) => {
   if (status === null || status === undefined || status === "") return null;
@@ -67,7 +68,8 @@ const Tooltip = ({ label, children }) => {
   );
 };
 
-const AttendanceHelper = ({ status, employeeId, statusChange, checkIn, checkOut }) => {
+// Active admin manual-status workflow: PUT /api/attendance/update/:employeeId (Employee._id).
+const AttendanceHelper = ({ status, employeeId, statusChange }) => {
   const finalStatus = normalizeStatus(status);
   const [loading, setLoading] = useState(false);
   const [localStatus, setLocalStatus] = useState(finalStatus);
@@ -91,6 +93,7 @@ const AttendanceHelper = ({ status, employeeId, statusChange, checkIn, checkOut 
       statusChange();
     } catch (err) {
       console.error("Attendance Sync Error:", err);
+      alert(apiErrorMessage(err, "Failed to update attendance status."));
     } finally {
       setLoading(false);
     }

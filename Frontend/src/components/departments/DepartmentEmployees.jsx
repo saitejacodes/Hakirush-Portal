@@ -1,7 +1,32 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ChevronDown, Users, Mail, Briefcase } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Users, Mail, Briefcase, Star } from "lucide-react";
+import { apiErrorMessage } from "../../utils/apiError";
+
+const idOf = (value) => {
+  if (!value) return "";
+  if (typeof value === "object") return String(value._id || value.employeeRecordId || "");
+  return String(value);
+};
+
+const ManagerBadge = () => (
+  <span
+    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+    style={{ backgroundColor: "#A9853C22", color: "#7A5A1C", border: "1px solid #A9853C55" }}
+  >
+    <Star size={10} strokeWidth={2} /> Manager
+  </span>
+);
+
+const InactiveBadge = () => (
+  <span
+    className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+    style={{ backgroundColor: "#6B728018", color: "#6B7280" }}
+  >
+    Inactive
+  </span>
+);
 
 const INK = "#4A1015";          
 const INK_SOFT = "#5C161C";     
@@ -30,6 +55,7 @@ const DepartmentEmployees = () => {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [departmentName, setDepartmentName] = useState("");
 
   useEffect(() => {
     if (!id || id === ":id") {
@@ -42,20 +68,31 @@ const DepartmentEmployees = () => {
       try {
         setLoading(true);
         setError("");
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/employee/department/${id}/employees`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
+        const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+        const [res, depRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/department/${id}/employees`, { headers }),
+          // Department carries managerEmployeeId; failure here only hides the badge.
+          axios
+            .get(`${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`, { headers })
+            .catch(() => null),
+        ]);
 
         if (res.data?.success) {
-          setEmployees(res.data.employees || []);
+          const dep = depRes?.data?.department || null;
+          const managerId = idOf(dep?.managerEmployeeId) || idOf(dep?.manager?.employeeRecordId);
+          setDepartmentName(dep?.dep_name || "");
+          const list = (res.data.employees || []).map((emp) => ({
+            ...emp,
+            isManager: Boolean(emp.isManager) || (managerId !== "" && String(emp._id) === managerId),
+          }));
+          // Manager first, then the rest in their original order
+          list.sort((a, b) => Number(b.isManager) - Number(a.isManager));
+          setEmployees(list);
         } else {
           setError("Failed to load employees");
         }
       } catch (err) {
-        setError(err?.response?.data?.error || "Connection error occurred");
+        setError(apiErrorMessage(err, "Connection error occurred"));
       } finally {
         setLoading(false);
       }
@@ -113,7 +150,7 @@ const DepartmentEmployees = () => {
             </div>
             <div>
               <p className="text-[11.5px] font-semibold" style={{ color: SLATE }}>
-                Assigned personnel
+                Assigned personnel{departmentName ? ` · ${departmentName}` : ""}
               </p>
               <h1
                 className="text-[1.9rem] leading-[1.05] tracking-tight sm:text-[2.35rem]"
@@ -183,7 +220,7 @@ const DepartmentEmployees = () => {
                           className="rounded-md px-2.5 py-1 text-[10.5px] font-medium"
                           style={{ backgroundColor: PAPER_DIM, color: SLATE }}
                         >
-                          {emp.userId?.employeeId || "No ID"}
+                          {emp.employeeId || emp.userId?.employeeId || "No ID"}
                         </span>
                       </div>
 
@@ -193,6 +230,12 @@ const DepartmentEmployees = () => {
                       >
                         {emp.userId?.name}
                       </p>
+                      {(emp.isManager || emp.isActive === false || emp.userId?.isActive === false) && (
+                        <div className="mb-2 flex gap-1.5">
+                          {emp.isManager && <ManagerBadge />}
+                          {(emp.isActive === false || emp.userId?.isActive === false) && <InactiveBadge />}
+                        </div>
+                      )}
                       <p className="mb-3 flex items-center gap-1.5 text-[12px] font-medium" style={{ color: SLATE }}>
                         <Mail size={12} color={BRASS} /> {emp.userId?.email}
                       </p>
@@ -253,12 +296,20 @@ const DepartmentEmployees = () => {
                         >
                           {emp.userId?.name?.charAt(0) || "?"}
                         </div>
-                        <span
-                          className="truncate text-[16px] leading-tight"
-                          style={{ ...displayFont, fontWeight: 600, color: "#14161B" }}
-                        >
-                          {emp.userId?.name}
-                        </span>
+                        <div className="min-w-0">
+                          <span
+                            className="block truncate text-[16px] leading-tight"
+                            style={{ ...displayFont, fontWeight: 600, color: "#14161B" }}
+                          >
+                            {emp.userId?.name}
+                          </span>
+                          {(emp.isManager || emp.isActive === false || emp.userId?.isActive === false) && (
+                            <div className="mt-1 flex gap-1.5">
+                              {emp.isManager && <ManagerBadge />}
+                              {(emp.isActive === false || emp.userId?.isActive === false) && <InactiveBadge />}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <span className="truncate pr-3 text-[13px] font-medium" style={{ color: SLATE }}>

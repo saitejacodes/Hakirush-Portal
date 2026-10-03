@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+// startDate/endDate are business dates stored as UTC midnight (the web sends YYYY-MM-DD).
 const leaveSchema = new mongoose.Schema(
   {
     employeeId: {
@@ -28,12 +29,20 @@ const leaveSchema = new mongoose.Schema(
       enum: ["Pending", "Approved", "Rejected", "Cancelled"],
       default: "Pending",
     },
+    // Working days (weekends + holidays excluded), always computed by the server.
     days: {
       type: Number,
       required: true
-    }
+    },
+    /* ===== Audit fields (additive) ===== */
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    reviewedAt: { type: Date, default: null },
+    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    cancelledAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
+
+leaveSchema.index({ employeeId: 1, status: 1, startDate: 1 });
 
 export default mongoose.model("Leave", leaveSchema);

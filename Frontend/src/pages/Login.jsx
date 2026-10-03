@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../context/authContext";
 import { useNavigate } from "react-router-dom";
+import { apiErrorCode, isNetworkError } from "../utils/apiError";
 import { Eye, EyeOff, ShieldCheck, Lock, Mail, Loader2 } from "lucide-react";
 
 const INK = "#1C1A17";
@@ -18,39 +19,64 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const { login } = useAuth();
+  const { login, sessionError, offline } = useAuth();
   const navigate = useNavigate();
+
+  const loginErrorMessage = (error) => {
+    if (isNetworkError(error)) {
+      return "Can't reach the server. Check your connection and try again.";
+    }
+    const code = apiErrorCode(error);
+    const serverMessage = error.response?.data?.error || error.response?.data?.message;
+    if (code === "INVALID_CREDENTIALS") return serverMessage || "Invalid email or password.";
+    if (code === "ACCOUNT_INACTIVE") return serverMessage || "This account is inactive. Contact your administrator.";
+    if (code === "RATE_LIMITED" || error.response?.status === 429) {
+      return serverMessage || "Too many attempts. Please wait a moment and try again.";
+    }
+    if (error.response?.status >= 500) {
+      return serverMessage || "The server is having trouble. Please try again shortly.";
+    }
+    return serverMessage || "Access Denied: Invalid Credentials";
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setErr("");
     setLoading(true);
 
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
-        { email, password }
+        { email, password },
+        { timeout: 20000 }
       );
 
-      localStorage.setItem("token", response.data.token);
-
-      if (response.data.success) {
-        login(response.data.user);
+      if (response.data?.success && response.data.token && response.data.user) {
+        login(response.data.user, response.data.token);
         // Directing to appropriate dashboard based on role
-        if (response.data.user.role === "admin") {
+        const role = response.data.user.role;
+        if (role === "admin") {
           navigate("/admin-dashboard");
-        } else if (response.data.user.role === "client") {
-            navigate("/client-dashboard")
-        } else {
+        } else if (role === "client") {
+          navigate("/client-dashboard");
+        } else if (role === "employee") {
           navigate("/employee-dashboard");
+        } else {
+          setErr("This account has no portal access.");
         }
+      } else {
+        setErr(response.data?.error || "Login failed. Please try again.");
       }
     } catch (error) {
-      setErr(error.response?.data?.message || "Access Denied: Invalid Credentials");
+      setErr(loginErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
+
+  // Message carried over from a session that ended (revoked / inactive).
+  const notice = !err && !offline ? sessionError : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F6F3EC] px-4 relative overflow-hidden">
@@ -58,7 +84,7 @@ const Login = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#B8912E]/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#7A2233]/10 blur-[120px] rounded-full" />
 
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -71,7 +97,7 @@ const Login = () => {
         >
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
 
-          <motion.div
+          <Motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
             className="relative z-10 mb-8"
@@ -79,7 +105,7 @@ const Login = () => {
             <div className="p-4 bg-white/5 rounded-[2rem] border border-[#B8912E]/20 backdrop-blur-md shadow-2xl">
               <img src="/favicon.png" className="w-24 h-24 sm:w-38 sm:h-38 object-contain" alt="Logo" />
             </div>
-          </motion.div>
+          </Motion.div>
 
           <div className="relative z-10 text-center">
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-[#F6F3EC] leading-none">
@@ -108,7 +134,7 @@ const Login = () => {
 
           <AnimatePresence>
             {err && (
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
@@ -116,9 +142,16 @@ const Login = () => {
               >
                 <ShieldCheck size={18} />
                 <p className="text-xs font-bold uppercase tracking-wide">{err}</p>
-              </motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
+
+          {notice && (
+            <div className="mb-6 flex items-center gap-3 bg-[#F6F3EC] border border-[#E7E1D3] p-4 rounded-2xl text-[#7A2233]">
+              <ShieldCheck size={18} />
+              <p className="text-xs font-bold uppercase tracking-wide">{notice}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -156,7 +189,7 @@ const Login = () => {
               </div>
             </div>
 
-            <motion.button
+            <Motion.button
               type="submit"
               disabled={loading}
               whileHover={{ scale: 1.02 }}
@@ -171,7 +204,7 @@ const Login = () => {
               ) : (
                 "Login"
               )}
-            </motion.button>
+            </Motion.button>
           </form>
 
           <div className="mt-10 pt-6 border-t border-[#F1EFE8] flex justify-center">
@@ -181,7 +214,7 @@ const Login = () => {
              </div>
           </div>
         </div>
-      </motion.div>
+      </Motion.div>
     </div>
   );
 };

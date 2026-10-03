@@ -3,11 +3,12 @@ import {
   CalendarDays, ChevronLeft, ChevronRight,
   X, Bell, Activity, ArrowRight, Umbrella,
   Megaphone, Cake, Award, Clock, Send, CheckCircle2, XCircle, Clock3,
-  Users, UserPlus
+  Users, UserPlus, RefreshCw
 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/authContext";
 import EmployeePunch from "../attendance/EmployeePunch";
+import { apiErrorMessage } from "../../utils/apiError";
 
 const NOTICE_TYPES = ["leave-status", "attendance-request-status"];
 
@@ -28,6 +29,36 @@ const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 const GRAIN_URI =
   "data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.5'/%3E%3C/svg%3E";
 
+const TEAM_INITIAL = {
+  status: "loading", // loading | ok | error
+  error: "",
+  department: null,
+  managerStatus: null, // assigned | unassigned | no_department
+  manager: null,
+  members: [],
+  totalMembers: 0,
+  hasMore: false,
+};
+
+// "MM-DD" -> Date in the given year (null if malformed)
+const monthDayToDate = (monthDay, year) => {
+  if (typeof monthDay !== "string") return null;
+  const match = /^(\d{2})-(\d{2})$/.exec(monthDay);
+  if (!match) return null;
+  const d = new Date(year, Number(match[1]) - 1, Number(match[2]));
+  return isNaN(d.getTime()) ? null : d;
+};
+
+// Upcoming-days count for a recurring "MM-DD" date (birthdays / anniversaries)
+const daysUntilMonthDay = (monthDay) => {
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let next = monthDayToDate(monthDay, today.getFullYear());
+  if (!next) return null;
+  if (next < todayMid) next = monthDayToDate(monthDay, today.getFullYear() + 1);
+  return Math.round((next - todayMid) / (1000 * 60 * 60 * 24));
+};
+
 const CornerTicks = ({ color = GOLD }) => (
   <>
     <span className="pointer-events-none absolute top-4 left-4 h-2.5 w-2.5 border-t border-l opacity-70" style={{ borderColor: color }} />
@@ -35,9 +66,51 @@ const CornerTicks = ({ color = GOLD }) => (
   </>
 );
 
+// One SafePerson row: { employeeRecordId, userId, employeeCode, name, designation, profileImageUrl, isSelf, isManager }
+const TeamPersonRow = ({ person, isManager = false, getImageUrl }) => {
+  const name = person?.name || "Team member";
+  const subtitle = [person?.designation, person?.employeeCode].filter(Boolean).join(" · ");
+  return (
+    <div
+      className="flex items-center gap-3.5 p-2 rounded-2xl border transition-all"
+      style={isManager ? { borderColor: `${GOLD}55`, backgroundColor: `${GOLD}10` } : { borderColor: "transparent" }}
+    >
+      <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border shadow-sm flex items-center justify-center bg-[#FBF8F3] relative" style={{ borderColor: HAIRLINE }}>
+        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[#B4ADA0] uppercase">
+          {name.charAt(0)}
+        </span>
+        {person?.profileImageUrl && (
+          <img
+            src={getImageUrl(person.profileImageUrl)}
+            className="relative w-full h-full object-cover"
+            alt=""
+            onError={(ev) => { ev.currentTarget.style.display = "none"; }}
+          />
+        )}
+      </div>
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-[12.5px] font-medium text-[#1C1A17] truncate">{name}</span>
+        {subtitle && <span className="text-[10px] font-medium text-[#B4ADA0] tracking-wide truncate">{subtitle}</span>}
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {isManager && (
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border" style={{ color: "#8A6A2E", borderColor: `${GOLD}66`, backgroundColor: "#fff" }}>
+            Manager
+          </span>
+        )}
+        {person?.isSelf && (
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide text-white" style={{ backgroundColor: GARNET }}>
+            You
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const EmployeeSummary = () => {
   const { user, loading } = useAuth();
-  const [deptEmployees, setDeptEmployees] = useState([]);
+  const [team, setTeam] = useState(TEAM_INITIAL);
   const [holidays, setHolidays] = useState([]);
   const [leaves, setLeaves] = useState([]); 
   const [leaveBalance, setLeaveBalance] = useState({ casual: 0, sick: 0 });
@@ -124,8 +197,8 @@ const EmployeeSummary = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data?.success) setNotifications(res.data.notifications.filter(n => NOTICE_TYPES.includes(n.type)));
-      } catch (err) {
-        // Optionally handle error
+      } catch {
+        // Notifications are best effort; the bell simply stays empty.
       }
     };
     fetchNotifications();
@@ -233,11 +306,25 @@ const EmployeeSummary = () => {
 
   const formatBday = (dateString) => {
     if(!dateString) return "";
-    return new Date(dateString).toLocaleDateString('en-IN', { 
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString('en-IN', { 
       day: '2-digit', 
       month: 'short' 
     }).toUpperCase();
   };
+
+  // Department-scoped feeds send `monthDay: "MM-DD"` (no year / dob / age for employees).
+  const formatMonthDay = (monthDay, fallbackDate) => {
+    // leap year so "02-29" renders correctly
+    const d = monthDayToDate(monthDay, 2000);
+    if (d) {
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+    }
+    return formatBday(fallbackDate);
+  };
+
+  const personName = (p) => p?.userId?.name || p?.name || "Team member";
 
 
   // Helper: Get years since joining
@@ -248,31 +335,76 @@ const EmployeeSummary = () => {
   };
 
   /* ================= DATA FETCHING ================= */
+  const userId = user?._id;
+
+  // Department members widget: GET /api/employee/team/me (TeamResponse v1).
+  // Independent of the calendar so it is not refetched on month changes.
+  const fetchTeam = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/team/me`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        params: { page: 1, limit: 100 },
+      });
+      const data = res.data || {};
+      setTeam({
+        status: "ok",
+        error: "",
+        department: data.department || null,
+        managerStatus: data.managerStatus || (data.department ? "unassigned" : "no_department"),
+        manager: data.manager || null,
+        members: Array.isArray(data.members) ? data.members : [],
+        totalMembers: Number(data.totalMembers) || 0,
+        hasMore: Boolean(data.hasMore),
+      });
+    } catch (err) {
+      setTeam({ ...TEAM_INITIAL, status: "error", error: apiErrorMessage(err, "Couldn't load your team.") });
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchTeam();
+  }, [fetchTeam]);
+
+  const retryTeam = () => {
+    setTeam(TEAM_INITIAL);
+    fetchTeam();
+  };
+
+  // fetchData only depends on inputs (user id + calendar month), never on the
+  // state it sets, so it cannot re-trigger itself.
   const fetchData = useCallback(() => {
-    if (!user?._id) return;
+    if (!userId) return;
     const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    const base = import.meta.env.VITE_BACKEND_URL;
 
-    Promise.all([
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/by-department/me`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/holiday/all`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/announcements/public`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/leave/${user._id}/employee`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/birthdays`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/attendance/user/${user._id}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/anniversaries`, { headers }),
-      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employee/new/recent`, { headers })  
+    // allSettled: one failing widget (e.g. 403) must not blank the whole dashboard
+    Promise.allSettled([
+      axios.get(`${base}/api/holiday/all`, { headers }),
+      axios.get(`${base}/api/announcements/public`, { headers }),
+      axios.get(`${base}/api/leave/${userId}/employee`, { headers }),
+      axios.get(`${base}/api/employee/birthdays`, { headers }),
+      axios.get(`${base}/api/attendance/user/${userId}/monthly?month=${calendarMonth.getMonth() + 1}&year=${calendarMonth.getFullYear()}`, { headers }),
+      axios.get(`${base}/api/employee/anniversaries`, { headers }),
+      axios.get(`${base}/api/employee/new/recent`, { headers })
     ])
-    .then(([d1, d2, d3, d4, d5, d6, d7, d8]) => { 
-      const employeeData = d1?.data?.employees || [];
-      const holidayData = d2?.data?.holidays || [];
-      const announcementData = d3?.data?.announcements || [];
-      const allLeaves = d4?.data?.leaves || [];
-      const birthdayData = d5?.data || { today: [], upcoming: [] };
-      const attendanceData = d6?.data?.attendance || [];
-      const anniversaryData = d7?.data || { today: [], upcoming: [] }; 
-      const newEmployeeData = d8?.data?.employees || [];
+    .then(([r2, r3, r4, r5, r6, r7, r8]) => { 
+      const ok = (r) => (r.status === "fulfilled" ? r.value?.data : null);
+      const listOrEmpty = (v) => (Array.isArray(v) ? v : []);
+      const holidayData = listOrEmpty(ok(r2)?.holidays);
+      const announcementData = listOrEmpty(ok(r3)?.announcements);
+      const allLeaves = listOrEmpty(ok(r4)?.leaves);
+      const birthdayRaw = ok(r5) || {};
+      const birthdayData = { today: listOrEmpty(birthdayRaw.today), upcoming: listOrEmpty(birthdayRaw.upcoming) };
+      const attendanceData = listOrEmpty(ok(r6)?.attendance);
+      const anniversaryRaw = ok(r7) || {};
+      const anniversaryData = { today: listOrEmpty(anniversaryRaw.today), upcoming: listOrEmpty(anniversaryRaw.upcoming) };
+      const newEmployeeData = listOrEmpty(ok(r8)?.employees);
 
-      setDeptEmployees(employeeData);
+      [r2, r3, r4, r5, r6, r7, r8].forEach((r) => {
+        if (r.status === "rejected") console.error("Dashboard widget failed:", apiErrorMessage(r.reason));
+      });
+
       setHolidays(holidayData);
       setAnnouncements(announcementData);
       setLeaves(allLeaves);
@@ -302,12 +434,12 @@ const EmployeeSummary = () => {
         casual: Math.max(0, TOTAL_ANNUAL_CASUAL - getUsedDays("Casual Leave")), 
         sick: Math.max(0, TOTAL_ANNUAL_SICK - getUsedDays("Sick Leave")) 
       });
-    }).catch(console.error);
-  }, [user, calendarMonth, deptEmployees]);
+    });
+  }, [userId, calendarMonth]);
 
   useEffect(() => {
     fetchData();
-  }, [calendarMonth, fetchData]);
+  }, [fetchData]);
 
   const handleAttendanceSuccess = () => {
     fetchData();
@@ -527,36 +659,55 @@ const EmployeeSummary = () => {
               <SectionLabel icon={<Activity size={13} />} tone={GARNET} live={GARNET}>
                 Team Pulse
               </SectionLabel>
+              {team.department?.name && (
+                <div className="-mt-3 mb-3 px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#B4ADA0]">
+                  {team.department.name}
+                  {team.totalMembers > 0 && <span> · {team.totalMembers} {team.totalMembers === 1 ? "person" : "people"}</span>}
+                </div>
+              )}
               <div className="flex flex-col gap-2.5 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-                {deptEmployees.map((e) => (
-                  <div 
-                    key={e._id} 
-                    className="flex items-center gap-3.5 p-2 rounded-2xl border border-transparent transition-all group"
-                    style={{}}
-                    onMouseEnter={(ev)=>{ev.currentTarget.style.borderColor=`${GARNET}25`; ev.currentTarget.style.backgroundColor=`${GARNET}08`;}}
-                    onMouseLeave={(ev)=>{ev.currentTarget.style.borderColor="transparent"; ev.currentTarget.style.backgroundColor="transparent";}}
-                  >
-                    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border shadow-sm flex items-center justify-center bg-[#FBF8F3] relative" style={{ borderColor: HAIRLINE }}>
-                      <img 
-                        src={getImageUrl(e.userId?.profileImage || e.profileImage)} 
-                        className="w-full h-full object-cover" 
-                        alt="" 
-                        onError={(e) => {e.target.style.display = 'none'}} 
-                      />
-                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[#B4ADA0] -z-10 uppercase">
-                        {(e.userId?.name || e.name).charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[12.5px] font-medium text-[#1C1A17] truncate">
-                        {e.userId?.name || e.name || "Unknown"}
-                      </span>
-                      <span className="text-[10px] font-medium text-[#B4ADA0] tracking-wide">
-                        {typeof e.employeeId === 'object' ? e.userId?.employeeId : e.employeeId}
-                      </span>
-                    </div>
+                {team.status === "loading" && (
+                  <div className="flex-grow flex items-center justify-center text-[12px] font-medium text-[#B4ADA0]">Loading team…</div>
+                )}
+                {team.status === "error" && (
+                  <div className="flex-grow flex flex-col items-center justify-center gap-2 text-center">
+                    <span className="text-[12px] font-medium text-[#7A2233]">{team.error}</span>
+                    <button onClick={retryTeam} className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A8378] hover:text-[#7A2233] cursor-pointer">
+                      <RefreshCw size={12} /> Retry
+                    </button>
                   </div>
-                ))}
+                )}
+                {team.status === "ok" && team.managerStatus === "no_department" && (
+                  <div className="flex-grow flex flex-col items-center justify-center gap-2 text-[#B4ADA0]">
+                    <Users size={28} strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium">Department not assigned</span>
+                  </div>
+                )}
+                {team.status === "ok" && team.managerStatus !== "no_department" && (
+                  <>
+                    {team.manager ? (
+                      <TeamPersonRow person={team.manager} isManager getImageUrl={getImageUrl} />
+                    ) : (
+                      <div className="flex items-center gap-3.5 p-2 rounded-2xl border border-dashed" style={{ borderColor: HAIRLINE }}>
+                        <div className="w-9 h-9 rounded-full shrink-0 border flex items-center justify-center bg-[#FBF8F3] text-[#B4ADA0]" style={{ borderColor: HAIRLINE }}>
+                          <Users size={14} />
+                        </div>
+                        <span className="text-[12px] font-medium text-[#8A8378]">Manager not assigned</span>
+                      </div>
+                    )}
+                    {team.members.map((m) => (
+                      <TeamPersonRow key={m.employeeRecordId || m.userId} person={m} getImageUrl={getImageUrl} />
+                    ))}
+                    {team.members.length === 0 && (
+                      <div className="py-3 text-center text-[12px] font-medium text-[#D9D2C4]">No other team members yet</div>
+                    )}
+                    {team.hasMore && (
+                      <div className="py-1 text-center text-[10px] font-medium text-[#B4ADA0]">
+                        Showing the first {team.members.length} members
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
@@ -570,7 +721,7 @@ const EmployeeSummary = () => {
                   <div key={e._id} className="flex items-center gap-3 p-2.5 rounded-2xl border" style={{ backgroundColor: `${SAGE}08`, borderColor: `${SAGE}30` }}>
                     <img src={getImageUrl(e.profileImage)} className="w-9 h-9 rounded-full object-cover border border-white shadow-sm" alt="" />
                     <div className="flex flex-col">
-                      <span className="text-[12.5px] font-medium truncate" style={{ color: "#2A3F3A" }}>{e.name}</span>
+                      <span className="text-[12.5px] font-medium truncate" style={{ color: "#2A3F3A" }}>{personName(e)}</span>
                       <span className="text-[10px] font-medium" style={{ color: SAGE }}>
                         {e.dateOfJoining ? (
                           getDaysAgo(e.dateOfJoining)
@@ -603,21 +754,20 @@ const EmployeeSummary = () => {
                       <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex flex-col relative z-10">
-                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{personName(emp)}</span>
                       <span className="text-[10px] font-medium text-white/70 mt-0.5">Happy birthday, today 🎉</span>
                     </div>
                   </div>
                 ))}
                 {birthdays.upcoming?.map(emp => {
-                  let daysLeft = null;
-                  if (emp.dob) {
-                    const today = new Date();
+                  // Employees get `monthDay` only; admins may still get `dob`.
+                  let daysLeft = daysUntilMonthDay(emp.monthDay);
+                  if (daysLeft === null && emp.dob) {
                     const dob = new Date(emp.dob);
-                    let nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
-                    if (nextBirthday < today) {
-                      nextBirthday.setFullYear(today.getFullYear() + 1);
+                    if (!isNaN(dob.getTime())) {
+                      const md = `${String(dob.getMonth() + 1).padStart(2, "0")}-${String(dob.getDate()).padStart(2, "0")}`;
+                      daysLeft = daysUntilMonthDay(md);
                     }
-                    daysLeft = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
                   }
                   return (
                     <div key={emp._id} className="flex items-center gap-3.5 p-2 rounded-2xl border border-[#E7DFD2]/0 hover:border-[#E7DFD2] hover:bg-[#FBF8F3]/60 transition-all group">
@@ -625,10 +775,10 @@ const EmployeeSummary = () => {
                         <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" alt="" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[12.5px] font-medium text-[#1C1A17] truncate leading-tight">{emp.userId?.name || emp.name}</span>
+                        <span className="text-[12.5px] font-medium text-[#1C1A17] truncate leading-tight">{personName(emp)}</span>
                         <span className="text-[10px] font-medium mt-0.5" style={{ color: GARNET }}>
-                          {formatBday(emp.dob)}
-                          {daysLeft !== null && (
+                          {formatMonthDay(emp.monthDay, emp.dob)}
+                          {daysLeft !== null && daysLeft > 0 && (
                             <span className="ml-1.5 text-[#B4ADA0]">· {daysLeft === 1 ? 'in 1 day' : `in ${daysLeft} days`}</span>
                           )}
                         </span>
@@ -654,8 +804,8 @@ const EmployeeSummary = () => {
                       <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex flex-col relative z-10">
-                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{emp.userId?.name || emp.name}</span>
-                      <span className="text-[10px] font-medium text-white/80 mt-0.5">{getYearsJoined(emp.joiningDate)}-year anniversary 🥂</span>
+                      <span className="text-[12.5px] font-semibold text-white truncate leading-tight">{personName(emp)}</span>
+                      <span className="text-[10px] font-medium text-white/80 mt-0.5">{emp.years || getYearsJoined(emp.joiningDate)}-year anniversary 🥂</span>
                     </div>
                   </div>
                 ))}
@@ -665,8 +815,11 @@ const EmployeeSummary = () => {
                       <img src={getImageUrl(emp.userId?.profileImage || emp.profileImage)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" alt="" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[12.5px] font-medium text-[#1C1A17] truncate leading-tight">{emp.userId?.name || emp.name}</span>
-                      <span className="text-[10px] font-medium mt-0.5" style={{ color: "#8A6A2E" }}>{formatBday(emp.joiningDate)}</span>
+                      <span className="text-[12.5px] font-medium text-[#1C1A17] truncate leading-tight">{personName(emp)}</span>
+                      <span className="text-[10px] font-medium mt-0.5" style={{ color: "#8A6A2E" }}>
+                        {formatMonthDay(emp.monthDay, emp.joiningDate)}
+                        {emp.years ? <span className="ml-1.5 text-[#B4ADA0]">· {emp.years} yr</span> : null}
+                      </span>
                     </div>
                   </div>
                 ))}
