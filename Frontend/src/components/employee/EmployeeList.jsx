@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { EmployeeButtons } from "../../utils/EmployeeHelper";
 import { Search, UserPlus, Users, ChevronLeft, ChevronRight, ChevronDown, Building2, UserX } from "lucide-react";
@@ -43,8 +43,27 @@ const ScrollbarStyle = () => (
   `}</style>
 );
 
+/* Active/inactive chip - only rendered when the API reports isActive */
+const StatusChip = ({ isActive }) => {
+  if (isActive === undefined || isActive === null) return null;
+  return (
+    <span
+      className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
+      style={
+        isActive
+          ? { color: SAGE, borderColor: `${SAGE}40`, backgroundColor: `${SAGE}0D` }
+          : { color: "#8A8378", borderColor: HAIRLINE, backgroundColor: "#F3EEE4" }
+      }
+    >
+      {isActive ? "Active" : "Inactive"}
+    </span>
+  );
+};
+
+const statusDotColor = (isActive) => (isActive === false ? "#B4ADA0" : SAGE);
+
 /* ================= PREMIUM MOBILE CARD ================= */
-const MobileEmployeeCard = ({ emp, getImageUrl, index }) => {
+const MobileEmployeeCard = ({ emp, getImageUrl, index, refresh }) => {
   return (
     <div
       className="animate-in fade-in slide-in-from-bottom-1 rounded-[1.5rem] border border-[#E7DFD2] bg-white/75 p-5 shadow-[0_1px_2px_rgba(28,26,23,0.04),0_16px_32px_-16px_rgba(28,26,23,0.14)] backdrop-blur-md duration-500 active:scale-[0.98]"
@@ -60,13 +79,14 @@ const MobileEmployeeCard = ({ emp, getImageUrl, index }) => {
           />
           <div
             className="absolute -right-0.5 -bottom-0.5 h-4 w-4 rounded-full border-2 border-white"
-            style={{ backgroundColor: SAGE }}
+            style={{ backgroundColor: statusDotColor(emp.isActive) }}
           ></div>
         </div>
 
         <div className="min-w-0 flex-1">
           <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-widest" style={{ color: GOLD }}>
             {emp.employeeId}
+            <StatusChip isActive={emp.isActive} />
           </p>
           <p
             className="truncate text-base leading-none tracking-tight text-[#1C1A17]"
@@ -81,7 +101,7 @@ const MobileEmployeeCard = ({ emp, getImageUrl, index }) => {
       </div>
 
       <div className="mt-5 flex justify-end border-t pt-4" style={{ borderColor: HAIRLINE }}>
-        <EmployeeButtons id={emp._id} />
+        <EmployeeButtons id={emp._id} isActive={emp.isActive} refresh={refresh} />
       </div>
     </div>
   );
@@ -97,26 +117,28 @@ const List = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setEmpLoading(true);
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/employee`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
+  const fetchEmployees = useCallback(async () => {
+    setEmpLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/employee`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
-        if (response.data.success) {
-          const sortedEmployees = [...response.data.employees].sort((a, b) => {
-            const idA = a.employeeId ?? "";
-            const idB = b.employeeId ?? "";
-            return !isNaN(idA) && !isNaN(idB) ? Number(idA) - Number(idB) : String(idA).localeCompare(String(idB));
-          });
+      if (response.data.success) {
+        const sortedEmployees = [...response.data.employees].sort((a, b) => {
+          const idA = a.employeeId ?? "";
+          const idB = b.employeeId ?? "";
+          return !isNaN(idA) && !isNaN(idB) ? Number(idA) - Number(idB) : String(idA).localeCompare(String(idB));
+        });
 
-          let sno = 1;
-          const data = sortedEmployees.map((emp) => ({
+        let sno = 1;
+        const data = sortedEmployees.map((emp) => {
+          // isActive may be on the employee (admin list) or on the populated user
+          const rawActive = emp.isActive ?? emp.userId?.isActive;
+          return {
             _id: emp._id,
             sno: sno++,
             employeeId: emp.employeeId || "N/A",
@@ -125,20 +147,23 @@ const List = () => {
             name: emp.userId?.name || "Unknown",
             dob: emp.dob ? new Date(emp.dob).toDateString() : "N/A",
             profileImage: emp.userId?.profileImage || "",
-          }));
+            isActive: typeof rawActive === "boolean" ? rawActive : undefined,
+          };
+        });
 
-          setEmployees(data);
-          setFilteredEmployees(data);
-        }
-      } catch (error) {
-        console.error("Failed to load employees");
-      } finally {
-        setEmpLoading(false);
+        setEmployees(data);
+        setFilteredEmployees(data);
       }
-    };
-
-    fetchEmployees();
+    } catch {
+      console.error("Failed to load employees");
+    } finally {
+      setEmpLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   useEffect(() => {
     const result = employees.filter((emp) =>
@@ -297,7 +322,7 @@ const List = () => {
               <div className="space-y-4 p-4 md:hidden">
                 {paginatedEmployees.length ? (
                   paginatedEmployees.map((emp, i) => (
-                    <MobileEmployeeCard key={emp._id} emp={emp} getImageUrl={getImageUrl} index={i} />
+                    <MobileEmployeeCard key={emp._id} emp={emp} getImageUrl={getImageUrl} index={i} refresh={fetchEmployees} />
                   ))
                 ) : (
                   <EmptyState />
@@ -360,7 +385,7 @@ const List = () => {
                                   />
                                   <div
                                     className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white"
-                                    style={{ backgroundColor: SAGE }}
+                                    style={{ backgroundColor: statusDotColor(emp.isActive) }}
                                   />
                                 </div>
                                 <span
@@ -382,6 +407,7 @@ const List = () => {
                               </p>
                               <p className="mt-1 text-[10px] font-medium uppercase tracking-widest text-[#B4ADA0]">
                                 {emp.designation}
+                                <StatusChip isActive={emp.isActive} />
                               </p>
                             </td>
 
@@ -399,7 +425,7 @@ const List = () => {
                             {/* Actions */}
                             <td className="rounded-r-[1.5rem] px-5 py-5 text-right">
                               <div className="origin-right scale-110 opacity-90 transition-all group-hover:-translate-x-1 group-hover:opacity-100">
-                                <EmployeeButtons id={emp._id} />
+                                <EmployeeButtons id={emp._id} isActive={emp.isActive} refresh={fetchEmployees} />
                               </div>
                             </td>
                           </tr>

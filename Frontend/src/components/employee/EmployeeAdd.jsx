@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
+import { apiErrorMessage } from "../../utils/apiError";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, Camera, Check, Eye, EyeOff } from "lucide-react";
 
@@ -16,7 +17,7 @@ const GOLD_HAIRLINE = "rgba(173,138,86,0.4)";
 const displayFont = { fontFamily: "'Cormorant Garamond', 'Georgia', serif" };
 const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 /* ================= CONFIRMATION DIALOG ================= */
 const SuccessAlert = ({ onClose }) => (
@@ -85,9 +86,14 @@ const Add = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     const fd = new FormData();
-    Object.keys(formData).forEach((key) => fd.append(key, formData[key]));
+    // `manager` is never sent: a manager is a Department assignment
+    // (Departments -> Edit), not an employee field.
+    Object.keys(formData)
+      .filter((key) => key !== "manager")
+      .forEach((key) => fd.append(key, formData[key]));
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/employee/add`, fd, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -96,7 +102,7 @@ const Add = () => {
         setShowAlert(true);
         setTimeout(() => navigate("/admin-dashboard/employees"), 1800);
       }
-    } catch (error) { alert(error.response?.data?.error || "Submission error"); }
+    } catch (error) { alert(apiErrorMessage(error, "Submission error")); }
     finally { setLoading(false); }
   };
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import axios from "axios";
+import { apiErrorMessage } from "../../utils/apiError";
 import { Play, Square, Coffee, RotateCcw, Timer } from "lucide-react";
 
 const theme = {
@@ -155,7 +156,11 @@ const EmployeePunch = ({ onSuccess }) => {
         if (onSuccess) onSuccess();
       }
     } catch (error) {
-      console.error(`Error during ${endpoint}:`, error.response?.data?.message || error.message);
+      console.error(`Error during ${endpoint}:`, apiErrorMessage(error));
+      // 409 INVALID_TRANSITION carries the authoritative record: resync the UI.
+      const serverAttendance = error.response?.data?.details?.attendance;
+      if (serverAttendance) setAttendance(serverAttendance);
+      alert(apiErrorMessage(error, "Couldn't update attendance. Please try again."));
     }
   };
 

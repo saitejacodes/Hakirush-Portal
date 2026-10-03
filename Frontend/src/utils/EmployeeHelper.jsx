@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Eye, Edit2, UserX, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { apiErrorCode, apiErrorMessage } from "./apiError";
 
 /* ================= CONFIGURATION =================
    Same editorial system as the rest of the admin area —
@@ -16,8 +17,10 @@ const HAIRLINE = "#E7DFD2";
 const displayFont = { fontFamily: "'Playfair Display', 'Georgia', serif" };
 const bodyFont = { fontFamily: "'Inter', 'Helvetica Neue', sans-serif" };
 
-/* ================= PREMIUM CONFIRM DELETE ================= */
-const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
+/* ================= CONFIRM DEACTIVATE =================
+   DELETE /api/employee/:id is retention-safe: it deactivates the account
+   (sign-in blocked, sessions revoked) and keeps payroll/attendance/leave history. */
+const ConfirmDeleteAlert = ({ onConfirm, onCancel, busy }) => {
   return createPortal(
     <>
       <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/40 backdrop-blur-md duration-300" />
@@ -44,10 +47,11 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
               className="text-2xl leading-none tracking-tight text-[#1C1A17]"
               style={{ ...displayFont, fontWeight: 700 }}
             >
-              Terminate Record<span className="italic text-[#7A2233]">?</span>
+              Deactivate employee<span className="italic text-[#7A2233]">?</span>
             </h3>
-            <p className="mt-2 text-[10.5px] font-semibold uppercase leading-relaxed tracking-widest text-[#B4ADA0]">
-              This action is permanent and <br /> cannot be reversed.
+            <p className="mt-3 text-[12px] font-medium leading-relaxed text-[#8A8378]">
+              They will no longer be able to sign in and all of their sessions end.
+              Payroll, attendance and leave history are retained.
             </p>
           </div>
 
@@ -61,10 +65,11 @@ const ConfirmDeleteAlert = ({ onConfirm, onCancel }) => {
             </button>
             <button
               onClick={onConfirm}
-              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(122,34,51,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-12px_rgba(122,34,51,0.55)] active:scale-95"
+              disabled={busy}
+              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(122,34,51,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-12px_rgba(122,34,51,0.55)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 100%)` }}
             >
-              Confirm
+              {busy ? "Working…" : "Deactivate"}
             </button>
           </div>
         </div>
@@ -99,10 +104,10 @@ const DeleteSuccessAlert = ({ onClose }) => {
             className="text-2xl leading-none tracking-tight text-[#1C1A17]"
             style={{ ...displayFont, fontWeight: 700 }}
           >
-            <span className="italic text-[#7A2233]">Removed!</span>
+            <span className="italic text-[#7A2233]">Deactivated</span>
           </h3>
           <p className="mt-2 mb-6 text-[10.5px] font-semibold uppercase tracking-widest text-[#B4ADA0]">
-            Personnel database updated.
+            Account disabled. History retained.
           </p>
           <button
             onClick={onClose}
@@ -171,21 +176,40 @@ const IconButton = ({ icon, label, onClick, variant = "default" }) => {
 };
 
 /* ================= MAIN ACTION COMPONENT ================= */
-export const EmployeeButtons = ({ id, refresh }) => {
+export const EmployeeButtons = ({ id, refresh, isActive }) => {
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const deleteEmployee = async () => {
+  const sendDeactivate = (clearManager = false) =>
+    axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      ...(clearManager ? { data: { clearManager: true } } : {}),
+    });
+
+  const deactivateEmployee = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+      let res;
+      try {
+        res = await sendDeactivate(false);
+      } catch (err) {
+        // The employee currently manages a department: offer to clear it.
+        if (apiErrorCode(err) !== "MANAGER_REASSIGNMENT_REQUIRED") throw err;
+        const ok = window.confirm(
+          `${apiErrorMessage(err, "This employee is the manager of their department.")}\n\n` +
+            "Clear the department's manager assignment and deactivate this employee?"
+        );
+        if (!ok) {
+          setShowConfirm(false);
+          return;
         }
-      );
+        res = await sendDeactivate(true);
+      }
 
       if (res.data.success) {
         setShowConfirm(false);
@@ -200,8 +224,11 @@ export const EmployeeButtons = ({ id, refresh }) => {
         }, 1500);
       }
     } catch (err) {
-      console.error("Critical: Employee termination protocol failed.", err);
-      alert("System Error: Unable to delete.");
+      console.error("Employee deactivation failed.", err);
+      setShowConfirm(false);
+      alert(apiErrorMessage(err, "Unable to deactivate this employee."));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -209,8 +236,9 @@ export const EmployeeButtons = ({ id, refresh }) => {
     <>
       {showConfirm && (
         <ConfirmDeleteAlert
-          onConfirm={deleteEmployee}
+          onConfirm={deactivateEmployee}
           onCancel={() => setShowConfirm(false)}
+          busy={busy}
         />
       )}
 
@@ -247,12 +275,14 @@ export const EmployeeButtons = ({ id, refresh }) => {
           onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
         />
 
-        <IconButton
-          variant="danger"
-          label="Delete personnel"
-          icon={<Trash2 size={15} strokeWidth={1.75} />}
-          onClick={() => setShowConfirm(true)}
-        />
+        {isActive !== false && (
+          <IconButton
+            variant="danger"
+            label="Deactivate"
+            icon={<UserX size={15} strokeWidth={1.75} />}
+            onClick={() => setShowConfirm(true)}
+          />
+        )}
       </div>
     </>
   );

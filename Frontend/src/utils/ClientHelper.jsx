@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, AlertCircle, Check } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { apiErrorMessage } from "./apiError";
 
 const CHARCOAL = "#1A1A1D";
 const GOLD = "#AD8A56";
@@ -183,7 +184,7 @@ export const ClientButtons = ({ id, refresh }) => {
       }
     } catch (err) {
       console.error(err);
-      alert("System Error: Unable to delete client record.");
+      alert(apiErrorMessage(err, "System Error: Unable to delete client record."));
     }
   };
 

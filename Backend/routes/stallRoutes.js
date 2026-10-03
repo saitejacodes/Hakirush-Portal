@@ -1,4 +1,6 @@
 import express from "express";
+import authMiddleware from "../middleware/authMiddleware.js";
+import { requireAdmin } from "../middleware/roleMiddleware.js";
 import upload from "../middleware/upload.js";
 import {
   getAllStalls,
@@ -9,6 +11,9 @@ import {
 } from "../controllers/stallController.js";
 
 const router = express.Router();
+
+// Previously unauthenticated. Only admin web screens use stalls.
+router.use(authMiddleware, requireAdmin);
 
 router.get("/", getAllStalls);
 router.get("/:id", getStallById);

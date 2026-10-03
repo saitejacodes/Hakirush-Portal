@@ -11,9 +11,6 @@ const RoleBaseRoutes = ({ children, requiredRole }) => {
     return <div>Loading...</div>;
   }
 
-  console.log("user:", user);
-  console.log("User role:", user?.role);
-
  
   if (!user) {
     return <Navigate to="/login" replace />;

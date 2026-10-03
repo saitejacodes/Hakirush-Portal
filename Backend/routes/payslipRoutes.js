@@ -1,15 +1,23 @@
 import express from "express";
-import multer from "multer";
 import {
   addPayslip,
   getPayslipsByEmployee,
+  getMyPayslips,
+  getPayslipLink,
+  downloadPayslip,
 } from "../controllers/payslipController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import authorizeRoles, { requireAdmin, requireEmployee } from "../middleware/roleMiddleware.js";
+import pdfUpload from "../middleware/pdfUpload.js";
 
 const router = express.Router();
-const upload = multer();
+const adminOrEmployee = authorizeRoles("admin", "employee");
 
-router.post( "/add", authMiddleware, upload.single("payslip"), addPayslip);
-router.get( "/employee/:id", authMiddleware, getPayslipsByEmployee );
+// Auth + role run before the multipart body is parsed.
+router.post("/add", authMiddleware, requireAdmin, pdfUpload("payslip"), addPayslip);
+router.get("/me", authMiddleware, requireEmployee, getMyPayslips);
+router.get("/employee/:id", authMiddleware, adminOrEmployee, getPayslipsByEmployee);
+router.get("/:payslipId/download", authMiddleware, adminOrEmployee, downloadPayslip);
+router.get("/:payslipId/link", authMiddleware, adminOrEmployee, getPayslipLink);
 
 export default router;

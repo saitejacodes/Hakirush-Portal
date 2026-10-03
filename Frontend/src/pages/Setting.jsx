@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 import axios from "axios";
+import { apiErrorMessage } from "../utils/apiError";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -42,10 +43,10 @@ const strengthColor = (score) => {
 
 const Setting = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { logout } = useAuth();
 
+  // The backend always targets the authenticated user; never send a userId.
   const [form, setForm] = useState({
-    userId: user?._id,
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -54,6 +55,7 @@ const Setting = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [reauthRequired, setReauthRequired] = useState(false);
 
   const strength = useMemo(() => strengthOf(form.newPassword), [form.newPassword]);
   const mismatch =
@@ -73,16 +75,31 @@ const Setting = () => {
     if (form.newPassword !== form.confirmPassword) {
       return setError("New password and confirmation don't match.");
     }
+    if (form.newPassword.length < 8) {
+      return setError("New password must be at least 8 characters.");
+    }
+    if (loading) return;
     try {
       setLoading(true);
       const res = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/setting/change-password`,
-        form,
+        { oldPassword: form.oldPassword, newPassword: form.newPassword },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-      if (res.data.success) setDone(true);
+      if (res.data.success) {
+        setForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+        // Password change revokes every session (tokenVersion bump):
+        // sign out now and tell the user on the login page.
+        if (res.data.reauthRequired) {
+          setReauthRequired(true);
+          logout("Password changed. Please sign in again with your new password.");
+          navigate("/login", { replace: true });
+          return;
+        }
+        setDone(true);
+      }
     } catch (err) {
-      setError(err?.response?.data?.error || "Couldn't update your password. Try again.");
+      setError(apiErrorMessage(err, "Couldn't update your password. Try again."));
     } finally {
       setLoading(false);
     }
@@ -118,16 +135,25 @@ const Setting = () => {
                 </div>
                 <h2 className="text-lg font-black tracking-tight mb-1.5">Password updated</h2>
                 <p className="text-[13px] mb-7" style={{ color: MUTED }}>
-                  Use your new password the next time you sign in.
+                  {reauthRequired
+                    ? "Your password was changed and all sessions were signed out. Sign in again with your new password."
+                    : "Use your new password the next time you sign in."}
                 </p>
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => {
+                    if (reauthRequired) {
+                      logout();
+                      navigate("/login", { replace: true });
+                    } else {
+                      navigate(-1);
+                    }
+                  }}
                   className="w-full py-4 rounded-xl font-bold text-[12px] uppercase tracking-widest transition-colors"
                   style={{ backgroundColor: INK, color: PAPER }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = INK)}
                 >
-                  Done
+                  {reauthRequired ? "Sign in again" : "Done"}
                 </button>
               </div>
             ) : (

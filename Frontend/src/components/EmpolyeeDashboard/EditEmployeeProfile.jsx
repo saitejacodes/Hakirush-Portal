@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { apiErrorCode, apiErrorMessage } from "../../utils/apiError";
 import {
   User, Calendar, Briefcase, Heart, Droplets,
   Fingerprint, CreditCard, PiggyBank, Camera, Check, X, Globe
@@ -30,7 +31,7 @@ const CornerTicks = ({ color = GOLD }) => (
   </>
 );
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 /* ================= CONFIRMATION DIALOG ================= */
 const ConfirmDialog = ({ onClose }) => (
@@ -93,6 +94,8 @@ const EditEmployeeProfile = () => {
   const [aadharcard, setAadharcard] = useState("");
   const [pancard, setPancard] = useState("");
   const [pfNumber, setPfNumber] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -121,8 +124,9 @@ const EditEmployeeProfile = () => {
               : `${import.meta.env.VITE_BACKEND_URL}/${profileImg}`
           );
         }
-      } catch {
+      } catch (err) {
         console.error("Failed to load employee");
+        setLoadError(apiErrorMessage(err, "Couldn't load your profile."));
       } finally {
         setLoading(false);
       }
@@ -135,15 +139,20 @@ const EditEmployeeProfile = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
-      alert("Image must be under 10MB");
+      alert("Image must be under 5MB");
       return;
     }
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
 
+  // Self-service allowlist only: name, experience, dob, bloodGroup,
+  // maritalStatus, aadharcard, pancard, pfNumber (+ profileImage).
+  // Salary, department and designation are admin-managed and never sent.
   const handleSave = async (e) => {
     e.preventDefault();
+    if (saving) return;
+    setSaveError("");
     try {
       setSaving(true);
       const fd = new FormData();
@@ -165,13 +174,37 @@ const EditEmployeeProfile = () => {
 
       setShowAlert(true);
     } catch (err) {
-      alert(err.response?.data?.error || "Update failed");
+      if (apiErrorCode(err) === "FIELD_NOT_EDITABLE") {
+        setSaveError(
+          `${apiErrorMessage(err, "Some of these fields can only be changed by an administrator.")} ` +
+            "Contact HR to change salary, department or designation."
+        );
+      } else {
+        setSaveError(apiErrorMessage(err, "Update failed"));
+      }
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) return <LoadingPulse />;
+
+  if (!employee) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FBF8F3] p-6" style={bodyFont}>
+        <div className="max-w-sm rounded-[1.5rem] border bg-white p-8 text-center" style={{ borderColor: HAIRLINE }}>
+          <p className="text-sm font-semibold" style={{ color: GARNET }}>{loadError || "Profile not found."}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-6 cursor-pointer rounded-full px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-white"
+            style={{ backgroundColor: INK }}
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#FBF8F3] via-white to-[#F3EDE0] p-4 text-[#1C1A17] lg:p-10" style={bodyFont}>
@@ -260,6 +293,10 @@ const EditEmployeeProfile = () => {
             <div className="grid grid-cols-1 gap-x-10 gap-y-8 px-8 py-10 sm:grid-cols-2 sm:px-14">
               <StaticField icon={<Fingerprint size={14} strokeWidth={1.5} />} label="Employee ID" value={employee?.employeeId} />
               <StaticField icon={<Globe size={14} strokeWidth={1.5} />} label="Department" value={employee?.department?.dep_name} />
+              <StaticField icon={<Briefcase size={14} strokeWidth={1.5} />} label="Designation" value={employee?.designation} />
+              <p className="self-end text-[11px] leading-relaxed sm:col-span-1" style={{ color: "#8A8378" }}>
+                Employee ID, department, designation and salary are managed by HR and are read-only here.
+              </p>
 
               <EditField
                 icon={<Calendar size={14} strokeWidth={1.5} />}
@@ -320,6 +357,15 @@ const EditEmployeeProfile = () => {
           </div>
 
           {/* ============ ACTIONS ============ */}
+          {saveError && (
+            <div
+              role="alert"
+              className="mt-6 rounded-2xl border px-5 py-3 text-[12px] font-medium"
+              style={{ borderColor: `${GARNET}40`, backgroundColor: `${GARNET}0A`, color: GARNET }}
+            >
+              {saveError}
+            </div>
+          )}
           <button
             type="submit"
             disabled={saving}

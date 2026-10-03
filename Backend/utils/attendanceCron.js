@@ -1,74 +1,165 @@
+import crypto from "node:crypto";
 import cron from "node-cron";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
+import { ORG_TIMEZONE, businessDate, addDays, eachDate } from "./orgTime.js";
+import {
+  storedDateToYmd,
+  loadHolidayMap,
+  loadApprovedLeaves,
+  leaveOn,
+  isWorkingDay,
+} from "../services/businessCalendar.js";
 
-/* ================= FORMAT DATE ================= */
-const formatToLocalYMD = (dateInput) => {
-  const d = new Date(dateInput);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+export const DEFAULT_LOOKBACK_DAYS = 7;
+const MAX_LOOKBACK_DAYS = 31;
 
-/* ================= FIX MISSED CHECKOUT ================= */
-const fixMissedCheckouts = async () => {
-  try {
-    const todayStr = formatToLocalYMD(new Date());
+/**
+ * Idempotent day-close job. Safe to run any number of times (in-process cron,
+ * Vercel Cron, manual trigger); repeated runs never create duplicates.
+ *
+ * 1. Open check-ins from previous business days (checkIn set, checkOut null,
+ *    no explicit Present/Half Day/Leave status) are closed per the original
+ *    policy: status Absent, workedHours 0, pause state cleared. checkIn is kept.
+ * 2. For each of the previous `lookbackDays` business days that is a working
+ *    day (not weekend/holiday), every active employee (joined on/before that
+ *    day, not on approved leave) without a record gets an Absent record.
+ *    Upserts on the unique {employeeId, date} index => no duplicates.
+ *
+ * Differences from the original cron (documented in docs/mobile/parts/backend-domain.md):
+ * it used the server-local date and created Absent records for *today* at
+ * 00:30 (including weekends, holidays, approved leave and deactivated users),
+ * and it reset days whose status had been set explicitly.
+ */
+export const closeAttendanceDay = async ({ now = new Date(), lookbackDays = DEFAULT_LOOKBACK_DAYS } = {}) => {
+  const lookback = Math.min(MAX_LOOKBACK_DAYS, Math.max(1, Math.floor(Number(lookbackDays) || DEFAULT_LOOKBACK_DAYS)));
+  const today = businessDate(now);
+  const from = addDays(today, -lookback);
+  const to = addDays(today, -1);
 
-    const result = await Attendance.updateMany(
-      {
-        checkIn: { $ne: null },
-        checkOut: null,
-        date: { $lt: todayStr },
+  // 1) Close stale open sessions.
+  const closed = await Attendance.updateMany(
+    {
+      checkIn: { $ne: null },
+      checkOut: null,
+      date: { $lt: today },
+      status: { $nin: ["Present", "Half Day", "Leave"] },
+      autoClosedAt: null,
+    },
+    {
+      $set: {
+        status: "Absent",
+        workedHours: 0,
+        isPaused: false,
+        pauseStartedAt: null,
+        totalPausedMs: 0,
+        source: "system",
+        autoClosedAt: now,
       },
-      {
-        $set: {
-          status: "Absent",
-          workedHours: 0,
-          isPaused: false,
-          pauseStartedAt: null,
-          totalPausedMs: 0,
-        },
-      }
-    );
-
-    console.log(`[CRON] Missed checkouts updated: ${result.modifiedCount}`);
-
-    // Mark employees as Absent if no attendance record exists for today
-    const employees = await Employee.find();
-    let absentCount = 0;
-    for (const emp of employees) {
-      const exists = await Attendance.exists({ employeeId: emp._id, date: todayStr });
-      if (!exists) {
-        await Attendance.create({
-          employeeId: emp._id,
-          date: todayStr,
-          status: "Absent",
-          checkIn: null,
-          checkOut: null,
-          workedHours: 0,
-          isPaused: false,
-          pauseStartedAt: null,
-          totalPausedMs: 0,
-        });
-        absentCount++;
-      }
     }
-    console.log(`[CRON] Absent records created for employees with no attendance: ${absentCount}`);
-  } catch (error) {
-    console.error("[CRON ERROR]", error);
+  );
+
+  // 2) Absent records for missed working days.
+  const [holidayMap, leaves, employees] = await Promise.all([
+    loadHolidayMap(from, to),
+    loadApprovedLeaves(from, to),
+    Employee.find().select("_id userId dateOfJoining").populate("userId", "isActive"),
+  ]);
+  const active = employees.filter((e) => e.userId && e.userId.isActive !== false);
+
+  const ops = [];
+  for (const date of eachDate(from, to)) {
+    if (!isWorkingDay(date, holidayMap)) continue;
+    for (const emp of active) {
+      const joined = storedDateToYmd(emp.dateOfJoining);
+      if (joined && date < joined) continue;
+      if (leaveOn(leaves, emp._id, date)) continue;
+      ops.push({
+        updateOne: {
+          filter: { employeeId: emp._id, date },
+          update: {
+            $setOnInsert: {
+              status: "Absent",
+              checkIn: null,
+              checkOut: null,
+              workedHours: 0,
+              isPaused: false,
+              pauseStartedAt: null,
+              totalPausedMs: 0,
+              source: "system",
+            },
+          },
+          upsert: true,
+        },
+      });
+    }
   }
+
+  let absentCreated = 0;
+  if (ops.length) {
+    try {
+      const res = await Attendance.bulkWrite(ops, { ordered: false });
+      absentCreated = res.upsertedCount || 0;
+    } catch (err) {
+      // A concurrent run may win some upserts (duplicate key): count what we inserted.
+      if (err?.code !== 11000 && !err?.writeErrors) throw err;
+      absentCreated = err?.result?.upsertedCount ?? err?.result?.nUpserted ?? 0;
+    }
+  }
+
+  return {
+    businessDate: today,
+    range: { from, to },
+    closedOpenSessions: closed.modifiedCount || 0,
+    absentCreated,
+    employeesConsidered: active.length,
+  };
 };
 
-/* ================= START CRON ================= */
+/* ================= HTTP GUARD FOR THE JOB ENDPOINT ================= */
+const MIN_SECRET_LENGTH = 16;
+const digest = (v) => crypto.createHash("sha256").update(String(v)).digest();
+
+/**
+ * `Authorization: Bearer <CRON_SECRET>` (what Vercel Cron sends when CRON_SECRET is set).
+ * - CRON_SECRET unset or shorter than 16 chars => endpoint disabled (503 JOB_DISABLED).
+ * - Missing/wrong bearer => 401.
+ */
+export const requireCronSecret = (req, res, next) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || secret.length < MIN_SECRET_LENGTH) {
+    return res.status(503).json({ success: false, error: "Scheduled job endpoint is disabled", code: "JOB_DISABLED" });
+  }
+  const header = req.get("authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!token || !crypto.timingSafeEqual(digest(token), digest(secret))) {
+    return res.status(401).json({ success: false, error: "Authentication required", code: "AUTH_REQUIRED" });
+  }
+  return next();
+};
+
+/* ================= IN-PROCESS SCHEDULE (long-lived hosts only) ================= */
+let task = null;
 
 const startAttendanceCron = () => {
-  // Runs every day at 12:30 AM
-  cron.schedule("30 0 * * *", async () => {
-    console.log("Running Attendance Cleanup Job...");
-    await fixMissedCheckouts();
-  });
+  if (task) return task;
+  // 00:30 every day in the organization timezone.
+  task = cron.schedule(
+    "30 0 * * *",
+    async () => {
+      try {
+        const result = await closeAttendanceDay({ now: new Date() });
+        console.log(
+          `[CRON] close-day ${result.businessDate}: closed=${result.closedOpenSessions} absentCreated=${result.absentCreated}`
+        );
+      } catch (error) {
+        console.error("[CRON ERROR] close-day failed:", error?.message);
+      }
+    },
+    { timezone: ORG_TIMEZONE, name: "attendance-close-day", noOverlap: true }
+  );
+  return task;
 };
 
+export { startAttendanceCron };
 export default startAttendanceCron;

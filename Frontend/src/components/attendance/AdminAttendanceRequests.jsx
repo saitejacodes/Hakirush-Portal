@@ -4,6 +4,7 @@ import {
   Search, ChevronLeft, ChevronRight, Clock3, CheckCircle2, XCircle,
   User, Hash, Briefcase, CalendarDays, ArrowRight, X, MessageSquareText
 } from "lucide-react";
+import { apiErrorMessage } from "../../utils/apiError";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -71,7 +72,12 @@ const AdminAttendanceRequests = () => {
       setReviewTarget(null);
       await fetchRequests(tab);
     } catch (err) {
-      alert("Failed to update the request.");
+      // e.g. 409 ALREADY_REVIEWED when another admin got there first
+      alert(apiErrorMessage(err, "Failed to update the request."));
+      if (err?.response?.status === 409) {
+        setReviewTarget(null);
+        await fetchRequests(tab);
+      }
     } finally {
       setSubmitting(false);
     }

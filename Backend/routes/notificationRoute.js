@@ -1,35 +1,67 @@
 import express from "express";
 import Notification from "../models/Notification.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { asyncHandler, notFound } from "../middleware/errorHandler.js";
+import { requireObjectId, parsePagination } from "../utils/validate.js";
 
 const router = express.Router();
 
-// Get notifications for current user (admin or employee)
-router.get("/", authMiddleware, async (req, res) => {
-  try {
-    let notifications = [];
-    if (req.user.role === "admin") {
-      notifications = await Notification.find({ "data.adminId": req.user._id }).sort({ createdAt: -1 });
-    } else if (req.user.role === "employee") {
-      notifications = await Notification.find({ "data.userId": req.user._id }).sort({ createdAt: -1 });
-    }
-    res.json({ success: true, notifications });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+// Recipient filter (existing semantics): admin => data.adminId, employee => data.userId.
+// Clients have no notifications. Ids may have been stored as ObjectId or string.
+const recipientFilter = (user) => {
+  const ids = [user._id, String(user._id)];
+  if (user.role === "admin") return { "data.adminId": { $in: ids } };
+  if (user.role === "employee") return { "data.userId": { $in: ids } };
+  return null;
+};
 
-// Mark notification as seen
-router.patch("/:id/seen", authMiddleware, async (req, res) => {
-  try {
-    const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ success: false, message: "Not found" });
-    notif.seen = true;
-    await notif.save();
+// GET /api/notifications — own notifications, newest first. Bounded: default and max 100
+// per page (?page=&limit=); the web bell reads the first page.
+router.get(
+  "/",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 100, maxLimit: 100 });
+    const filter = recipientFilter(req.user);
+    if (!filter) return res.json({ success: true, notifications: [], page, limit, hasMore: false, unseenCount: 0 });
+
+    const [items, unseenCount] = await Promise.all([
+      Notification.find(filter).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(limit + 1).lean(),
+      Notification.countDocuments({ ...filter, seen: false }),
+    ]);
+    const hasMore = items.length > limit;
+    res.json({ success: true, notifications: items.slice(0, limit), page, limit, hasMore, unseenCount });
+  })
+);
+
+// PATCH /api/notifications/seen-all — marks all of the caller's notifications seen.
+router.patch(
+  "/seen-all",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const filter = recipientFilter(req.user);
+    if (!filter) return res.json({ success: true, modified: 0 });
+    const result = await Notification.updateMany({ ...filter, seen: false }, { $set: { seen: true } });
+    res.json({ success: true, modified: result.modifiedCount || 0 });
+  })
+);
+
+// PATCH /api/notifications/:id/seen — recipient only; anyone else gets 404.
+router.patch(
+  "/:id/seen",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    requireObjectId(req.params.id, "notification id");
+    const filter = recipientFilter(req.user);
+    if (!filter) throw notFound("Notification not found");
+    const updated = await Notification.findOneAndUpdate(
+      { _id: req.params.id, ...filter },
+      { $set: { seen: true } },
+      { new: true }
+    );
+    if (!updated) throw notFound("Notification not found");
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+  })
+);
 
 export default router;

@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Camera, UserPlus, CheckCircle2 } from "lucide-react";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";

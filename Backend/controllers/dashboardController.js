@@ -4,6 +4,7 @@ import Department from "../models/Department.js";
 import Leave from "../models/Leave.js";
 import Sponsor from "../models/Sponsor.js";
 import Stall from "../models/Stall.js";
+import { sendError } from "../middleware/errorHandler.js";
 
 const getSummary = async (req, res) => {
   try {
@@ -182,11 +183,7 @@ const sponsorSummary = {
     });
 
   } catch (error) {
-    console.error("DASHBOARD SUMMARY ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return sendError(res, error);
   }
 };
 

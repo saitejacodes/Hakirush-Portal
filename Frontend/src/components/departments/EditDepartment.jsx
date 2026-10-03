@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -8,8 +8,21 @@ import {
   Save,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  UserCog,
+  RefreshCw
 } from "lucide-react";
+import { apiErrorCode, apiErrorMessage } from "../../utils/apiError";
+
+// managerEmployeeId may arrive as an id string or a populated document
+const idOf = (value) => {
+  if (!value) return "";
+  if (typeof value === "object") return String(value._id || value.employeeRecordId || "");
+  return String(value);
+};
+
+const managerLabel = (m) =>
+  [m?.name || "Unnamed employee", m?.employeeCode, m?.designation].filter(Boolean).join(" · ");
 
 const INK = "#4A1015";        
 const INK_SOFT = "#5C161C";    
@@ -81,31 +94,68 @@ const EditDepartment = () => {
   const [fetching, setFetching] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [error, setError] = useState("");
+  const [stale, setStale] = useState(false);
+
+  // Manager assignment (admin only - this route lives under /admin-dashboard)
+  const [originalManagerId, setOriginalManagerId] = useState("");
+  const [managerId, setManagerId] = useState("");
+  const [currentManager, setCurrentManager] = useState(null);
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [eligible, setEligible] = useState([]);
+  const [eligibleState, setEligibleState] = useState({ loading: true, error: "" });
+
+  const fetchDepartment = useCallback(async () => {
+    try {
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const [depRes, eligibleRes] = await Promise.allSettled([
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`, { headers }),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/department/${id}/eligible-managers`, { headers })
+      ]);
+
+      if (depRes.status === "fulfilled" && depRes.value.data?.success) {
+        const dep = depRes.value.data.department || {};
+        const mgrId = idOf(dep.managerEmployeeId) || idOf(dep.manager?.employeeRecordId);
+        setDepartment({ dep_name: dep.dep_name || "", description: dep.description || "" });
+        setOriginalManagerId(mgrId);
+        setManagerId(mgrId);
+        setCurrentManager(dep.manager || null);
+        setUpdatedAt(dep.updatedAt || null);
+        setError("");
+      } else {
+        setError(
+          depRes.status === "rejected"
+            ? apiErrorMessage(depRes.reason, "Failed to load department data")
+            : "Failed to load department data"
+        );
+      }
+
+      if (eligibleRes.status === "fulfilled") {
+        const list = eligibleRes.value.data?.employees;
+        setEligible(Array.isArray(list) ? list : []);
+        setEligibleState({ loading: false, error: "" });
+      } else {
+        setEligible([]);
+        setEligibleState({
+          loading: false,
+          error: apiErrorMessage(eligibleRes.reason, "Couldn't load eligible managers")
+        });
+      }
+    } finally {
+      setFetching(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const fetchDepartment = async () => {
-      setFetching(true);
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          }
-        );
-        if (response.data.success) {
-          setDepartment(response.data.department);
-        }
-      } catch (err) {
-        setError("Failed to load department data");
-        console.error("Fetch Error:", err);
-      } finally {
-        setFetching(false);
-      }
-    };
     fetchDepartment();
-  }, [id]);
+  }, [fetchDepartment]);
+
+  const reload = () => {
+    setStale(false);
+    setError("");
+    setFetching(true);
+    setEligibleState({ loading: true, error: "" });
+    fetchDepartment();
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,12 +164,24 @@ const EditDepartment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
+    setStale(false);
     try {
+      const payload = {
+        dep_name: department.dep_name.trim(),
+        description: department.description
+      };
+      // Only send the manager when the admin changed it ("" -> null clears it).
+      if (managerId !== originalManagerId) {
+        payload.managerEmployeeId = managerId || null;
+      }
+      if (updatedAt) payload.expectedUpdatedAt = updatedAt;
+
       const response = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/department/${id}`,
-        department,
+        payload,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -130,12 +192,28 @@ const EditDepartment = () => {
         setShowAlert(true);
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Update failed");
+      const code = apiErrorCode(err);
+      if (code === "STALE_UPDATE") {
+        setStale(true);
+        setError(
+          apiErrorMessage(err, "This department was changed by someone else.") +
+            " Reload to see the latest version before saving again."
+        );
+      } else {
+        const details = err.response?.data?.details;
+        const detailText =
+          details && typeof details === "object" && !Array.isArray(details)
+            ? Object.values(details).filter((v) => typeof v === "string").join(" ")
+            : "";
+        setError([apiErrorMessage(err, "Update failed"), detailText].filter(Boolean).join(" "));
+      }
       console.error("Update Error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  const currentInEligible = eligible.some((m) => String(m.employeeRecordId) === originalManagerId);
 
   return (
     <>
@@ -205,7 +283,17 @@ const EditDepartment = () => {
                       style={{ backgroundColor: `${RUST}0F`, color: RUST }}
                     >
                       <AlertCircle size={16} strokeWidth={1.75} className="shrink-0" />
-                      <span className="text-[12.5px] font-medium">{error}</span>
+                      <span className="text-[12.5px] font-medium flex-1">{error}</span>
+                      {stale && (
+                        <button
+                          type="button"
+                          onClick={reload}
+                          className="form-focusable flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11.5px] font-semibold"
+                          style={{ backgroundColor: `${RUST}1A`, color: RUST }}
+                        >
+                          <RefreshCw size={13} strokeWidth={2} /> Reload
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -264,6 +352,61 @@ const EditDepartment = () => {
                           style={{ color: "#14161B" }}
                         />
                       </div>
+                    </div>
+
+                    {/* Manager (admin only) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="dept-manager" className="text-[12.5px] font-semibold" style={{ color: "#14161B" }}>
+                          Department manager
+                        </label>
+                        <span className="text-[10.5px] font-medium" style={{ color: SLATE }}>
+                          Active members only
+                        </span>
+                      </div>
+                      <div
+                        className="flex items-center gap-3 rounded-lg px-4 transition-colors focus-within:ring-2"
+                        style={{ backgroundColor: PAPER_DIM }}
+                      >
+                        <UserCog size={16} strokeWidth={1.75} color={SLATE} />
+                        <select
+                          id="dept-manager"
+                          value={managerId}
+                          onChange={(e) => setManagerId(e.target.value)}
+                          disabled={eligibleState.loading}
+                          className="form-focusable w-full bg-transparent py-3.5 text-[14px] font-medium outline-none disabled:opacity-60"
+                          style={{ color: "#14161B" }}
+                        >
+                          <option value="">No manager</option>
+                          {originalManagerId && !currentInEligible && (
+                            <option value={originalManagerId}>
+                              {currentManager ? managerLabel(currentManager) : "Current manager"} (current - no longer eligible)
+                            </option>
+                          )}
+                          {eligible.map((m) => (
+                            <option key={m.employeeRecordId} value={String(m.employeeRecordId)}>
+                              {managerLabel(m)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {eligibleState.loading && (
+                        <p className="text-[11.5px]" style={{ color: SLATE }}>Loading eligible employees…</p>
+                      )}
+                      {eligibleState.error && (
+                        <p className="text-[11.5px] font-medium" style={{ color: RUST }}>{eligibleState.error}</p>
+                      )}
+                      {!eligibleState.loading && !eligibleState.error && eligible.length === 0 && (
+                        <p className="text-[11.5px]" style={{ color: SLATE }}>
+                          No active employees in this department yet. Add employees to the department first,
+                          then assign a manager.
+                        </p>
+                      )}
+                      {managerId !== originalManagerId && (
+                        <p className="text-[11.5px] font-medium" style={{ color: BRASS }}>
+                          {managerId ? "Manager will change when you save." : "The manager assignment will be cleared when you save."}
+                        </p>
+                      )}
                     </div>
 
                     {/* Submit */}

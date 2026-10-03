@@ -1,10 +1,45 @@
 import axios from "axios";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   UploadCloud, CheckCircle2, AlertTriangle, ArrowLeft, ShieldCheck,
   History, FileText, Wallet, Activity, Receipt
 } from "lucide-react";
+import { apiErrorMessage } from "../../utils/apiError";
+import { openPayslip, payslipHasFile } from "../../utils/payslipFiles";
+
+// Mirrors Backend/models/Payslip.js input fields (computed fields are server-side).
+const EARNING_FIELDS = [
+  ["basicSalary", "Basic Salary"],
+  ["hra", "HRA"],
+  ["conveyanceAllowance", "Conveyance Allowance"],
+  ["medicalAllowance", "Medical Allowance"],
+  ["otherAllowances", "Other Allowances"],
+  ["bonus", "Bonus"],
+  ["reimbursements", "Reimbursements"],
+];
+const OVERTIME_FIELDS = [
+  ["overtimeHours", "Overtime Hours"],
+  ["overtimeRate", "Overtime Rate (per hour)"],
+];
+const DEDUCTION_FIELDS = [
+  ["providentFund", "Provident Fund"],
+  ["professionalTax", "Professional Tax"],
+  ["incomeTax", "Income Tax"],
+  ["lossOfPay", "Loss of Pay"],
+  ["otherDeductions", "Other Deductions"],
+];
+const NUMERIC_FIELDS = [...EARNING_FIELDS, ...OVERTIME_FIELDS, ...DEDUCTION_FIELDS].map(([k]) => k);
+const MAX_PDF_BYTES = 5 * 1024 * 1024;
+
+const emptyForm = () => ({
+  month: "",
+  paymentStatus: "Paid",
+  paymentDate: "",
+  ...Object.fromEntries(NUMERIC_FIELDS.map((k) => [k, ""])),
+});
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 const INK = "#1C1A17";
 const GARNET = "#7A2233";
@@ -58,30 +93,36 @@ const AddPayslip = () => {
   const [history, setHistory] = useState([]);
   const [fetchingHistory, setFetchingHistory] = useState(true);
 
-  const [form, setForm] = useState({
-    month: "", basicSalary: "", hra: "", conveyanceAllowance: "",
-    medicalAllowance: "", bonus: "", providentFund: "",
-    professionalTax: "", incomeTax: "", lossOfPay: ""
-  });
+  const [form, setForm] = useState(emptyForm);
+  // Totals returned by the server for the last posted payslip (authoritative)
+  const [posted, setPosted] = useState(null);
+  const [historyError, setHistoryError] = useState("");
+  const [fileInputKey, setFileInputKey] = useState(0);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/payslip/employee/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setHistory(res.data.payslips || []);
-    } catch (err) { console.error(err); }
+      setHistoryError("");
+    } catch (err) {
+      console.error(err);
+      setHistoryError(apiErrorMessage(err, "Couldn't load payslip history."));
+    }
     finally { setFetchingHistory(false); }
-  };
+  }, [id]);
 
-  useEffect(() => { if (id) fetchHistory(); }, [id]);
+  useEffect(() => { if (id) fetchHistory(); }, [id, fetchHistory]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
     if (!selected) return;
-    if (selected.type !== "application/pdf") {
+    // Server also checks the %PDF signature; some browsers report an empty MIME type.
+    const looksPdf = (selected.type === "application/pdf" || selected.type === "") && /\.pdf$/i.test(selected.name);
+    if (!looksPdf) {
       setAlertState({
         variant: "error",
         title: "Wrong Format",
@@ -90,19 +131,46 @@ const AddPayslip = () => {
       e.target.value = "";
       return;
     }
+    if (selected.size > MAX_PDF_BYTES) {
+      setAlertState({
+        variant: "error",
+        title: "File Too Large",
+        message: "Payslip PDFs must be 5 MB or smaller."
+      });
+      e.target.value = "";
+      return;
+    }
     setFile(selected);
   };
 
+  // Client-side ESTIMATE only - the server computes the stored totals.
   const calculations = useMemo(() => {
-    const gross = ["basicSalary", "hra", "conveyanceAllowance", "medicalAllowance", "bonus"]
-      .reduce((acc, k) => acc + Number(form[k] || 0), 0);
-    const ded = ["providentFund", "professionalTax", "incomeTax", "lossOfPay"]
-      .reduce((acc, k) => acc + Number(form[k] || 0), 0);
-    return { gross, ded, net: gross - ded };
+    const n = (k) => Number(form[k] || 0);
+    const overtimePay = n("overtimeHours") * n("overtimeRate");
+    const gross = ["basicSalary", "hra", "conveyanceAllowance", "medicalAllowance", "otherAllowances", "bonus", "reimbursements"]
+      .reduce((acc, k) => acc + n(k), 0) + overtimePay;
+    const ded = DEDUCTION_FIELDS.reduce((acc, [k]) => acc + n(k), 0);
+    return { overtimePay, gross, ded, net: gross - ded };
   }, [form]);
+
+  const validate = () => {
+    if (!/^\d{4}-\d{2}$/.test(form.month)) return "Choose the payroll month.";
+    if (!(Number(form.basicSalary) > 0)) return "Basic salary must be greater than 0.";
+    for (const k of NUMERIC_FIELDS) {
+      const v = form[k];
+      if (v !== "" && (!Number.isFinite(Number(v)) || Number(v) < 0)) return "Amounts cannot be negative.";
+    }
+    return "";
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    const problem = validate();
+    if (problem) {
+      setAlertState({ variant: "error", title: "Check The Form", message: problem });
+      return;
+    }
     if (!file) {
       setAlertState({
         variant: "error",
@@ -113,7 +181,10 @@ const AddPayslip = () => {
     }
     setLoading(true);
     const formData = new FormData();
-    Object.entries(form).forEach(([k, v]) => formData.append(k, v));
+    formData.append("month", form.month); // YYYY-MM
+    formData.append("paymentStatus", form.paymentStatus);
+    if (form.paymentStatus === "Paid" && form.paymentDate) formData.append("paymentDate", form.paymentDate);
+    NUMERIC_FIELDS.forEach((k) => formData.append(k, form[k] === "" ? "0" : String(Number(form[k]))));
     formData.append("employeeId", id);
     formData.append("payslip", file);
 
@@ -122,20 +193,31 @@ const AddPayslip = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       if (res.data.success) {
+        const p = res.data.payslip || {};
+        setPosted({
+          month: p.month || form.month,
+          overtimePay: p.overtimePay,
+          grossSalary: p.grossSalary,
+          totalDeductions: p.totalDeductions,
+          netSalary: p.netSalary,
+        });
         setAlertState({
           variant: "success",
           title: "Vaulted!",
-          message: "Financial statement has been securely posted."
+          message: p.netSalary !== undefined
+            ? `Statement posted. Server-calculated net pay: ${inr(p.netSalary)}.`
+            : "Financial statement has been securely posted."
         });
         fetchHistory();
-        setForm({ month: "", basicSalary: "", hra: "", conveyanceAllowance: "", medicalAllowance: "", bonus: "", providentFund: "", professionalTax: "", incomeTax: "", lossOfPay: "" });
+        setForm(emptyForm());
         setFile(null);
+        setFileInputKey((k) => k + 1);
       }
     } catch (err) {
       setAlertState({
         variant: "error",
         title: "Posting Failed",
-        message: "The statement could not be committed. Please try again."
+        message: apiErrorMessage(err, "The statement could not be committed. Please try again.")
       });
     }
     finally { setLoading(false); }
@@ -174,28 +256,59 @@ const AddPayslip = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="bg-white rounded-[2.5rem] border border-[#E7E1D3] p-8 shadow-sm space-y-8">
-                <div className="w-full md:w-1/3">
-                   <Input label="Payroll Month" name="month" type="month" value={form.month} onChange={handleChange} required placeholder="" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Input label="Payroll Month" name="month" type="month" value={form.month} onChange={handleChange} required placeholder="" />
+                  <div className="group space-y-2">
+                    <label htmlFor="paymentStatus" className="text-[9px] font-black uppercase tracking-widest text-[#8A8478] ml-1">Payment Status</label>
+                    <select
+                      id="paymentStatus"
+                      name="paymentStatus"
+                      value={form.paymentStatus}
+                      onChange={handleChange}
+                      className="w-full bg-[#F6F3EC] border border-[#E7E1D3] rounded-2xl px-5 py-3.5 text-xs font-black tracking-tight outline-none text-[#1C1A17] focus:bg-white focus:border-[#B8912E]"
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                  {form.paymentStatus === "Paid" && (
+                    <Input label="Payment Date (optional)" name="paymentDate" type="date" value={form.paymentDate} onChange={handleChange} placeholder="" />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
                   <div className="space-y-4">
                     <SectionLabel icon={<Wallet size={12}/>} title="Earnings" />
-                    <Input label="Basic Salary" name="basicSalary" type="number" value={form.basicSalary} onChange={handleChange} />
-                    <Input label="HRA" name="hra" type="number" value={form.hra} onChange={handleChange} />
-                    <Input label="Bonus" name="bonus" type="number" value={form.bonus} onChange={handleChange} />
+                    {EARNING_FIELDS.map(([name, label]) => (
+                      <Input
+                        key={name}
+                        label={label}
+                        name={name}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form[name]}
+                        onChange={handleChange}
+                        required={name === "basicSalary"}
+                      />
+                    ))}
+                    <SectionLabel icon={<Activity size={12}/>} title="Overtime" />
+                    {OVERTIME_FIELDS.map(([name, label]) => (
+                      <Input key={name} label={label} name={name} type="number" min="0" step="0.01" value={form[name]} onChange={handleChange} />
+                    ))}
                   </div>
 
                   <div className="space-y-4">
                     <SectionLabel icon={<Receipt size={12}/>} title="Deductions" color="text-[#A24A32]" />
-                    <Input label="Provident Fund" name="providentFund" type="number" value={form.providentFund} onChange={handleChange} />
-                    <Input label="Income Tax" name="incomeTax" type="number" value={form.incomeTax} onChange={handleChange} />
-                    <Input label="Loss of Pay" name="lossOfPay" type="number" value={form.lossOfPay} onChange={handleChange} />
+                    {DEDUCTION_FIELDS.map(([name, label]) => (
+                      <Input key={name} label={label} name={name} type="number" min="0" step="0.01" value={form[name]} onChange={handleChange} />
+                    ))}
                   </div>
                 </div>
 
                 <div className="group relative border-2 border-dashed border-[#E7E1D3] rounded-[2rem] p-6 text-center transition-all hover:border-[#B8912E] hover:bg-[#FBF3E3]/30">
                   <input
+                    key={fileInputKey}
                     type="file"
                     accept="application/pdf,.pdf"
                     className="absolute inset-0 opacity-0 cursor-pointer"
@@ -205,6 +318,7 @@ const AddPayslip = () => {
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#8A8478] group-hover:text-[#9C7A22] transition-colors">
                     {file ? file.name : "Drop PDF Statement"}
                   </p>
+                  <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#C9C2AE]">PDF only · max 5 MB</p>
                 </div>
               </div>
 
@@ -221,13 +335,22 @@ const AddPayslip = () => {
               style={{ background: `linear-gradient(155deg, ${INK} 0%, ${GARNET} 140%)` }}
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#B8912E]/10 rounded-full blur-3xl" />
-              <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B8912E]/70 mb-8 flex items-center gap-2">
-                <Activity size={10}/> Real-time Calculation
+              <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B8912E]/70 mb-2 flex items-center gap-2">
+                <Activity size={10}/> Estimate (preview)
               </h3>
+              <p className="text-[10px] text-[#D6D0BF]/80 mb-6">
+                Calculated in your browser. The server computes the official totals when the statement is posted.
+              </p>
 
               <div className="space-y-5">
+                {calculations.overtimePay > 0 && (
+                  <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                    <span className="text-[10px] text-[#D6D0BF] uppercase font-bold tracking-widest">Overtime Pay (est.)</span>
+                    <span className="text-base font-black tracking-tight">₹{calculations.overtimePay.toLocaleString("en-IN")}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                  <span className="text-[10px] text-[#D6D0BF] uppercase font-bold tracking-widest">Gross Yield</span>
+                  <span className="text-[10px] text-[#D6D0BF] uppercase font-bold tracking-widest">Gross (est.)</span>
                   <span className="text-xl font-black tracking-tight">₹{calculations.gross.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/10 pb-3 text-[#E08F73]">
@@ -235,11 +358,27 @@ const AddPayslip = () => {
                   <span className="text-xl font-black tracking-tight">- ₹{calculations.ded.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="pt-4 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#B8912E] mb-1">Final Net Pay</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#B8912E] mb-1">Estimated Net Pay</p>
                   <p className="text-5xl font-black tracking-tighter">₹{calculations.net.toLocaleString("en-IN")}</p>
                 </div>
               </div>
             </div>
+
+            {posted && (
+              <section className="rounded-[2rem] border border-[#D7E4D9] bg-white p-6 shadow-sm">
+                <h2 className="text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 mb-4" style={{ color: SAGE }}>
+                  <CheckCircle2 size={12} /> Posted · server-calculated totals ({posted.month})
+                </h2>
+                <dl className="space-y-2 text-xs font-bold">
+                  {posted.overtimePay !== undefined && (
+                    <div className="flex justify-between"><dt className="text-[#8A8478]">Overtime pay</dt><dd>{inr(posted.overtimePay)}</dd></div>
+                  )}
+                  <div className="flex justify-between"><dt className="text-[#8A8478]">Gross salary</dt><dd>{posted.grossSalary !== undefined ? inr(posted.grossSalary) : "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-[#8A8478]">Total deductions</dt><dd>{posted.totalDeductions !== undefined ? inr(posted.totalDeductions) : "—"}</dd></div>
+                  <div className="flex justify-between text-sm font-black"><dt>Net salary</dt><dd>{posted.netSalary !== undefined ? inr(posted.netSalary) : "—"}</dd></div>
+                </dl>
+              </section>
+            )}
 
             <section className="space-y-4">
               <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8A8478] flex items-center gap-2 ml-2">
@@ -248,6 +387,8 @@ const AddPayslip = () => {
               <div className="space-y-3">
                 {fetchingHistory ? (
                    <div className="p-4 bg-white/60 rounded-2xl border border-[#E7E1D3] motion-safe:animate-pulse text-[10px] font-black uppercase text-[#D6D0BF] text-center tracking-widest">Syncing Vault...</div>
+                ) : historyError ? (
+                  <div className="p-4 bg-white/60 rounded-2xl border border-[#EAD9CC] text-[11px] font-bold text-[#A24A32] text-center">{historyError}</div>
                 ) : history.length === 0 ? (
                   <div className="p-10 text-center border-2 border-dashed border-[#E7E1D3] rounded-[2rem] text-[10px] font-black uppercase text-[#D6D0BF] tracking-widest">No entries found</div>
                 ) : (
@@ -262,9 +403,23 @@ const AddPayslip = () => {
                           <p className="text-[10px] font-bold text-[#8A8478]">₹{item.netSalary?.toLocaleString("en-IN")}</p>
                         </div>
                       </div>
-                      <a href={item.payslipFile} target="_blank" rel="noreferrer" className="h-10 w-10 flex items-center justify-center rounded-xl text-[#D6D0BF] hover:bg-[#1C1A17] hover:text-[#F6F3EC] transition-all">
+                      <button
+                        type="button"
+                        disabled={!payslipHasFile(item)}
+                        aria-label={`Open payslip for ${item.month}`}
+                        onClick={() =>
+                          openPayslip(item._id).catch((err) =>
+                            setAlertState({
+                              variant: "error",
+                              title: "Can't Open File",
+                              message: apiErrorMessage(err, "The payslip file could not be opened.")
+                            })
+                          )
+                        }
+                        className="h-10 w-10 flex items-center justify-center rounded-xl text-[#D6D0BF] hover:bg-[#1C1A17] hover:text-[#F6F3EC] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
                         <FileText size={18} />
-                      </a>
+                      </button>
                     </div>
                   ))
                 )}

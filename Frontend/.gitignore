@@ -3,3 +3,6 @@ build/
 .env/
 dist/
 *.log
+.env
+.env.*
+!.env.example

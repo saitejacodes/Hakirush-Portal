@@ -6,6 +6,7 @@ import {
   CreditCard, DollarSign, ShieldCheck, Edit,
   Fingerprint, ArrowUpRight
 } from "lucide-react";
+import ClientMediaAdmin from "./ClientMediaAdmin";
 
 const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
 
@@ -143,6 +144,9 @@ const ViewClient = () => {
             </button>
           </div>
         </div>
+
+        {/* Admin management: client gallery + performance standings */}
+        <ClientMediaAdmin clientId={client._id} />
 
         <p className="mt-6 text-center text-[9px] uppercase tracking-[0.28em]" style={{ color: SLATE }}>
           Verified &nbsp;·&nbsp; Active &nbsp;·&nbsp; Priority Support

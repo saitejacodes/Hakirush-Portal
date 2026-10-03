@@ -1,21 +1,10 @@
-import Employee from '../models/Employee.js';
-import Attendance from '../models/Attendance.js'
-
-const defaultAttendance = async (req, res, next) => {
-    try {
-        const date = new Date().toISOString().split('T')[0];
-        const existingAttendance = await Attendance.findOne({date});
-
-        if(!existingAttendance) {
-            const employees = await Employee.find({});
-            const attendance = employees.map(employee => ({ date, employeeId: employee._id, staus: null }))
-
-            await Attendance.insertMany(attendance)
-        }
-        next();
-    } catch (error) {
-        return res.status(500).json({success: false, error: error.message})
-    }
-};
+// Deprecated: this middleware used to insert placeholder Attendance rows on
+// GET /api/attendance (with a misspelled `staus` field and a UTC date).
+// Missing day records are now synthesized at read time by
+// utils/attendanceStatus.buildAttendanceForEmployee, and Absent rows for past
+// working days are written by the idempotent day-close job
+// (utils/attendanceCron.closeAttendanceDay). Kept as a no-op so any stale
+// import keeps working; it performs no writes.
+const defaultAttendance = (req, res, next) => next();
 
 export default defaultAttendance;

@@ -5,7 +5,7 @@ import {
   Building2, DollarSign, Camera, CheckCircle2, X, FileText, ChevronLeft
 } from "lucide-react";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // matches server limit (5MB)
 
 const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
 
@@ -109,7 +109,7 @@ const EditClient = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file || file.size > MAX_FILE_SIZE) {
-      alert("File too large. Max 10MB");
+      alert("File too large. Max 5MB");
       return;
     }
     setImage(file);
