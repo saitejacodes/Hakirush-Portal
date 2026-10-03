@@ -5,6 +5,7 @@ import RoleBaseRoutes from "./utils/RoleBaseRoutes";
 import RootRedirect from "./utils/RootRedirect";
 import EmployeeSetting from "./pages/Setting";
 import Unauthorized from "./pages/Unauthorized";
+import SetupPassword from "./pages/SetupPassword";
 
 /* ================= ADMIN IMPORTS ================= */
 import AdminDashboard from "./pages/AdminDashboard";
@@ -64,6 +65,7 @@ const App = () => {
         {/* ROOT & AUTH */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/setup-password" element={<SetupPassword />} />
 
         {/* ================= ADMIN ROUTES ================= */}
         <Route

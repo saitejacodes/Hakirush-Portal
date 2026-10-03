@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Client from "../models/Client.js";
 import Employee from "../models/Employee.js";
 import Department from "../models/Department.js";
+import { validateNewPassword } from "./settingController.js";
 import { asyncHandler, badRequest, ApiError } from "../middleware/errorHandler.js";
 import {
   signWebToken,
@@ -123,4 +125,32 @@ export const mobileLogout = asyncHandler(async (req, res) => {
 export const logoutAll = asyncHandler(async (req, res) => {
   await revokeAllSessions(req.user._id, "logout_all");
   return res.status(200).json({ success: true, reauthRequired: true });
+});
+
+/* POST /api/auth/setup-password */
+export const setupPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) throw badRequest("Token and password are required");
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_KEY);
+  } catch (err) {
+    throw new ApiError(401, "Invalid or expired setup token", "INVALID_TOKEN");
+  }
+
+  if (decoded.type !== "setup") throw new ApiError(401, "Invalid token type", "INVALID_TOKEN");
+
+  const user = await User.findById(decoded._id);
+  if (!user) throw badRequest("User no longer exists");
+
+  validateNewPassword(password, "password");
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  user.password = hashedPassword;
+  // Increment tokenVersion to kill any sessions that might theoretically exist
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
+  await user.save();
+
+  return res.status(200).json({ success: true, message: "Password setup successfully. You may now log in." });
 });
