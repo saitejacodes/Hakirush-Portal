@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, UserX, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Eye, Edit2, UserX, UserCheck, Plane, Receipt, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { apiErrorCode, apiErrorMessage } from "./apiError";
@@ -123,6 +123,110 @@ const DeleteSuccessAlert = ({ onClose }) => {
   );
 };
 
+/* ================= CONFIRM REACTIVATE ================= */
+const ConfirmReactivateAlert = ({ onConfirm, onCancel, busy }) => {
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/40 backdrop-blur-md duration-300" />
+      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
+        <div
+          className="w-full max-w-sm animate-in zoom-in-95 overflow-hidden rounded-[2.25rem] border border-[#E7DFD2] bg-white shadow-[0_35px_70px_-15px_rgba(28,26,23,0.35)] duration-200"
+          style={bodyFont}
+        >
+          <div className="h-[3px]" style={{ background: `linear-gradient(90deg, #3F5B54, ${GOLD} 45%, #3F5B54)` }} />
+
+          <div className="p-8 text-center">
+            <span
+              className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+              style={{ borderColor: "#3F5B5440", color: "#3F5B54", backgroundColor: "#3F5B540A" }}
+            >
+              <span
+                className="absolute inset-0 animate-ping-slow rounded-full"
+                style={{ backgroundColor: "#3F5B5414" }}
+              />
+              <UserCheck size={30} strokeWidth={1.5} className="relative" />
+            </span>
+
+            <h3
+              className="text-2xl leading-none tracking-tight text-[#1C1A17]"
+              style={{ ...displayFont, fontWeight: 700 }}
+            >
+              Reactivate employee<span className="italic text-[#3F5B54]">?</span>
+            </h3>
+            <p className="mt-3 text-[12px] font-medium leading-relaxed text-[#8A8378]">
+              They will be able to sign in again and access the portal.
+              All existing history remains intact.
+            </p>
+          </div>
+
+          <div className="flex gap-3 px-8 pb-8">
+            <button
+              onClick={onCancel}
+              className="w-1/2 cursor-pointer rounded-2xl border py-3.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A8378] transition-all duration-300 hover:border-[#D9C79A] hover:text-[#1C1A17] active:scale-95"
+              style={{ borderColor: HAIRLINE, backgroundColor: "#FBF8F3" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={busy}
+              className="w-1/2 cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(63,91,84,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-12px_rgba(63,91,84,0.55)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "linear-gradient(155deg, #1C1A17 0%, #3F5B54 100%)" }}
+            >
+              {busy ? "Working…" : "Reactivate"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+};
+
+/* ================= REACTIVATE SUCCESS ALERT ================= */
+const ReactivateSuccessAlert = ({ onClose }) => {
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[100] animate-in fade-in bg-[#1C1A17]/20 backdrop-blur-sm" />
+      <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
+        <div
+          className="w-full max-w-sm animate-in zoom-in-95 overflow-hidden rounded-[2.25rem] border border-[#E7DFD2] bg-white p-8 text-center shadow-[0_35px_70px_-15px_rgba(28,26,23,0.35)]"
+          style={bodyFont}
+        >
+          <span
+            className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border"
+            style={{ borderColor: "#3F5B5440", color: "#3F5B54", backgroundColor: "#3F5B540A" }}
+          >
+            <span
+              className="absolute inset-0 animate-ping-slow rounded-full"
+              style={{ backgroundColor: "#3F5B5414" }}
+            />
+            <CheckCircle2 size={30} strokeWidth={1.5} className="relative" />
+          </span>
+
+          <h3
+            className="text-2xl leading-none tracking-tight text-[#1C1A17]"
+            style={{ ...displayFont, fontWeight: 700 }}
+          >
+            <span className="italic text-[#3F5B54]">Reactivated</span>
+          </h3>
+          <p className="mt-2 mb-6 text-[10.5px] font-semibold uppercase tracking-widest text-[#B4ADA0]">
+            Account restored. Employee can sign in.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full cursor-pointer rounded-2xl py-3.5 text-[10px] font-semibold uppercase tracking-widest text-white shadow-[0_16px_32px_-12px_rgba(28,26,23,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+            style={{ background: "linear-gradient(155deg, #1C1A17 0%, #3F5B54 100%)" }}
+          >
+            Acknowledged
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+};
+
 /* ================= ICON BUTTON WITH TOOLTIP ================= */
 const IconButton = ({ icon, label, onClick, variant = "default" }) => {
   const [hovered, setHovered] = useState(false);
@@ -180,6 +284,8 @@ export const EmployeeButtons = ({ id, refresh, isActive }) => {
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showReactivateConfirm, setShowReactivateConfirm] = useState(false);
+  const [showReactivateSuccess, setShowReactivateSuccess] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const sendDeactivate = (clearManager = false) =>
@@ -189,6 +295,17 @@ export const EmployeeButtons = ({ id, refresh, isActive }) => {
       },
       ...(clearManager ? { data: { clearManager: true } } : {}),
     });
+
+  const sendReactivate = () =>
+    axios.patch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/employee/${id}/status`,
+      { isActive: true },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
 
   const deactivateEmployee = async () => {
     if (busy) return;
@@ -232,6 +349,30 @@ export const EmployeeButtons = ({ id, refresh, isActive }) => {
     }
   };
 
+  const reactivateEmployee = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await sendReactivate();
+      if (res.data.success) {
+        setShowReactivateConfirm(false);
+        setShowReactivateSuccess(true);
+
+        if (refresh) refresh();
+
+        setTimeout(() => {
+          setShowReactivateSuccess(false);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Employee reactivation failed.", err);
+      setShowReactivateConfirm(false);
+      alert(apiErrorMessage(err, "Unable to reactivate this employee."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       {showConfirm && (
@@ -244,6 +385,18 @@ export const EmployeeButtons = ({ id, refresh, isActive }) => {
 
       {showSuccess && (
         <DeleteSuccessAlert onClose={() => setShowSuccess(false)} />
+      )}
+
+      {showReactivateConfirm && (
+        <ConfirmReactivateAlert
+          onConfirm={reactivateEmployee}
+          onCancel={() => setShowReactivateConfirm(false)}
+          busy={busy}
+        />
+      )}
+
+      {showReactivateSuccess && (
+        <ReactivateSuccessAlert onClose={() => setShowReactivateSuccess(false)} />
       )}
 
       <div className="flex items-center justify-end gap-2">
@@ -275,7 +428,14 @@ export const EmployeeButtons = ({ id, refresh, isActive }) => {
           onClick={() => navigate(`/admin-dashboard/employees/payslip/${id}`)}
         />
 
-        {isActive !== false && (
+        {isActive === false ? (
+          <IconButton
+            variant="default"
+            label="Reactivate"
+            icon={<UserCheck size={15} strokeWidth={1.75} />}
+            onClick={() => setShowReactivateConfirm(true)}
+          />
+        ) : (
           <IconButton
             variant="danger"
             label="Deactivate"
