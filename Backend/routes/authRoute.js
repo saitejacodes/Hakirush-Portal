@@ -6,6 +6,7 @@ import {
   mobileRefresh,
   mobileLogout,
   logoutAll,
+  setupPassword
 } from "../controllers/authController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { loginLimiter } from "../middleware/loginRateLimit.js";
@@ -19,5 +20,6 @@ router.post("/mobile/login", loginLimiter, mobileLogin);
 router.post("/mobile/refresh", mobileRefresh);
 router.post("/mobile/logout", mobileLogout);
 router.post("/logout-all", authMiddleware, logoutAll);
+router.post("/setup-password", setupPassword);
 
 export default router;

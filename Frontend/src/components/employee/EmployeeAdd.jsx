@@ -3,7 +3,7 @@ import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
 import { apiErrorMessage } from "../../utils/apiError";
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Camera, Check, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Camera, Check } from "lucide-react";
 
 const PAGE_BG = "bg-gradient-to-br from-white via-red-50 to-pink-100";
 
@@ -37,7 +37,7 @@ const SuccessAlert = ({ onClose }) => (
         Onboarded
       </h3>
       <p className="mt-3 text-xs leading-relaxed" style={{ color: SLATE }}>
-        The employee record has been initialized in the registry.
+        An onboarding email has been sent to their address to set up a secure password.
       </p>
       <button
         onClick={onClose}
@@ -57,7 +57,6 @@ const Add = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -174,30 +173,6 @@ const Add = () => {
                       onChange={handleChange}
                       options={["Single", "Married", "Divorced", "Widowed"].map((v) => ({ label: v, value: v }))}
                     />
-                    <div>
-                      <FieldLabel label="Password" />
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          name="password"
-                          placeholder="Password"
-                          required
-                          onChange={handleChange}
-                          className="mt-2 w-full border-b bg-transparent pb-2 pr-8 text-base outline-none transition-colors"
-                          style={{ ...displayFont, fontWeight: 500, borderColor: HAIRLINE, color: CHARCOAL }}
-                          onFocus={(e) => (e.target.style.borderColor = GOLD)}
-                          onBlur={(e) => (e.target.style.borderColor = HAIRLINE)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute bottom-2 right-0 transition-colors"
-                          style={{ color: SLATE }}
-                        >
-                          {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </section>
 
