@@ -19,8 +19,11 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://hakirush-portal-lxwv.vercel.app"
+      },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
     }
   },
