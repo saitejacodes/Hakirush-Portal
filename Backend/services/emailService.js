@@ -49,3 +49,51 @@ export const sendWelcomeEmail = async (user, employee) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+export const sendLeaveRequestToManagerEmail = async (managerUser, employee, leave) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const loginLink = `${frontendUrl}/login`;
+
+  const mailOptions = {
+    from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+    to: managerUser.email,
+    subject: `Leave Request: ${employee.name} (${leave.days} days)`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #7A2233; text-align: center;">New Leave Request</h2>
+        <p>Hello ${managerUser.name},</p>
+        <p><strong>${employee.name}</strong> has requested a <strong>${leave.leaveType}</strong>.</p>
+        <ul>
+          <li><strong>Duration:</strong> ${leave.days} days</li>
+          <li><strong>Reason:</strong> ${leave.reason || "N/A"}</li>
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${loginLink}" style="background-color: #7A2233; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Review in Portal</a>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions).catch(console.error);
+};
+
+export const sendLeaveStatusEmail = async (employeeUser, leave, status, managerName) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+  const color = status === "Approved" ? "#2E7D32" : "#C62828";
+  
+  const mailOptions = {
+    from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+    to: employeeUser.email,
+    subject: `Leave Request ${status}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: ${color}; text-align: center;">Leave ${status}</h2>
+        <p>Hello ${employeeUser.name},</p>
+        <p>Your request for <strong>${leave.leaveType}</strong> (${leave.days} days) has been <strong>${status}</strong> by ${managerName}.</p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions).catch(console.error);
+};

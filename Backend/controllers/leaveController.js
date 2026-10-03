@@ -1,7 +1,9 @@
 import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
 import User from "../models/User.js";
+import Department from "../models/Department.js";
 import Notification from "../models/Notification.js";
+import { sendLeaveRequestToManagerEmail, sendLeaveStatusEmail } from "../services/emailService.js";
 import { asyncHandler, badRequest, conflict, forbidden, notFound } from "../middleware/errorHandler.js";
 import { requireObjectId, requireYmd, requireEnum, trimmedString, parsePagination } from "../utils/validate.js";
 import { businessDate, addDays } from "../utils/orgTime.js";
@@ -91,13 +93,29 @@ const addLeave = asyncHandler(async (req, res) => {
   const balance = await computeLeaveBalance(employee._id, clockNow());
   const typeBalance = leaveType === "Sick Leave" ? balance.sick : balance.casual;
 
+  // Check if department has a manager
+  const dept = await Department.findById(employee.department).lean();
+  let managerNotified = false;
+  if (dept && dept.managerEmployeeId && String(dept.managerEmployeeId) !== String(employee._id)) {
+    const managerEmp = await Employee.findById(dept.managerEmployeeId).populate("userId").lean();
+    if (managerEmp?.userId && managerEmp.userId.isActive !== false) {
+      await Notification.create({
+        type: "leave-request",
+        message: `${req.user.name || "An employee"} applied for ${leaveType} leave (${days} days)`,
+        data: { leaveId: leave._id, employeeId: employee._id, adminId: managerEmp.userId._id, link: "/employee-dashboard" } // Manager views it on their dash
+      });
+      sendLeaveRequestToManagerEmail(managerEmp.userId, employee, leave);
+      managerNotified = true;
+    }
+  }
+
+  // Also notify admins always
   await notifyAdmins("leave-request", `${req.user.name || "An employee"} applied for ${leaveType} leave (${days} days)`, {
     leaveId: leave._id,
     employeeId: employee._id,
     link: "/admin-dashboard/leaves",
   });
 
-  // Balance is reported, not enforced (owner decision; the web form blocks client-side).
   return res.status(200).json({ success: true, leave, exceedsBalance: days > typeBalance.balance });
 });
 
@@ -106,10 +124,19 @@ const updateLeave = asyncHandler(async (req, res) => {
   const id = requireObjectId(req.params.id, "id");
   const status = requireEnum(req.body?.status, REVIEW_DECISIONS, "status");
 
-  const current = await Leave.findById(id).lean();
+  const current = await Leave.findById(id).populate("employeeId").lean();
   if (!current) throw notFound("Leave request not found");
   if (current.status !== "Pending") {
     throw conflict("Leave request has already been reviewed", "ALREADY_REVIEWED", { status: current.status });
+  }
+
+  // Authorization: Admin, or the manager of the requesting employee's department
+  if (req.user.role !== "admin") {
+    const callerEmp = await getEmployeeForUser(req.user._id);
+    const dept = await Department.findById(current.employeeId.department).lean();
+    if (!dept || String(dept.managerEmployeeId) !== String(callerEmp._id)) {
+      throw forbidden("You are not the manager of this employee's department");
+    }
   }
 
   const set = { status, reviewedBy: req.user._id, reviewedAt: clockNow() };
@@ -127,13 +154,17 @@ const updateLeave = asyncHandler(async (req, res) => {
     throw conflict("Leave request has already been reviewed", "ALREADY_REVIEWED", { status: latest?.status });
   }
 
-  const employee = await Employee.findById(leave.employeeId).select("userId").lean();
+  const employee = await Employee.findById(leave.employeeId).populate("userId").lean();
+  const reviewer = await User.findById(req.user._id).select("name role").lean();
+  const reviewerName = reviewer?.role === "admin" ? "Admin" : (reviewer?.name || "Manager");
+
   if (employee?.userId) {
     await Notification.create({
       type: "leave-status",
-      message: `Your leave request from ${formatLeaveRange(leave)} was ${status}`,
-      data: { leaveId: leave._id, employeeId: employee._id, userId: employee.userId, status },
+      message: `Your leave request from ${formatLeaveRange(leave)} was ${status} by ${reviewerName}`,
+      data: { leaveId: leave._id, employeeId: employee._id, userId: employee.userId._id, status },
     });
+    sendLeaveStatusEmail(employee.userId, leave, status, reviewerName);
   }
 
   return res.status(200).json({ success: true, leave });
@@ -251,6 +282,31 @@ const getLeaveDetail = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, leave });
 });
 
+/* ================= GET TEAM LEAVES (MANAGER) ================= */
+const getTeamLeaves = asyncHandler(async (req, res) => {
+  const me = await getEmployeeForUser(req.user._id);
+  const dept = await Department.findOne({ managerEmployeeId: me._id }).lean();
+  if (!dept) return res.status(200).json({ success: true, leaves: [] });
+
+  const { status, page, limit } = req.query;
+  const filter = { status: status || "Pending" };
+  
+  // Find all employees in this department
+  const teamMembers = await Employee.find({ department: dept._id, _id: { $ne: me._id } }).select("_id").lean();
+  filter.employeeId = { $in: teamMembers.map(m => m._id) };
+
+  const query = Leave.find(filter).populate(EMPLOYEE_POPULATE).sort({ createdAt: -1 });
+  
+  if (page !== undefined || limit !== undefined) {
+    const p = parsePagination(req.query, { defaultLimit: 20, maxLimit: 100 });
+    const [leaves, total] = await Promise.all([query.skip(p.skip).limit(p.limit), Leave.countDocuments(filter)]);
+    return res.status(200).json({ success: true, leaves, page: p.page, limit: p.limit, total, hasMore: p.skip + leaves.length < total });
+  }
+  
+  const leaves = await query.limit(500);
+  return res.status(200).json({ success: true, leaves });
+});
+
 export {
   calculateNetWorkDays,
   canCancelLeave,
@@ -263,4 +319,5 @@ export {
   getLeave,
   getLeaves,
   getLeaveDetail,
+  getTeamLeaves,
 };
