@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import Employee, { BLOOD_GROUPS, GENDERS, MARITAL_STATUSES } from "../models/Employee.js";
 import User from "../models/User.js";
 import Department from "../models/Department.js";
 import uploadToImageKit from "../utils/uploadToImageKit.js";
+import { sendWelcomeEmail } from "../services/emailService.js";
 import { asyncHandler, badRequest, forbidden, notFound, conflict, ApiError } from "../middleware/errorHandler.js";
 import {
   requireObjectId,
@@ -135,7 +137,6 @@ const addEmployee = asyncHandler(async (req, res) => {
   const employeeId = trimmedString(b.employeeId, "employeeId", { max: 50 });
   const designation = trimmedString(b.designation, "designation", { max: 100 });
   const salary = toFiniteNumber(b.salary, "salary", { min: 0, max: 1e12 });
-  const password = validateNewPassword(b.password, "password");
   const departmentId = requireObjectId(b.department, "department");
   const role = b.role === undefined || b.role === "" ? "employee" : requireEnum(b.role, ["employee", "admin"], "role");
   const dob = parseDateInput(b.dob, "dob", { notFuture: true });
@@ -152,7 +153,11 @@ const addEmployee = asyncHandler(async (req, res) => {
   if (await Employee.exists({ employeeId })) throw conflict("This employee ID is already in use", "CONFLICT");
 
   const profileImage = (await uploadProfileImage(req.file)) || "";
-  const hashedPassword = await bcrypt.hash(password, 10);
+  
+  // Generate a random high-entropy placeholder password. 
+  // User will set their actual password via the setup link.
+  const randomPassword = crypto.randomBytes(32).toString("hex");
+  const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
   const user = await User.create({ name, email, password: hashedPassword, role, profileImage });
   let employee;
@@ -177,6 +182,11 @@ const addEmployee = asyncHandler(async (req, res) => {
     await User.deleteOne({ _id: user._id }); // keep user+employee creation all-or-nothing
     throw err;
   }
+
+  // Trigger automated onboarding email asynchronously (do not block the response)
+  sendWelcomeEmail(user, employee).catch(err => {
+    console.error("Failed to send welcome email to", user.email, err);
+  });
 
   return res.status(201).json({ success: true, employee });
 });
