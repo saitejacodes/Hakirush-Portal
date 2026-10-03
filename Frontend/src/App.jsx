@@ -49,6 +49,7 @@ import EmployeeLeaveAdd from "./components/leave/EmployeeLeaveAdd";
 import EmployeeProfile from "./components/EmpolyeeDashboard/EmployeeProfile";
 import EditEmployeeProfile from "./components/EmpolyeeDashboard/EditEmployeeProfile";
 import ViewPayslip from "./components/payslips/ViewPayslip";
+import TeamRequests from "./components/leave/TeamRequests";
 
 
 /* ================= CLIENT IMPORTS ================= */
@@ -136,6 +137,8 @@ const App = () => {
           <Route path="profile/:id/edit" element={<EditEmployeeProfile />} />
           <Route path="leaves/:id" element={<EmployeeLeaveList />} />
           <Route path="add-leave" element={<EmployeeLeaveAdd />} />
+          <Route path="team-requests" element={<TeamRequests />} />
+          <Route path="team-requests/:id" element={<LeaveDetails />} />
           <Route path="payslips/:id" element={<ViewPayslip />} />
           <Route path="setting" element={<EmployeeSetting />} />
         </Route>

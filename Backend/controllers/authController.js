@@ -65,12 +65,17 @@ export const buildSessionUser = async (userDoc) => {
       sessionUser.employeeRecordId = employee._id;
       sessionUser.departmentId = dept ? dept._id : null;
       sessionUser.departmentName = dept ? dept.dep_name : null;
+      
+      // Determine if they manage ANY department
+      const managedDept = await Department.findOne({ managerEmployeeId: employee._id }).lean();
+      sessionUser.isManager = !!managedDept;
     } else if (u.role === "employee") {
       sessionUser.employeeId = null;
       sessionUser.designation = null;
       sessionUser.employeeRecordId = null;
       sessionUser.departmentId = null;
       sessionUser.departmentName = null;
+      sessionUser.isManager = false;
     }
   }
 

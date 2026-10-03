@@ -271,9 +271,20 @@ const getLeaves = asyncHandler(async (req, res) => {
 const getLeaveDetail = asyncHandler(async (req, res) => {
   const id = requireObjectId(req.params.id, "id");
   const filter = { _id: id };
+  
   if (req.user.role === "employee") {
     const own = await getEmployeeForUser(req.user._id);
-    filter.employeeId = own._id;
+    // Allow if they are the owner OR if they are the manager of the department
+    const managedDept = await Department.findOne({ managerEmployeeId: own._id }).lean();
+    if (managedDept) {
+      // Find all employees in the managed department
+      const teamMembers = await Employee.find({ department: managedDept._id }).select("_id").lean();
+      const teamIds = teamMembers.map(m => m._id);
+      // Can view their own OR their team's
+      filter.employeeId = { $in: [...teamIds, own._id] };
+    } else {
+      filter.employeeId = own._id;
+    }
   } else if (req.user.role !== "admin") {
     throw forbidden();
   }
