@@ -31,6 +31,11 @@ const AttendanceSchema = new mongoose.Schema(
       default: 0,
     },
 
+    overtimeHours: {
+      type: Number,
+      default: 0,
+    },
+
     // "" = not yet determined (open punch session / placeholder record).
     status: {
       type: String,
@@ -81,6 +86,8 @@ AttendanceSchema.index(
   { employeeId: 1, date: 1 },
   { unique: true }
 );
+AttendanceSchema.index({ date: 1, status: 1 });
+AttendanceSchema.index({ date: 1, employeeId: 1 });
 
 const Attendance = mongoose.model("Attendance", AttendanceSchema);
 export default Attendance;

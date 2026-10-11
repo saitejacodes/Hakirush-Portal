@@ -1,4 +1,7 @@
 import Payslip from "../models/Payslip.js";
+import ExpenseClaim from "../models/ExpenseClaim.js";
+import Employee from "../models/Employee.js";
+import { generatePayslipPdfBuffer } from "../services/pdfPayslipGenerator.js";
 import { asyncHandler, badRequest, conflict, forbidden, notFound } from "../middleware/errorHandler.js";
 import { requireObjectId, toFiniteNumber, requireEnum } from "../utils/validate.js";
 import { now as clockNow } from "../services/clock.js";
@@ -78,8 +81,6 @@ export const addPayslip = asyncHandler(async (req, res) => {
   const paymentStatus = requireEnum(body.paymentStatus || "Paid", ["Pending", "Paid"], "paymentStatus");
   const figures = computePayslipFigures(body);
 
-  if (!req.file) throw badRequest("Payslip PDF file is required");
-
   const employee = await findEmployeeByAnyId(employeeRef);
   if (!employee) throw notFound("Employee not found");
 
@@ -87,8 +88,40 @@ export const addPayslip = asyncHandler(async (req, res) => {
     throw conflict("A payslip for this employee and month already exists", "CONFLICT");
   }
 
+  const autoGenerate =
+    body.autoGenerate === "true" ||
+    body.autoGenerate === true ||
+    body.generatePdf === "true" ||
+    body.generatePdf === true;
+
+  if (!req.file && !autoGenerate) {
+    throw badRequest("Payslip PDF file is required (or set autoGenerate=true to generate automatically)");
+  }
+
+  // If no file was uploaded and autoGenerate is requested, generate standard branded PDF payslip using pdfkit
+  let pdfFileToStore = req.file;
+  if (!pdfFileToStore && autoGenerate) {
+    const populatedEmployee = await Employee.findById(employee._id)
+      .populate("userId", "name email")
+      .populate("department", "dep_name")
+      .lean();
+
+    const pdfBuffer = await generatePayslipPdfBuffer({
+      employee: populatedEmployee || employee,
+      figures,
+      month,
+      paymentStatus,
+    });
+
+    pdfFileToStore = {
+      buffer: pdfBuffer,
+      originalname: `payslip_${employee.employeeId}_${month}.pdf`,
+      mimetype: "application/pdf",
+    };
+  }
+
   const now = clockNow();
-  const stored = await storePayslipPdf(req.file, { employeeCode: employee.employeeId, month });
+  const stored = await storePayslipPdf(pdfFileToStore, { employeeCode: employee.employeeId, month });
 
   let payslip;
   try {
@@ -109,6 +142,14 @@ export const addPayslip = asyncHandler(async (req, res) => {
     await removePayslipFile(stored.fileId);
     if (err?.code === 11000) throw conflict("A payslip for this employee and month already exists", "CONFLICT");
     throw err;
+  }
+
+  // Link and mark approved expense claims as Reimbursed
+  if (figures.reimbursements > 0) {
+    await ExpenseClaim.updateMany(
+      { employeeId: employee._id, status: "Approved", reimbursedPayslipId: null },
+      { $set: { status: "Reimbursed", reimbursedInPayslipMonth: month, reimbursedPayslipId: payslip._id } }
+    ).catch((err) => console.error("Failed to link reimbursed claims:", err));
   }
 
   return res.status(201).json({ success: true, payslip: toDto(payslip, { forAdmin: true, now }) });

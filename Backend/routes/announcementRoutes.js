@@ -11,8 +11,19 @@ import {
 import authMiddleware from "../middleware/authMiddleware.js";
 import { requireAdmin } from "../middleware/roleMiddleware.js";
 import upload from "../middleware/upload.js";
+import { requireCronSecret } from "../utils/attendanceCron.js";
+import { runCelebrationsJob } from "../services/celebrationCron.js";
 
 const router = express.Router();
+
+router.post("/jobs/celebrations", requireCronSecret, async (req, res) => {
+  const result = await runCelebrationsJob();
+  return res.json({ success: true, ...result });
+});
+router.get("/jobs/celebrations", requireCronSecret, async (req, res) => {
+  const result = await runCelebrationsJob();
+  return res.json({ success: true, ...result });
+});
 
 // General Routes
 router.get("/", authMiddleware, requireAdmin, getAnnouncements);

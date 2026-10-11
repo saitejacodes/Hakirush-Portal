@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import compression from "compression";
+import helmet from "helmet";
 
 import authRouter from "./routes/authRoute.js";
 import departmentRouter from "./routes/departmentRoute.js";
@@ -19,6 +21,8 @@ import payslipRoutes from "./routes/payslipRoutes.js";
 import attendanceRequestRouter from "./routes/attendanceRequestRoutes.js";
 import notificationRoute from "./routes/notificationRoute.js";
 import assetRoutes from "./routes/assetRoutes.js";
+import overtimeRoute from "./routes/overtimeRoute.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +40,8 @@ export const createApp = () => {
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
+  app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.use(compression());
   app.use(express.json({ limit: "1mb" }));
   app.use(
     cors({
@@ -62,6 +68,8 @@ export const createApp = () => {
   app.use("/api/attendance-request", attendanceRequestRouter);
   app.use("/api/notifications", notificationRoute);
   app.use("/api/asset", assetRoutes);
+  app.use("/api/overtime", overtimeRoute);
+  app.use("/api/expenses", expenseRoutes);
 
   app.get("/api/test", (req, res) => {
     res.json({ success: true, message: "Backend is working!" });

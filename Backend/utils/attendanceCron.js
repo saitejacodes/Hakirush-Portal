@@ -141,6 +141,8 @@ export const requireCronSecret = (req, res, next) => {
 /* ================= IN-PROCESS SCHEDULE (long-lived hosts only) ================= */
 let task = null;
 
+import { runCelebrationsJob } from "../services/celebrationCron.js";
+
 const startAttendanceCron = () => {
   if (task) return task;
   // 00:30 every day in the organization timezone.
@@ -154,6 +156,15 @@ const startAttendanceCron = () => {
         );
       } catch (error) {
         console.error("[CRON ERROR] close-day failed:", error?.message);
+      }
+
+      try {
+        const celebResult = await runCelebrationsJob({ now: new Date() });
+        console.log(
+          `[CRON] celebrations ${celebResult.date}: birthdays=${celebResult.birthdays?.length || 0} anniversaries=${celebResult.anniversaries?.length || 0}`
+        );
+      } catch (celebError) {
+        console.error("[CRON ERROR] celebrations failed:", celebError?.message);
       }
     },
     { timezone: ORG_TIMEZONE, name: "attendance-close-day", noOverlap: true }

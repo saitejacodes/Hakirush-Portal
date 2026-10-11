@@ -14,6 +14,7 @@ import {
   BadgeDollarSign,
   Store,
   Briefcase,
+  Receipt,
 } from "lucide-react";
 import { useSidebar } from "../../context/sidebarContext";
 
@@ -42,6 +43,7 @@ const sidebarLinks = [
   { link: "/admin-dashboard/stalls", icon: Store, title: "Stalls" },
   { link: "/admin-dashboard/attendance", icon: UserCheck, title: "Attendance" },
   { link: "/admin-dashboard/leaves", icon: CalendarCheck, title: "Leaves" },
+  { link: "/admin-dashboard/expenses", icon: Receipt, title: "Expenses" },
   { link: "/admin-dashboard/holidays", icon: PartyPopper, title: "Holidays" },
   { link: "/admin-dashboard/announcement", icon: Bell, title: "Announcement" },
   { link: "/admin-dashboard/assets", icon: Briefcase, title: "Assets" },

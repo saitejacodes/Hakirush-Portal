@@ -154,10 +154,13 @@ const addEmployee = asyncHandler(async (req, res) => {
 
   const profileImage = (await uploadProfileImage(req.file)) || "";
   
-  // Generate a random high-entropy placeholder password. 
-  // User will set their actual password via the setup link.
-  const randomPassword = crypto.randomBytes(32).toString("hex");
-  const hashedPassword = await bcrypt.hash(randomPassword, 10);
+  let rawPassword = typeof b.password === "string" && b.password.length > 0 ? b.password : null;
+  if (rawPassword) {
+    validateNewPassword(rawPassword);
+  } else {
+    rawPassword = crypto.randomBytes(32).toString("hex");
+  }
+  const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
   const user = await User.create({ name, email, password: hashedPassword, role, profileImage });
   let employee;
