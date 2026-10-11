@@ -23,8 +23,8 @@ export const buildAttendanceForEmployee = ({ employee, record, isOffDay, leaveBy
     if (isIncompleteCheckout) {
       return {
         ...recordData,
-        status: 'Absent',
-        workedHours: 0,
+        status: 'Present',
+        workedHours: recordData?.workedHours && recordData.workedHours > 0 ? recordData.workedHours : NOMINAL_HOURS.Present,
         checkOut: null,
         employeeId: employee,
       };

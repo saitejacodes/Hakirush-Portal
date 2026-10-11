@@ -40,7 +40,7 @@ test('preserves existing attendance record when no leave exists', () => {
   assert.equal(result._id, 'att-1');
 });
 
-test('marks a past incomplete checkout as Absent', () => {
+test('marks a past incomplete checkout as Present with nominal hours', () => {
   const result = buildAttendanceForEmployee({
     employee: { _id: 'emp-3', userId: { name: 'Carol' }, department: { dep_name: 'Finance' } },
     record: {
@@ -57,8 +57,8 @@ test('marks a past incomplete checkout as Absent', () => {
     todayStr: '2026-08-06'
   });
 
-  assert.equal(result.status, 'Absent');
-  assert.equal(result.workedHours, 0);
+  assert.equal(result.status, 'Present');
+  assert.equal(result.workedHours, 8);
   assert.equal(result.checkOut, null);
 });
 

@@ -3,6 +3,7 @@ import cron from "node-cron";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import { ORG_TIMEZONE, businessDate, addDays, eachDate } from "./orgTime.js";
+import { NOMINAL_HOURS } from "./attendanceStatus.js";
 import {
   storedDateToYmd,
   loadHolidayMap,
@@ -19,17 +20,12 @@ const MAX_LOOKBACK_DAYS = 31;
  * Vercel Cron, manual trigger); repeated runs never create duplicates.
  *
  * 1. Open check-ins from previous business days (checkIn set, checkOut null,
- *    no explicit Present/Half Day/Leave status) are closed per the original
- *    policy: status Absent, workedHours 0, pause state cleared. checkIn is kept.
+ *    no explicit Present/Half Day/Leave status) are closed: an employee who checked in
+ *    showed up to work, so they are marked Present with nominal hours (8h).
  * 2. For each of the previous `lookbackDays` business days that is a working
  *    day (not weekend/holiday), every active employee (joined on/before that
  *    day, not on approved leave) without a record gets an Absent record.
  *    Upserts on the unique {employeeId, date} index => no duplicates.
- *
- * Differences from the original cron (documented in docs/mobile/parts/backend-domain.md):
- * it used the server-local date and created Absent records for *today* at
- * 00:30 (including weekends, holidays, approved leave and deactivated users),
- * and it reset days whose status had been set explicitly.
  */
 export const closeAttendanceDay = async ({ now = new Date(), lookbackDays = DEFAULT_LOOKBACK_DAYS } = {}) => {
   const lookback = Math.min(MAX_LOOKBACK_DAYS, Math.max(1, Math.floor(Number(lookbackDays) || DEFAULT_LOOKBACK_DAYS)));
@@ -37,7 +33,7 @@ export const closeAttendanceDay = async ({ now = new Date(), lookbackDays = DEFA
   const from = addDays(today, -lookback);
   const to = addDays(today, -1);
 
-  // 1) Close stale open sessions.
+  // 1) Close stale open sessions: mark as Present (8h).
   const closed = await Attendance.updateMany(
     {
       checkIn: { $ne: null },
@@ -48,13 +44,29 @@ export const closeAttendanceDay = async ({ now = new Date(), lookbackDays = DEFA
     },
     {
       $set: {
-        status: "Absent",
-        workedHours: 0,
+        status: "Present",
+        workedHours: NOMINAL_HOURS.Present,
         isPaused: false,
         pauseStartedAt: null,
         totalPausedMs: 0,
         source: "system",
         autoClosedAt: now,
+      },
+    }
+  );
+
+  // Auto-heal any past open check-in sessions that were previously closed as Absent
+  await Attendance.updateMany(
+    {
+      checkIn: { $ne: null },
+      checkOut: null,
+      date: { $lt: today },
+      status: "Absent",
+    },
+    {
+      $set: {
+        status: "Present",
+        workedHours: NOMINAL_HOURS.Present,
       },
     }
   );

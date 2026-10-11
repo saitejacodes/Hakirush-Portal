@@ -269,19 +269,32 @@ const EmployeeSummary = () => {
       const todayStr = toYMD(new Date());
       const isPastDay = dateStr < todayStr;
 
+      // 1. Explicit statuses take precedence
+      if (s === "present") {
+        return { status: "present", title: "Present" };
+      }
+      if (s === "halfday") {
+        return { status: "halfday", title: "Half Day" };
+      }
+      if (s === "leave") {
+        return { status: "leave", title: "Leave" };
+      }
+
+      // 2. Completed punches with checkout
       if (attRec.checkOut) {
-        if (s === "present" || workedHours >= 8) {
+        if (workedHours >= 8) {
           return { status: "present", title: "Present" };
         }
-        if (s === "halfday" || (workedHours >= 4 && workedHours < 8)) {
+        if (workedHours >= 4 && workedHours < 8) {
           return { status: "halfday", title: "Half Day" };
         }
         return { status: "absent", title: "Absent" };
       }
 
+      // 3. Checked in but forgot to checkout: mark as Present
       if (attRec.checkIn && !attRec.checkOut) {
-        if (isPastDay || s === "absent") {
-          return { status: "absent", title: "Absent" };
+        if (isPastDay) {
+          return { status: "present", title: "Present" };
         }
         return { status: "working", title: "Working" };
       }

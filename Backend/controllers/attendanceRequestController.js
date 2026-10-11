@@ -33,7 +33,8 @@ const EMPLOYEE_POPULATE = {
 // Status the day currently shows (server-derived; the client value is informational only).
 const effectiveStatus = (record, date, today) => {
   if (!record) return "Absent";
-  if (isIncompleteCheckout(record) && date < today) return "Absent";
+  if (isIncompleteCheckout(record) && date < today) return "Present";
+  if (record.checkIn && !record.status) return "Present";
   return record.status || "Absent";
 };
 
@@ -52,7 +53,7 @@ const createAttendanceRequest = asyncHandler(async (req, res) => {
 
   const record = await Attendance.findOne({ employeeId: employee._id, date }).lean();
   const currentStatus = effectiveStatus(record, date, today);
-  if (currentStatus === requestedStatus) {
+  if (currentStatus === requestedStatus && (record?.status || "Absent") === requestedStatus) {
     throw badRequest("Requested status must differ from current status");
   }
 
