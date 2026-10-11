@@ -87,3 +87,69 @@ export interface CelebrationsResponse {
 export interface NewJoinersResponse {
   employees: { _id: string; name: string; profileImage?: string; dateOfJoining?: string; joinedDaysAgo?: number }[];
 }
+
+export interface ExpenseClaimItem {
+  _id: string;
+  title: string;
+  category: string;
+  amount: number;
+  date: string;
+  description?: string;
+  receiptUrl?: string;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Reimbursed';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewRemarks?: string;
+  reimbursedInPayslipMonth?: string;
+  createdAt: string;
+}
+
+export interface ExpensesResponse {
+  success: boolean;
+  claims: ExpenseClaimItem[];
+}
+
+export interface OvertimeDayItem {
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  workedHours?: number;
+  overtimeHours: number;
+  status: string;
+}
+
+export interface OvertimeRequestItem {
+  _id: string;
+  type: 'Comp-Off' | 'Payout';
+  hours: number;
+  reason?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  reviewRemarks?: string;
+  createdAt: string;
+}
+
+export interface OvertimeSummaryResponse {
+  success: boolean;
+  totalEarnedHours: number;
+  claimedHours: number;
+  availableHours: number;
+  recentOvertimeDays: OvertimeDayItem[];
+  requests: OvertimeRequestItem[];
+}
+
+export interface AssetItem {
+  _id: string;
+  name: string;
+  assetType: 'Laptop' | 'Monitor' | 'Mobile' | 'ID Card' | 'Keys' | 'Other';
+  serialNumber?: string;
+  status: 'Available' | 'Assigned' | 'Maintenance' | 'Retired';
+  notes?: string;
+  issueDate?: string;
+  returnDate?: string;
+}
+
+export interface MyAssetsResponse {
+  success: boolean;
+  assets: AssetItem[];
+}
+

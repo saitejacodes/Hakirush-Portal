@@ -23,9 +23,10 @@
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
       "allowBackup": false,
-      "permissions": [],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "blockedPermissions": [
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -58,7 +59,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Hakirush Portal uses your photo library only when you choose a profile photo or an image to upload.",
-          "cameraPermission": false,
+          "cameraPermission": "Hakirush Portal uses your camera to capture expense receipts and bills.",
           "microphonePermission": false
         }
       ],
