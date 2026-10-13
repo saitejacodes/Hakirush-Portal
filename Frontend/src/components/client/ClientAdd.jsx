@@ -72,6 +72,10 @@ const AddClient = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.companyLogo) {
+      alert("Company logo is required.");
+      return;
+    }
     setLoading(true);
     const fd = new FormData();
     Object.keys(formData).forEach((key) => fd.append(key, formData[key]));

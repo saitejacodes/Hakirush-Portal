@@ -40,7 +40,7 @@ export function EmployeeAssetsScreen() {
   const theme = useTheme();
   const keys = useQueryKeys();
 
-  const query = useApiQuery<MyAssetsResponse>(keys.myAssets(), '/api/assets/me');
+  const query = useApiQuery<MyAssetsResponse>(keys.myAssets(), '/api/asset/me');
   const assets = query.data?.assets ?? [];
 
   return (

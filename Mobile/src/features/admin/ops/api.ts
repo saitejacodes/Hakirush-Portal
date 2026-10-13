@@ -68,7 +68,7 @@ export function deleteHoliday(id: string) {
 export interface AnnouncementInput {
   title: string;
   description: string;
-  type: 'Annual' | 'Quarterly';
+  type: 'Annual' | 'Quarterly' | 'Celebration';
   date: string;
   venue: string;
   status: 'Upcoming' | 'Ongoing' | 'Completed';

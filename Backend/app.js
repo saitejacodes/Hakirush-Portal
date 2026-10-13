@@ -63,18 +63,24 @@ export const createApp = () => {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/holiday", holidayRouter);
   app.use("/api/sponsors", sponsorRouter);
+  app.use("/api/sponsor", sponsorRouter);
   app.use("/api/stalls", stallRoutes);
+  app.use("/api/stall", stallRoutes);
   app.use("/api/payslip", payslipRoutes);
+  app.use("/api/payslips", payslipRoutes);
   app.use("/api/attendance-request", attendanceRequestRouter);
   app.use("/api/notifications", notificationRoute);
   app.use("/api/asset", assetRoutes);
+  app.use("/api/assets", assetRoutes);
   app.use("/api/overtime", overtimeRoute);
   app.use("/api/expenses", expenseRoutes);
+  app.use("/api/expense", expenseRoutes);
 
   app.get("/api/test", (req, res) => {
     res.json({ success: true, message: "Backend is working!" });
   });
   app.use("/api/announcements", announcementRoutes);
+  app.use("/api/announcement", announcementRoutes);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

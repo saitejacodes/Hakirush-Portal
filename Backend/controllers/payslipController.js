@@ -6,7 +6,6 @@ import { asyncHandler, badRequest, conflict, forbidden, notFound } from "../midd
 import { requireObjectId, toFiniteNumber, requireEnum } from "../utils/validate.js";
 import { now as clockNow } from "../services/clock.js";
 import { findEmployeeByAnyId, getEmployeeForUser, resolveEmployeeForCaller } from "../services/employeeScope.js";
-import { generatePayslipPdf } from "../services/pdfService.js";
 import { buildMonthlyAttendance } from "../services/attendanceService.js";
 import {
   storePayslipPdf,
@@ -201,8 +200,13 @@ export const autoGeneratePayslip = asyncHandler(async (req, res) => {
     professionalTax: 200, // standard PT in India
   });
 
-  // Generate PDF
-  const pdfBuffer = await generatePayslipPdf({ ...figures, month }, employee, employee.userId);
+  // Generate PDF using standard branded generator
+  const pdfBuffer = await generatePayslipPdfBuffer({
+    employee,
+    figures,
+    month,
+    paymentStatus: "Paid",
+  });
 
   // Mock a Multer file object for storePayslipPdf
   const fileObj = {
