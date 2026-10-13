@@ -145,6 +145,7 @@ const checkOut = async ({ employee, now }) => {
     const totalPausedMs = pausedMsAt(current, now);
     const workedMs = Math.max(0, now.getTime() - new Date(current.checkIn).getTime() - totalPausedMs);
     const workedHours = msToHours(workedMs);
+    const overtimeHours = workedHours > 8 ? Math.round((workedHours - 8) * 100) / 100 : 0;
     const updated = await Attendance.findOneAndUpdate(
       {
         _id: current._id,
@@ -161,6 +162,7 @@ const checkOut = async ({ employee, now }) => {
           pauseStartedAt: null,
           totalPausedMs,
           workedHours,
+          overtimeHours,
           status: getStatusFromHours(workedHours),
           source: "punch",
           hoursSource: "punch",

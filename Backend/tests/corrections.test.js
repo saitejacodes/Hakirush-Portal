@@ -184,3 +184,33 @@ test("concurrent duplicate requests for one date: one created, the rest 409", as
   assert.ok(results.filter((r) => r.status !== 201).every((r) => r.status === 409));
   assert.equal(await AttendanceRequest.countDocuments({ employeeId: fx.itDev1.employee._id, status: "Pending" }), 1);
 });
+
+test("employee with unclosed check-in can regularize or have Present approved", async () => {
+  const checkIn = ist("2026-09-14 09:00");
+  await Attendance.create({
+    employeeId: fx.itDev1.employee._id,
+    date: "2026-09-14",
+    checkIn,
+    checkOut: null,
+    status: "",
+    source: "punch",
+  });
+
+  const created = await create(fx.itDev1.user, {
+    date: "2026-09-14",
+    requestedStatus: "Present",
+    reason: "Forgot to check out before leaving office",
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.request.status, "Pending");
+
+  const r = await review(fx.admin, created.body.request._id, { decision: "Approved" });
+  assert.equal(r.status, 200);
+
+  const att = await Attendance.findOne({ employeeId: fx.itDev1.employee._id, date: "2026-09-14" }).lean();
+  assert.equal(att.status, "Present");
+  assert.equal(att.workedHours, 8);
+  assert.equal(att.checkIn.toISOString(), checkIn.toISOString());
+  assert.equal(att.checkOut, null);
+});
+

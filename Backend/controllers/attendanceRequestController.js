@@ -1,6 +1,7 @@
 import AttendanceRequest from "../models/AttendanceRequest.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
+import Department from "../models/Department.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 import { asyncHandler, badRequest, conflict, notFound } from "../middleware/errorHandler.js";
@@ -32,7 +33,8 @@ const EMPLOYEE_POPULATE = {
 // Status the day currently shows (server-derived; the client value is informational only).
 const effectiveStatus = (record, date, today) => {
   if (!record) return "Absent";
-  if (isIncompleteCheckout(record) && date < today) return "Absent";
+  if (isIncompleteCheckout(record) && date < today) return "Present";
+  if (record.checkIn && !record.status) return "Present";
   return record.status || "Absent";
 };
 
@@ -51,12 +53,45 @@ const createAttendanceRequest = asyncHandler(async (req, res) => {
 
   const record = await Attendance.findOne({ employeeId: employee._id, date }).lean();
   const currentStatus = effectiveStatus(record, date, today);
-  if (currentStatus === requestedStatus) {
+  if (currentStatus === requestedStatus && (record?.status || "Absent") === requestedStatus) {
     throw badRequest("Requested status must differ from current status");
   }
 
   const existing = await AttendanceRequest.exists({ employeeId: employee._id, date, status: "Pending" });
   if (existing) throw conflict("A request for this date is already pending", "CONFLICT");
+
+  const isManager = Boolean(await Department.exists({ managerEmployeeId: employee._id }));
+
+  // If caller is a Department Manager (or Admin), directly apply and auto-approve.
+  // No request is routed to admin.
+  if (isManager || req.user.role === "admin") {
+    let directRequest;
+    try {
+      directRequest = await AttendanceRequest.create({
+        employeeId: employee._id,
+        date,
+        currentStatus,
+        requestedStatus,
+        reason: reason || "Direct attendance entry by Department Manager",
+        status: "Approved",
+        reviewedBy: req.user._id,
+        reviewedAt: now,
+        reviewRemarks: "Direct entry by Department Manager (Auto-approved)",
+      });
+    } catch (err) {
+      if (err?.code === 11000) throw conflict("A request for this date already exists", "CONFLICT");
+      throw err;
+    }
+
+    const attendance = await applyApprovedCorrection(directRequest, req.user._id, now);
+    return res.status(201).json({
+      success: true,
+      request: directRequest,
+      attendance,
+      autoApproved: true,
+      message: "Attendance recorded directly without admin review",
+    });
+  }
 
   let request;
   try {

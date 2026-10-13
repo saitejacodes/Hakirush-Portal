@@ -3,6 +3,7 @@ import Notification from "../models/Notification.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { asyncHandler, notFound } from "../middleware/errorHandler.js";
 import { requireObjectId, parsePagination } from "../utils/validate.js";
+import { registerPushToken, unregisterPushToken } from "../services/pushNotificationService.js";
 
 const router = express.Router();
 
@@ -60,6 +61,31 @@ router.patch(
       { new: true }
     );
     if (!updated) throw notFound("Notification not found");
+    res.json({ success: true });
+  })
+);
+
+// POST /api/notifications/push-token — register an Expo/FCM push token
+router.post(
+  "/push-token",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { token, platform } = req.body || {};
+    if (!token) return res.status(400).json({ success: false, error: "Push token is required" });
+    const record = await registerPushToken({ userId: req.user._id, token, platform });
+    res.json({ success: true, registered: Boolean(record) });
+  })
+);
+
+// DELETE /api/notifications/push-token — unregister on logout
+router.delete(
+  "/push-token",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { token } = req.body || {};
+    if (token) {
+      await unregisterPushToken({ userId: req.user._id, token });
+    }
     res.json({ success: true });
   })
 );

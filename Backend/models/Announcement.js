@@ -7,7 +7,7 @@ const announcementSchema = new mongoose.Schema(
     image: { type: String },
     type: {
       type: String,
-      enum: ["Annual", "Quarterly"],
+      enum: ["Annual", "Quarterly", "Celebration"],
       required: true,
     },
     date: { type: String, required: true },

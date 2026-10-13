@@ -19,6 +19,10 @@ export default function EmployeeLayout() {
     <Stack screenOptions={stackScreenOptions(theme)}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="change-password" options={{ title: 'Change password' }} />
+      <Stack.Screen name="expenses" options={{ title: 'Expense claims' }} />
+      <Stack.Screen name="expense-apply" options={{ title: 'Claim an expense' }} />
+      <Stack.Screen name="overtime" options={{ title: 'Overtime & comp-off' }} />
+      <Stack.Screen name="assets" options={{ title: 'Company assets' }} />
     </Stack>
   );
 }

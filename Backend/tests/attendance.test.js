@@ -239,7 +239,8 @@ test("monthly attendance: ownership, validation, and leave/holiday/weekend handl
   assert.equal(own.body.attendance.length, 15); // Sep 1..15 (today)
   const byDate = Object.fromEntries(own.body.attendance.map((a) => [a.date, a]));
   assert.equal(byDate["2026-09-09"].status, "Leave");
-  assert.equal(byDate["2026-09-10"].status, "Absent"); // past open check-in
+  assert.equal(byDate["2026-09-10"].status, "Present"); // past open check-in: marked Present
+  assert.equal(byDate["2026-09-10"].workedHours, 8);
   assert.equal(byDate["2026-09-11"].status, "Holiday");
   assert.equal(byDate["2026-09-11"].holidayName, "Founders Day");
   assert.equal(byDate["2026-09-12"].dayType, "weekend");
@@ -406,8 +407,8 @@ test("close-day job is idempotent and follows working-day/leave/active rules", a
   assert.equal(first.absentCreated, 21);
 
   const closed = await Attendance.findOne({ employeeId: fx.itDev2.employee._id, date: "2026-09-14" });
-  assert.equal(closed.status, "Absent");
-  assert.equal(closed.workedHours, 0);
+  assert.equal(closed.status, "Present");
+  assert.equal(closed.workedHours, 8);
   assert.equal(closed.isPaused, false);
   assert.ok(closed.checkIn);
   const kept = await Attendance.findOne({ employeeId: fx.opsStaff1.employee._id, date: "2026-09-14" });

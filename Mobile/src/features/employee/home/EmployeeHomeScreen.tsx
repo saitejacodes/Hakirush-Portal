@@ -22,6 +22,7 @@ import type {
   LeavesResponse,
   NewJoinersResponse,
   NotificationsResponse,
+  ExpensesResponse,
 } from '../types';
 
 function greeting(nowMs: number): string {
@@ -46,6 +47,7 @@ export function EmployeeHomeScreen() {
   const requests = useApiQuery<AttendanceRequestsResponse>(keys.attendanceRequests(), '/api/attendance-request/me');
   const holidays = useApiQuery<HolidaysResponse>(keys.holidays('upcoming'), '/api/holiday/upcoming');
   const announcements = useApiQuery<AnnouncementsResponse>(keys.announcements(), '/api/announcements/public');
+  const expenses = useApiQuery<ExpensesResponse>(keys.expenses(), '/api/expenses/me');
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -56,6 +58,7 @@ export function EmployeeHomeScreen() {
   const unseen = notifications.data?.unseenCount ?? 0;
   const pendingLeaves = leaves.data?.leaves.filter((l) => l.status === 'Pending').length;
   const pendingRequests = requests.data?.requests.filter((r) => r.status === 'Pending').length;
+  const pendingExpenses = expenses.data?.claims.filter((c) => c.status === 'Pending').length;
   const firstName = (user?.name ?? '').split(/\s+/)[0];
 
   return (
@@ -101,6 +104,13 @@ export function EmployeeHomeScreen() {
           subtitle={pendingRequests === undefined ? 'Loading…' : `${pendingRequests} pending`}
           left={{ icon: 'create-outline' }}
           onPress={() => router.navigate('/employee/attendance')}
+        />
+        <Divider inset={68} />
+        <ListRow
+          title="Expense claims"
+          subtitle={pendingExpenses === undefined ? 'Loading…' : `${pendingExpenses} pending`}
+          left={{ icon: 'receipt-outline' }}
+          onPress={() => router.navigate('/employee/expenses')}
         />
       </Card>
 

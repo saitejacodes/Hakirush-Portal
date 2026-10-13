@@ -131,3 +131,65 @@ export const sendLeaveStatusEmail = async (employeeUser, leave, status, managerN
 
   await transporter.sendMail(mailOptions).catch(console.error);
 };
+
+export const sendBirthdayEmail = async (user) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+
+  const mailOptions = {
+    from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `🎂 Happy Birthday, ${user.name}! From Hakirush Portal`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #7A2233; font-size: 26px; margin: 0;">🎉 Happy Birthday, ${user.name}! 🎂</h1>
+          <p style="color: #666; font-size: 14px;">Wishing you joy, good health, and immense success!</p>
+        </div>
+        <p style="font-size: 15px; color: #333; line-height: 1.6;">
+          On this special day, the entire team at Hakirush celebrates you and the enthusiasm you bring to our workplace every day.
+        </p>
+        <p style="font-size: 15px; color: #333; line-height: 1.6;">
+          May this upcoming year be packed with memorable moments, personal growth, and fulfilling milestones!
+        </p>
+        <div style="margin-top: 30px; padding: 15px; background: #FAF8F5; border-radius: 8px; text-align: center; border: 1px dashed #B8912E;">
+          <p style="margin: 0; color: #7A2233; font-weight: bold; font-size: 15px;">Have a wonderful day ahead!</p>
+          <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Warm regards, Team Hakirush</p>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions).catch((err) => console.error("Birthday email failed:", err.message));
+};
+
+export const sendWorkAnniversaryEmail = async (user, years) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+
+  const yearText = years === 1 ? "1 Year" : `${years} Years`;
+
+  const mailOptions = {
+    from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `🏆 Happy ${yearText} Work Anniversary, ${user.name}!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #7A2233; font-size: 26px; margin: 0;">🏆 Happy ${yearText} Work Anniversary! 🌟</h1>
+          <p style="color: #666; font-size: 14px;">Celebrating your dedication at Hakirush</p>
+        </div>
+        <p style="font-size: 15px; color: #333; line-height: 1.6;">
+          Congratulations on reaching this milestone! Thank you for ${yearText} of passion, innovation, and valuable contributions to Hakirush.
+        </p>
+        <p style="font-size: 15px; color: #333; line-height: 1.6;">
+          We are truly grateful to have you on our team and look forward to achieving many more great achievements together.
+        </p>
+        <div style="margin-top: 30px; padding: 15px; background: #FAF8F5; border-radius: 8px; text-align: center; border: 1px dashed #7A2233;">
+          <p style="margin: 0; color: #7A2233; font-weight: bold; font-size: 15px;">Cheers to many more years of shared success!</p>
+          <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Warm regards, Team Hakirush</p>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions).catch((err) => console.error("Work anniversary email failed:", err.message));
+};

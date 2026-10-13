@@ -94,6 +94,8 @@ const AddPayslip = () => {
   const [fetchingHistory, setFetchingHistory] = useState(true);
 
   const [form, setForm] = useState(emptyForm);
+  const [autoGeneratePdf, setAutoGeneratePdf] = useState(true);
+  const [approvedReimbursementTotal, setApprovedReimbursementTotal] = useState(0);
   // Totals returned by the server for the last posted payslip (authoritative)
   const [posted, setPosted] = useState(null);
   const [historyError, setHistoryError] = useState("");
@@ -113,7 +115,22 @@ const AddPayslip = () => {
     finally { setFetchingHistory(false); }
   }, [id]);
 
-  useEffect(() => { if (id) fetchHistory(); }, [id, fetchHistory]);
+  useEffect(() => {
+    if (id) {
+      fetchHistory();
+      // Check for approved expense reimbursements waiting to be included in payroll
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/expenses/employee/${id}/approved`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      })
+      .then((res) => {
+        if (res.data.success && res.data.totalReimbursement > 0) {
+          setApprovedReimbursementTotal(res.data.totalReimbursement);
+          setForm((prev) => ({ ...prev, reimbursements: String(res.data.totalReimbursement) }));
+        }
+      })
+      .catch(() => {});
+    }
+  }, [id, fetchHistory]);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -213,11 +230,11 @@ const AddPayslip = () => {
       setAlertState({ variant: "error", title: "Check The Form", message: problem });
       return;
     }
-    if (!file) {
+    if (!file && !autoGeneratePdf) {
       setAlertState({
         variant: "error",
         title: "Missing Statement",
-        message: "Please upload the PDF payslip before finalizing."
+        message: "Please upload the PDF payslip or enable Auto-Generate Statement."
       });
       return;
     }
@@ -228,7 +245,8 @@ const AddPayslip = () => {
     if (form.paymentStatus === "Paid" && form.paymentDate) formData.append("paymentDate", form.paymentDate);
     NUMERIC_FIELDS.forEach((k) => formData.append(k, form[k] === "" ? "0" : String(Number(form[k]))));
     formData.append("employeeId", id);
-    formData.append("payslip", file);
+    if (autoGeneratePdf) formData.append("autoGenerate", "true");
+    if (file) formData.append("payslip", file);
 
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/payslip/add`, formData, {
@@ -348,6 +366,30 @@ const AddPayslip = () => {
                   </div>
                 </div>
 
+                {approvedReimbursementTotal > 0 && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800">
+                    <span className="font-semibold">
+                      💡 Found ₹{approvedReimbursementTotal.toLocaleString("en-IN")} in approved expense claims! Auto-populated into Reimbursements.
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-4 bg-[#FAF8F5] border border-[#E7E1D3] rounded-2xl">
+                  <div>
+                    <div className="text-xs font-bold text-[#1C1A17]">Auto-Generate Branded PDF Payslip</div>
+                    <div className="text-[10px] text-gray-500">Auto-creates standard branded PDF statement without manual upload</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoGeneratePdf}
+                      onChange={(e) => setAutoGeneratePdf(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7A2233]"></div>
+                  </label>
+                </div>
+
                 <div className="group relative border-2 border-dashed border-[#E7E1D3] rounded-[2rem] p-6 text-center transition-all hover:border-[#B8912E] hover:bg-[#FBF3E3]/30">
                   <input
                     key={fileInputKey}
@@ -358,7 +400,7 @@ const AddPayslip = () => {
                   />
                   <UploadCloud size={24} className="mx-auto text-[#D6D0BF] mb-2 group-hover:text-[#B8912E] transition-colors" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#8A8478] group-hover:text-[#9C7A22] transition-colors">
-                    {file ? file.name : "Drop PDF Statement"}
+                    {file ? file.name : autoGeneratePdf ? "Custom PDF (Optional: Overrides Auto-Generation)" : "Drop PDF Statement *"}
                   </p>
                   <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[#C9C2AE]">PDF only · max 5 MB</p>
                 </div>

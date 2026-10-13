@@ -92,6 +92,49 @@ export async function pickImage(options: { aspect?: [number, number]; allowsEdit
   }
 }
 
+/** Capture a photo directly from the device camera (used for receipts and expense bills). */
+export async function captureCameraImage(options: { allowsEditing?: boolean } = {}): Promise<PickResult> {
+  try {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      return { status: 'denied', message: 'Camera access is turned off for Hakirush. You can allow it in Settings.' };
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: 'images',
+      allowsEditing: options.allowsEditing ?? true,
+      quality: 1,
+      exif: false,
+    });
+    if (result.canceled || !result.assets?.length) return { status: 'canceled' };
+
+    const asset = result.assets[0];
+    const longest = Math.max(asset.width ?? 0, asset.height ?? 0);
+    const context = ImageManipulator.manipulate(asset.uri);
+    if (longest > MAX_IMAGE_EDGE) {
+      if ((asset.width ?? 0) >= (asset.height ?? 0)) context.resize({ width: MAX_IMAGE_EDGE });
+      else context.resize({ height: MAX_IMAGE_EDGE });
+    }
+    const rendered = await context.renderAsync();
+    let saved = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.82 });
+    let size = fileSize(saved.uri);
+    if (size !== null && size > MAX_UPLOAD_BYTES) {
+      saved = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.6 });
+      size = fileSize(saved.uri);
+    }
+    if (size !== null && size > MAX_UPLOAD_BYTES) {
+      return { status: 'error', message: 'This receipt photo is too large to upload (limit 5 MB).' };
+    }
+
+    return {
+      status: 'picked',
+      file: { uri: saved.uri, name: `${safeBaseName(asset.fileName, 'receipt')}.jpg`, type: 'image/jpeg', size },
+    };
+  } catch {
+    return { status: 'error', message: 'Could not access the camera. Please try again or choose from your photos.' };
+  }
+}
+
 export async function pickPdf(): Promise<PickResult> {
   try {
     const result = await DocumentPicker.getDocumentAsync({
