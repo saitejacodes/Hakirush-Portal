@@ -4,7 +4,7 @@ import Department from "../models/Department.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 import uploadToImageKit from "../utils/uploadToImageKit.js";
-import { asyncHandler, badRequest, conflict, forbidden, notFound } from "../middleware/errorHandler.js";
+import { asyncHandler, badRequest, conflict, forbidden, notFound, ApiError } from "../middleware/errorHandler.js";
 import { getEmployeeForUser } from "../services/employeeScope.js";
 import { requireObjectId, requireEnum, toFiniteNumber, trimmedString, requireYmd } from "../utils/validate.js";
 
@@ -13,8 +13,8 @@ const uploadReceiptImage = async (file) => {
   try {
     return await uploadToImageKit(file, "expenses");
   } catch (err) {
-    console.warn("Receipt upload to ImageKit failed, saving placeholder or error:", err.message);
-    return "";
+    console.error("Receipt upload to ImageKit failed:", err.message);
+    throw new ApiError(502, "Receipt upload failed. Please try again.", "UPLOAD_FAILED");
   }
 };
 
@@ -27,6 +27,10 @@ export const createExpenseClaim = asyncHandler(async (req, res) => {
   const date = requireYmd(b.date, "date");
   const description = trimmedString(b.description, "description", { max: 500, optional: true }) || "";
 
+  if (!req.file && (!b.receiptUrl || typeof b.receiptUrl !== "string" || !b.receiptUrl.trim())) {
+    throw badRequest("Receipt or bill photo is required");
+  }
+
   const employee = await getEmployeeForUser(req.user._id);
 
   let receiptUrl = "";
@@ -34,6 +38,10 @@ export const createExpenseClaim = asyncHandler(async (req, res) => {
     receiptUrl = await uploadReceiptImage(req.file);
   } else if (typeof b.receiptUrl === "string") {
     receiptUrl = b.receiptUrl.trim();
+  }
+
+  if (!receiptUrl) {
+    throw badRequest("Receipt or bill photo is required");
   }
 
   const isManager = Boolean(await Department.exists({ managerEmployeeId: employee._id }));

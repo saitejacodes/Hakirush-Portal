@@ -17,6 +17,7 @@ import { useTheme } from '@/theme';
 const TYPES = [
   { label: 'Annual', value: 'Annual' },
   { label: 'Quarterly', value: 'Quarterly' },
+  { label: 'Celebration', value: 'Celebration' },
 ] as const;
 const STATUSES = [
   { label: 'Upcoming', value: 'Upcoming' },

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Receipt, Check, X, Clock, CheckCircle, ArrowUpRight, XCircle, Image as ImageIcon, Filter } from "lucide-react";
+import { apiErrorMessage, authHeaders } from "../../utils/apiError";
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL || "";
 
 const AdminExpenses = () => {
   const [claims, setClaims] = useState([]);
@@ -12,8 +15,8 @@ const AdminExpenses = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/expenses", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const res = await axios.get(`${BACKEND}/api/expenses`, {
+        headers: authHeaders(),
       });
       if (res.data.success) {
         setClaims(res.data.claims || []);
@@ -33,16 +36,16 @@ const AdminExpenses = () => {
     try {
       setActionLoading(claimId);
       const res = await axios.put(
-        `http://localhost:5000/api/expenses/${claimId}/review`,
+        `${BACKEND}/api/expenses/${claimId}/review`,
         { decision },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        { headers: authHeaders() }
       );
       if (res.data.success) {
         setMsg(`Claim successfully ${decision.toLowerCase()}!`);
         fetchClaims();
       }
     } catch (err) {
-      alert(err.response?.data?.error || `Failed to ${decision.toLowerCase()} claim`);
+      alert(apiErrorMessage(err, `Failed to ${decision.toLowerCase()} claim`));
     } finally {
       setActionLoading(null);
     }

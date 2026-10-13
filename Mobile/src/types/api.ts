@@ -427,7 +427,7 @@ export interface Holiday {
   createdAt?: IsoDateTime;
 }
 
-export type AnnouncementType = 'Annual' | 'Quarterly';
+export type AnnouncementType = 'Annual' | 'Quarterly' | 'Celebration';
 export type AnnouncementStatus = 'Upcoming' | 'Ongoing' | 'Completed';
 
 export interface Announcement {

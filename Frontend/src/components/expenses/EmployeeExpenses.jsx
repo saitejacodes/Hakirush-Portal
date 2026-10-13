@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Plus, Receipt, CheckCircle, Clock, XCircle, ArrowUpRight, FileText, Image as ImageIcon } from "lucide-react";
+import { apiErrorMessage, authHeaders } from "../../utils/apiError";
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL || "";
 
 const CATEGORIES = [
   "Travel",
@@ -19,6 +22,7 @@ const EmployeeExpenses = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -29,11 +33,25 @@ const EmployeeExpenses = () => {
     receipt: null,
   });
 
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      category: "Travel",
+      amount: "",
+      date: new Date().toISOString().slice(0, 10),
+      description: "",
+      receipt: null,
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/expenses/me", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const res = await axios.get(`${BACKEND}/api/expenses/me`, {
+        headers: authHeaders(),
       });
       if (res.data.success) {
         setClaims(res.data.claims || []);
@@ -58,6 +76,12 @@ const EmployeeExpenses = () => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
+
+    if (!formData.receipt) {
+      setError("Please upload a bill or receipt photo.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -67,13 +91,11 @@ const EmployeeExpenses = () => {
       data.append("amount", formData.amount);
       data.append("date", formData.date);
       data.append("description", formData.description);
-      if (formData.receipt) {
-        data.append("receipt", formData.receipt);
-      }
+      data.append("receipt", formData.receipt);
 
-      const res = await axios.post("http://localhost:5000/api/expenses", data, {
+      const res = await axios.post(`${BACKEND}/api/expenses`, data, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...authHeaders(),
           "Content-Type": "multipart/form-data",
         },
       });
@@ -81,18 +103,11 @@ const EmployeeExpenses = () => {
       if (res.data.success) {
         setSuccessMsg(res.data.message || "Expense claim submitted successfully!");
         setIsModalOpen(false);
-        setFormData({
-          title: "",
-          category: "Travel",
-          amount: "",
-          date: new Date().toISOString().slice(0, 10),
-          description: "",
-          receipt: null,
-        });
+        resetForm();
         fetchClaims();
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to submit expense claim");
+      setError(apiErrorMessage(err, "Failed to submit expense claim"));
     } finally {
       setSubmitting(false);
     }
@@ -241,7 +256,13 @@ const EmployeeExpenses = () => {
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <Receipt size={18} /> File Expense Claim
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/80 hover:text-white text-lg font-bold">
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  resetForm();
+                }}
+                className="text-white/80 hover:text-white text-lg font-bold"
+              >
                 &times;
               </button>
             </div>
@@ -301,11 +322,13 @@ const EmployeeExpenses = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Bill / Receipt Photo (Optional)</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Bill / Receipt Photo *</label>
                 <input
+                  ref={fileInputRef}
                   type="file"
+                  required
                   accept="image/*,application/pdf"
-                  onChange={(e) => setFormData({ ...formData, receipt: e.target.files[0] })}
+                  onChange={(e) => setFormData({ ...formData, receipt: e.target.files[0] || null })}
                   className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                 />
               </div>
@@ -324,7 +347,10 @@ const EmployeeExpenses = () => {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
                   className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Cancel

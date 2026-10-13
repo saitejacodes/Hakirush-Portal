@@ -91,10 +91,14 @@ export function ExpenseApplyScreen() {
       toast.error('Please enter a valid amount greater than ₹0.');
       return;
     }
+    if (!receipt) {
+      toast.error('Please attach a bill or receipt photo.');
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const filePart = receipt ? { uri: receipt.uri, name: receipt.name, type: receipt.type } : undefined;
+      const filePart = { uri: receipt.uri, name: receipt.name, type: receipt.type };
       const form = toFormData(
         {
           title: title.trim(),
@@ -103,7 +107,7 @@ export function ExpenseApplyScreen() {
           date,
           description: description.trim(),
         },
-        filePart ? { receipt: filePart } : {}
+        { receipt: filePart }
       );
 
       await api.post('/api/expenses', form);
@@ -158,7 +162,7 @@ export function ExpenseApplyScreen() {
         />
       </FormSection>
 
-      <FormSection title="Receipt or Bill" description="Capture with camera or attach image / PDF.">
+      <FormSection title="Receipt or Bill *" description="Capture with camera or attach image / PDF.">
         {receipt ? (
           <Card style={styles.attachedCard}>
             <View style={styles.attachedRow}>

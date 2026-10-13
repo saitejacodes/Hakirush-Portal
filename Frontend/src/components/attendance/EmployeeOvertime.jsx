@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Clock, CheckCircle, Plus, Calendar, DollarSign, Award, XCircle } from "lucide-react";
+import { apiErrorMessage, authHeaders } from "../../utils/apiError";
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL || "";
 
 const EmployeeOvertime = () => {
   const [data, setData] = useState({
@@ -25,8 +28,8 @@ const EmployeeOvertime = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/overtime/summary/me", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const res = await axios.get(`${BACKEND}/api/overtime/summary/me`, {
+        headers: authHeaders(),
       });
       if (res.data.success) {
         setData(res.data);
@@ -49,8 +52,8 @@ const EmployeeOvertime = () => {
     setSubmitting(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/overtime/apply", formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const res = await axios.post(`${BACKEND}/api/overtime/apply`, formData, {
+        headers: authHeaders(),
       });
       if (res.data.success) {
         setMsg(res.data.message || `Successfully applied for overtime ${formData.type}!`);
@@ -59,7 +62,7 @@ const EmployeeOvertime = () => {
         fetchData();
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to submit request");
+      setError(apiErrorMessage(err, "Failed to submit request"));
     } finally {
       setSubmitting(false);
     }

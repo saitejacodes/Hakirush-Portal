@@ -3,7 +3,7 @@ import uploadToImageKit from "../utils/uploadToImageKit.js";
 import { asyncHandler, forbidden, notFound, ApiError } from "../middleware/errorHandler.js";
 import { requireObjectId, trimmedString, requireEnum } from "../utils/validate.js";
 
-const TYPES = ["Annual", "Quarterly"];
+const TYPES = ["Annual", "Quarterly", "Celebration"];
 const STATUSES = ["Upcoming", "Ongoing", "Completed"];
 // Audience rule (unchanged): non-admins only see announcements that are not Completed.
 const PUBLIC_FILTER = { status: { $ne: "Completed" } };
