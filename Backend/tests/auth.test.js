@@ -343,6 +343,73 @@ describe("login rate limiting", () => {
   });
 });
 
+describe("forgot-password and reset-password", () => {
+  test("POST /api/auth/forgot-password returns 200 regardless of whether email exists", async () => {
+    // Existing user
+    const res1 = await request(app).post("/api/auth/forgot-password").send({ email: "alan@test.local" });
+    assert.equal(res1.status, 200);
+    assert.equal(res1.body.success, true);
+    assert.match(res1.body.message, /password reset link has been sent/i);
+
+    // Non-existent user (anti-enumeration check)
+    const res2 = await request(app).post("/api/auth/forgot-password").send({ email: "doesnotexist@test.local" });
+    assert.equal(res2.status, 200);
+    assert.equal(res2.body.success, true);
+    assert.match(res2.body.message, /password reset link has been sent/i);
+
+    // Missing email
+    const res3 = await request(app).post("/api/auth/forgot-password").send({});
+    assert.equal(res3.status, 400);
+  });
+
+  test("POST /api/auth/reset-password resets password and invalidates token for reuse", async () => {
+    const user = fx.itDev1.user;
+    const token = jwt.sign(
+      { _id: String(user._id), role: user.role, type: "password_reset", tv: user.tokenVersion ?? 0 },
+      process.env.JWT_KEY,
+      { expiresIn: "15m" }
+    );
+
+    const newPassword = "BrandNew-StrongPassw0rd!";
+
+    // Short password rejection
+    const failShort = await request(app).post("/api/auth/reset-password").send({ token, password: "short" });
+    assert.equal(failShort.status, 400);
+
+    // Successful reset
+    const res = await request(app).post("/api/auth/reset-password").send({ token, password: newPassword });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+
+    // Login with old password must fail
+    const oldLogin = await request(app).post("/api/auth/login").send({ email: user.email, password: PASSWORD });
+    assert.equal(oldLogin.status, 401);
+
+    // Login with new password must succeed
+    const newLogin = await request(app).post("/api/auth/login").send({ email: user.email, password: newPassword });
+    assert.equal(newLogin.status, 200);
+    assert.equal(newLogin.body.success, true);
+
+    // Reusing the same reset token must fail because tokenVersion incremented
+    const reuse = await request(app).post("/api/auth/reset-password").send({ token, password: "AnotherPassw0rd!123" });
+    assert.equal(reuse.status, 401);
+    assert.equal(reuse.body.code, "INVALID_TOKEN");
+  });
+
+  test("POST /api/auth/reset-password rejects invalid token type or expired token", async () => {
+    const user = fx.itDev1.user;
+    const wrongTypeToken = jwt.sign(
+      { _id: String(user._id), role: user.role, type: "setup", tv: user.tokenVersion ?? 0 },
+      process.env.JWT_KEY,
+      { expiresIn: "15m" }
+    );
+
+    const res = await request(app).post("/api/auth/reset-password").send({ token: wrongTypeToken, password: "SomeNewPassword1!" });
+    assert.equal(res.status, 401);
+    assert.equal(res.body.code, "INVALID_TOKEN");
+  });
+});
+
 test("mongoose connection is the in-memory server", () => {
   assert.match(mongoose.connection.host, /127\.0\.0\.1|localhost/);
 });

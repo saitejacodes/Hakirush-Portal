@@ -6,10 +6,12 @@ import {
   mobileRefresh,
   mobileLogout,
   logoutAll,
-  setupPassword
+  setupPassword,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import { loginLimiter } from "../middleware/loginRateLimit.js";
+import { loginLimiter, forgotPasswordLimiter } from "../middleware/loginRateLimit.js";
 
 const router = express.Router();
 
@@ -21,5 +23,7 @@ router.post("/mobile/refresh", mobileRefresh);
 router.post("/mobile/logout", mobileLogout);
 router.post("/logout-all", authMiddleware, logoutAll);
 router.post("/setup-password", setupPassword);
+router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

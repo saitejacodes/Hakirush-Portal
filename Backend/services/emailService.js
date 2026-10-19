@@ -193,3 +193,68 @@ export const sendWorkAnniversaryEmail = async (user, years) => {
 
   await transporter.sendMail(mailOptions).catch((err) => console.error("Work anniversary email failed:", err.message));
 };
+
+export const sendPasswordResetEmail = async (user) => {
+  // Generate a special 15-minute password reset token, tied to user's current tokenVersion
+  const resetToken = jwt.sign(
+    { _id: String(user._id), role: user.role, type: "password_reset", tv: user.tokenVersion ?? 0 },
+    process.env.JWT_KEY,
+    { expiresIn: "15m" }
+  );
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+  const mailOptions = {
+    from: `"Hakirush Portal" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: "Reset Your Password - Hakirush Portal",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E7DFD2; border-radius: 16px; background-color: #FFFFFF;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #1C1A17; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0;">
+            Haki<span style="color: #7A2233;">rush</span> Portal
+          </h1>
+          <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B4ADA0; margin-top: 6px; font-weight: 700;">
+            Security Notification
+          </p>
+        </div>
+        
+        <h2 style="color: #1C1A17; font-size: 18px; font-weight: 700; margin-top: 0;">Password Reset Request</h2>
+        <p style="color: #4A463F; font-size: 14px; line-height: 1.6;">
+          Hello <strong>${user.name || "there"}</strong>,
+        </p>
+        <p style="color: #4A463F; font-size: 14px; line-height: 1.6;">
+          We received a request to reset the password for your Hakirush account. Click the button below to choose a new password:
+        </p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetLink}" style="background-color: #7A2233; color: #FFFFFF; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
+            Reset My Password
+          </a>
+        </div>
+
+        <p style="color: #4A463F; font-size: 13px; line-height: 1.5;">
+          If the button above does not work, copy and paste this link into your browser:
+        </p>
+        <p style="word-break: break-all; font-size: 12px; color: #7A2233; background: #FAF8F5; padding: 10px; border-radius: 6px; border: 1px solid #E7DFD2;">
+          <a href="${resetLink}" style="color: #7A2233; text-decoration: underline;">${resetLink}</a>
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #E7DFD2; margin: 24px 0;" />
+
+        <p style="font-size: 12px; color: #8A8378; line-height: 1.5; margin: 0;">
+          <strong>Security Notice:</strong> This link is single-use and will expire in <strong>15 minutes</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.
+        </p>
+      </div>
+    `,
+  };
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("WARNING: EMAIL_USER or EMAIL_PASS not configured in .env. Skipping password reset email.");
+    console.log("Mock Reset Link:", resetLink);
+    return;
+  }
+
+  await transporter.sendMail(mailOptions);
+};

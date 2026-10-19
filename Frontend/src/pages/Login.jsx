@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../context/authContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { apiErrorCode, isNetworkError } from "../utils/apiError";
 import { Eye, EyeOff, ShieldCheck, Lock, Mail, Loader2 } from "lucide-react";
 
@@ -169,7 +169,15 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8478] ml-1">Security Key</label>
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8478]">Security Key</label>
+                <Link
+                  to="/forgot-password"
+                  className="text-[10px] font-black uppercase tracking-[0.15em] text-[#7A2233] hover:text-[#B8912E] hover:underline transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9C2AE] group-focus-within:text-[#B8912E] transition-colors" size={18} />
                 <input

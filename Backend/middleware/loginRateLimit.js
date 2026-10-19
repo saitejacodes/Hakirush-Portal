@@ -53,4 +53,26 @@ export const createLoginLimiters = ({ limit, ipLimit, windowMs = WINDOW_MS } = {
 // Shared instance used by /auth/login and /auth/mobile/login.
 export const loginLimiter = createLoginLimiters();
 
+export const createForgotLimiters = ({ limit, windowMs = WINDOW_MS } = {}) => {
+  const isTest = process.env.NODE_ENV === "test";
+  return rateLimit({
+    windowMs,
+    limit: limit ?? (isTest ? 10000 : 5),
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    keyGenerator: (req) => ipKeyGenerator(req.ip || ""),
+    handler: (req, res, next, options) => {
+      const retryAfterSeconds = Math.ceil(options.windowMs / 1000);
+      res.status(429).json({
+        success: false,
+        error: "Too many reset attempts. Please wait a moment and try again.",
+        code: "RATE_LIMITED",
+        details: { retryAfterSeconds },
+      });
+    },
+  });
+};
+
+export const forgotPasswordLimiter = createForgotLimiters();
+
 export default loginLimiter;

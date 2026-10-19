@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Image, StyleSheet, View, type TextInput } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, View, type TextInput } from 'react-native';
 
 import { AppText, Button, Card, Icon, Screen, TextField } from '@/components';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -114,6 +114,19 @@ export function LoginScreen() {
           error={passwordError}
           disabled={submitting}
         />
+        <Pressable
+          testID="login-forgot-password"
+          accessibilityRole="button"
+          accessibilityLabel="Forgot Password"
+          onPress={() => {
+            Linking.openURL('https://hakirush-portal.vercel.app/forgot-password').catch(() => undefined);
+          }}
+          style={({ pressed }) => [{ alignSelf: 'flex-end', paddingVertical: 4, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <AppText variant="secondary" style={{ color: theme.colors.primary, fontSize: 13, fontWeight: '600' }}>
+            Forgot Password?
+          </AppText>
+        </Pressable>
         <Button testID="login-submit" label={submitting ? 'Signing in…' : 'Sign in'} onPress={submit} loading={submitting} />
       </Card>
     </Screen>

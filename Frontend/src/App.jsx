@@ -8,6 +8,9 @@ import EmployeeSetting from "./pages/Setting";
 import Unauthorized from "./pages/Unauthorized";
 import SetupPassword from "./pages/SetupPassword";
 
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+
 /* ================= LAZY LOADED ROUTE COMPONENTS ================= */
 // Code-split to drastically reduce initial JS chunk size and speed up Time-to-Interactive
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -81,6 +84,8 @@ const App = () => {
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<Login />} />
           <Route path="/setup-password" element={<SetupPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* ================= ADMIN ROUTES ================= */}
           <Route

@@ -13,6 +13,7 @@ import {
   logoutRefreshToken,
   revokeAllSessions,
 } from "../services/sessionService.js";
+import { sendPasswordResetEmail } from "../services/emailService.js";
 
 // Used to keep the unknown-email path as slow as the wrong-password path.
 const DUMMY_HASH = bcrypt.hashSync("hakirush-timing-equalizer", 10);
@@ -158,4 +159,64 @@ export const setupPassword = asyncHandler(async (req, res) => {
   await user.save();
 
   return res.status(200).json({ success: true, message: "Password setup successfully. You may now log in." });
+});
+
+/* POST /api/auth/forgot-password */
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  if (!email) throw badRequest("Email is required");
+  if (email.length > 254) throw badRequest("Invalid email");
+
+  // Constant-time / anti-enumeration: always return success response
+  const user = await User.findOne({ email }).select("+tokenVersion");
+  if (user && user.isActive !== false) {
+    try {
+      await sendPasswordResetEmail(user);
+    } catch (err) {
+      console.error("Failed to send password reset email:", err);
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "If an account with that email exists, a password reset link has been sent.",
+  });
+});
+
+/* POST /api/auth/reset-password */
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password) throw badRequest("Token and password are required");
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_KEY);
+  } catch (err) {
+    throw new ApiError(401, "Invalid or expired reset token", "INVALID_TOKEN");
+  }
+
+  if (decoded.type !== "password_reset") throw new ApiError(401, "Invalid token type", "INVALID_TOKEN");
+
+  const user = await User.findById(decoded._id).select("+password +tokenVersion");
+  if (!user) throw badRequest("User no longer exists");
+  if (user.isActive === false) throw new ApiError(403, "Account is deactivated", "ACCOUNT_INACTIVE");
+
+  // Prevent token reuse: tokenVersion in token must match user's current tokenVersion
+  if (decoded.tv !== undefined && decoded.tv !== (user.tokenVersion ?? 0)) {
+    throw new ApiError(401, "This reset link has already been used or expired", "INVALID_TOKEN");
+  }
+
+  validateNewPassword(password, "password");
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  user.password = hashedPassword;
+  await user.save();
+
+  // Invalidate all existing sessions (web access tokens + mobile sessions)
+  await revokeAllSessions(user._id, "password_reset");
+
+  return res.status(200).json({
+    success: true,
+    message: "Password reset successfully. You may now log in with your new password.",
+  });
 });
